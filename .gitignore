@@ -3,3 +3,4 @@ __pycache__/
 *.gxw
 *.prx
 *.bak
+trace.txt

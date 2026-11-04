@@ -1,7 +1,9 @@
-"""PLC 시뮬레이터를 돌리고 상태를 웹으로 내보내는 Flask 서버.
+"""PLC(시뮬레이터 또는 OpenPLC)를 돌리고 상태를 웹으로 내보내는 Flask 서버.
 
 실행 (프로젝트 폴더에서):
-    python src/server.py plc/1102
+    python src/server.py plc/1102          # 파이썬 시뮬레이터가 PLC 로직을 실행
+    python src/server.py modbus            # OpenPLC(127.0.0.1:502)가 PLC 로직을 실행
+    python src/server.py modbus 192.168.0.109   # 다른 PLC 주소
 접속: http://localhost:5001
 """
 import sys
@@ -15,10 +17,14 @@ from plc_sim import PlcSim
 from workpiece import Tracker
 
 BASE = Path(__file__).resolve().parent
-CSV_DIR = sys.argv[1] if len(sys.argv) > 1 else str(BASE.parent / "plc" / "1102")
+ARG = sys.argv[1] if len(sys.argv) > 1 else str(BASE.parent / "plc" / "1102")
 
 app = Flask(__name__, static_folder=str(BASE / "static"))
-sim = PlcSim(CSV_DIR)
+if ARG == "modbus":
+    from modbus_plc import ModbusPlc
+    sim = ModbusPlc(sys.argv[2] if len(sys.argv) > 2 else "127.0.0.1")
+else:
+    sim = PlcSim(ARG)
 tracker = Tracker()
 lock = threading.Lock()
 pending = set()  # 다음 스캔에서 한 번만 켜질 입력
@@ -28,7 +34,7 @@ PRESS_ALLOWED = {"M100", "M101", "M102", "M103", "X0E"}
 STATE_KEYS = (
     [f"X{i}" if i < 10 else f"X0{i:X}" for i in range(0, 11)]
     + [f"Y{i:X}" for i in range(0x20, 0x2C)]
-    + ["M0", "M1", "D0", "D2", "D4", "D10"]
+    + ["D0", "D2", "D4", "D10"]
 )
 
 
@@ -52,6 +58,8 @@ def state():
         out = {k: int(sim.dev[k]) for k in STATE_KEYS}
         out["pieces"] = tracker.snapshot()
         out["mode"] = sim.piece_mode
+        out["connected"] = getattr(sim, "connected", True)
+        out["error"] = getattr(sim, "error", "")
         return jsonify(out)
 
 
@@ -81,7 +89,10 @@ def set_d10():
     if not isinstance(value, int) or not 0 <= value <= 999:
         return jsonify(error="0~999 정수만 가능"), 400
     with lock:
-        sim.dev["D10"] = value  # 5~100 범위 제한은 PLC 프로그램이 처리
+        if hasattr(sim, "set_d10"):
+            sim.set_d10(value)  # OpenPLC의 D10 레지스터에 쓴다
+        else:
+            sim.dev["D10"] = value  # 5~100 범위 제한은 PLC 프로그램이 처리
     return jsonify(ok=True)
 
 

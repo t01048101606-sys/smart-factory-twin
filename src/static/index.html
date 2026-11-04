@@ -84,6 +84,14 @@
       <button data-dev="M102">연속정지</button>
       <button data-dev="X0E">리셋(PB4)</button>
       <button data-dev="M103">카운트 초기화</button>
+      <div style="margin-top:8px">
+        <label for="mode">작업물 종류(시뮬레이터)</label><br>
+        <select id="mode" style="background:#0e1216;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:4px">
+          <option value="alternate">번갈아(금속, 비금속)</option>
+          <option value="metal">금속만</option>
+          <option value="nonmetal">비금속만</option>
+        </select>
+      </div>
     </div>
     <div class="panel">
       <div class="cnt"><span>금속</span><b id="d0">0</b></div>
@@ -106,9 +114,10 @@
 const $ = id => document.getElementById(id);
 const post = (u, b) => fetch(u, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
 document.querySelectorAll('button[data-dev]').forEach(b => b.onclick = () => post('/api/press', {dev:b.dataset.dev}));
+$('mode').onchange = () => post('/api/mode', {mode: $('mode').value});
 $('d10btn').onclick = () => post('/api/d10', {value: parseInt($('d10in').value, 10)});
 
-const keys = [...Array(11).keys()].map(i => 'X' + i.toString(16).toUpperCase())
+const keys = [...Array(11).keys()].map(i => i < 10 ? 'X' + i : 'X0' + i.toString(16).toUpperCase())
   .concat([...Array(12).keys()].map(i => 'Y' + (0x20 + i).toString(16).toUpperCase()));
 $('sens').innerHTML = keys.map(k => `<span class="dot" id="s_${k}">${k}</span>`).join('');
 
@@ -139,6 +148,7 @@ function render(s) {
   $('magParts').style.display = s.X8 ? 'block' : 'none';
   $('mag').setAttribute('stroke', s.X8 ? 'var(--on)' : 'var(--line)');
   $('magTxt').textContent = s.X8 ? '적재 감지(X8)' : '비어 있음';
+  if (document.activeElement !== $('mode')) $('mode').value = s.mode;
   $('d0').textContent = s.D0; $('d2').textContent = s.D2; $('d4').textContent = s.D4; $('d10').textContent = s.D10;
   keys.forEach(k => $('s_' + k).classList.toggle('on', !!s[k]));
 }

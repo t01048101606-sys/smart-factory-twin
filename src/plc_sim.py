@@ -51,6 +51,10 @@ class PlcSim:
         self.active = {"READY": 1, "MAIN": 1, "TEST1": 0, "HMI": 0}
         self.moving = {}
         self.scan_no = 0
+        self.piece_mode = "alternate"  # alternate(번갈아) | metal | nonmetal
+        self._next_metal = True        # alternate 모드에서 다음 작업물이 금속인지
+        self._kind_metal = True        # 현재 센서 위치의 작업물이 금속인지
+        self._x5_prev = 0
         for x in ("X0", "X3", "X4", "X6", "X8"):  # 초기 센서 상태
             self.dev[x] = 1
 
@@ -129,7 +133,18 @@ class PlcSim:
             if mv["du"] >= 6: dev["X2"] = 0; dev["X3"] = 1
         else:
             mv["du"] = 0
-        dev["X9"] = 1 if dev["X5"] else 0  # 금속 감지(데모: 송출 전진 시 금속)
+        # 송출 전진이 끝나는 순간 작업물 종류를 정하고, 그 종류에 맞는 센서(X9 금속 / X0A 비금속)를 켠다
+        if dev["X5"] and not self._x5_prev:
+            if self.piece_mode == "metal":
+                self._kind_metal = True
+            elif self.piece_mode == "nonmetal":
+                self._kind_metal = False
+            else:
+                self._kind_metal = self._next_metal
+                self._next_metal = not self._next_metal
+        self._x5_prev = dev["X5"]
+        dev["X9"] = 1 if dev["X5"] and self._kind_metal else 0
+        dev["X0A"] = 1 if dev["X5"] and not self._kind_metal else 0
 
     def scan(self, pressed=()):
         """스캔 1회. pressed: 이번 스캔에만 켜질 입력 (예: 'M101', 'X0E')."""

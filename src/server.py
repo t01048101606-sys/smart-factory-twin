@@ -26,7 +26,7 @@ pending = set()  # 다음 스캔에서 한 번만 켜질 입력
 # 웹에서 조작을 허용하는 디바이스
 PRESS_ALLOWED = {"M100", "M101", "M102", "M103", "X0E"}
 STATE_KEYS = (
-    [f"X{i:X}" for i in range(0, 11)]
+    [f"X{i}" if i < 10 else f"X0{i:X}" for i in range(0, 11)]
     + [f"Y{i:X}" for i in range(0x20, 0x2C)]
     + ["M0", "M1", "D0", "D2", "D4", "D10"]
 )
@@ -51,6 +51,7 @@ def state():
     with lock:
         out = {k: int(sim.dev[k]) for k in STATE_KEYS}
         out["pieces"] = tracker.snapshot()
+        out["mode"] = sim.piece_mode
         return jsonify(out)
 
 
@@ -61,6 +62,16 @@ def press():
         return jsonify(error="허용되지 않은 디바이스"), 400
     with lock:
         pending.add(dev)
+    return jsonify(ok=True)
+
+
+@app.post("/api/mode")
+def set_mode():
+    mode = (request.get_json(silent=True) or {}).get("mode")
+    if mode not in ("alternate", "metal", "nonmetal"):
+        return jsonify(error="alternate, metal, nonmetal 중 하나"), 400
+    with lock:
+        sim.piece_mode = mode
     return jsonify(ok=True)
 
 

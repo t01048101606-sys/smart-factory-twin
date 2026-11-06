@@ -1,0 +1,66 @@
+{
+ "title": "스마트 팩토리",
+ "background": "#0f1216",
+ "lines": [
+  {
+   "id": "machining",
+   "name": "가공 라인",
+   "scene": "machining",
+   "state": "machining",
+   "offset": [
+    0,
+    0,
+    -12
+   ],
+   "title_pos": [
+    -3.5,
+    8.0,
+    -12.0
+   ]
+  },
+  {
+   "id": "press",
+   "name": "프레스 · 용접 · 도장 라인",
+   "scene": "press_weld_paint",
+   "state": "press",
+   "offset": [
+    -2.5,
+    0,
+    5
+   ],
+   "title_pos": [
+    -11.5,
+    7.4,
+    5.0
+   ]
+  },
+  {
+   "id": "logistics",
+   "name": "물류 · 출하 구역",
+   "scene": "logistics",
+   "state": "logistics",
+   "offset": [
+    -8,
+    0,
+    24
+   ],
+   "title_pos": [
+    2.0,
+    3.8,
+    34.0
+   ]
+  }
+ ],
+ "camera": {
+  "position": [
+   0,
+   52,
+   56
+  ],
+  "target": [
+   0,
+   0,
+   0
+  ]
+ }
+}

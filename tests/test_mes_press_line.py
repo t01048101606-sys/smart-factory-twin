@@ -201,6 +201,6 @@ assert abs(pc(k["가용률"]) * pc(k["성능률"]) * pc(k["품질률"]) / 10000 
 # 가공 라인 페이지가 프레스 라인 이벤트에 영향받지 않는다 (라인 구분)
 _r.run_path(str(mes / "pages" / "14_설비현황.py"), run_name="__main__")
 k2 = calls["kpi"]
-assert "분류된 작업물" in k2, k2
-print("가공 라인 설비현황 페이지도 정상 (라인별로 이벤트를 구분해서 읽음):", {x: k2[x] for x in ("OEE", "분류된 작업물")})
+assert "판별한 워크" in k2, k2          # 기본은 현장 용어
+print("가공 라인 설비현황 페이지도 정상 (라인별로 이벤트를 구분해서 읽음):", {x: k2[x] for x in ("OEE", "판별한 워크")})
 print("\n테스트 통과")

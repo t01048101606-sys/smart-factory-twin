@@ -1025,10 +1025,96 @@
      0
     ]
    ]
-  }
+  },
+  "shape": "box",
+  "rules": [
+   {
+    "if": {
+     "defect": true
+    },
+    "color": "defect"
+   },
+   {
+    "if": {
+     "painted": true
+    },
+    "color": "painted"
+   },
+   {
+    "if": {
+     "welded": true
+    },
+    "color": "welded"
+   },
+   {
+    "if": {
+     "pressed": true
+    },
+    "color": "pressed"
+   }
+  ],
+  "default": "normal"
  },
  "fit": {
   "width": 30.0,
   "height": 12.0
+ },
+ "summary": {
+  "title": "프레스 · 용접 · 도장 라인",
+  "status": {
+   "path": "running",
+   "map": {
+    "true": "가동",
+    "false": "정지"
+   }
+  },
+  "metrics": [
+   {
+    "label": "투입",
+    "path": "counts.in"
+   },
+   {
+    "label": "양품",
+    "path": "counts.good"
+   },
+   {
+    "label": "불량",
+    "path": "counts.scrap"
+   },
+   {
+    "label": "처리량",
+    "path": "kpi.throughput_per_min",
+    "suffix": " 개/분",
+    "zero": "-"
+   },
+   {
+    "label": "병목 공정",
+    "path": "kpi.bottleneck_name",
+    "zero": "-"
+   }
+  ],
+  "actions": [
+   {
+    "label": "시작",
+    "post": "/api/line/control",
+    "body": {
+     "action": "start"
+    }
+   },
+   {
+    "label": "정지",
+    "post": "/api/line/control",
+    "body": {
+     "action": "stop"
+    }
+   },
+   {
+    "label": "리셋",
+    "post": "/api/line/control",
+    "body": {
+     "action": "reset"
+    }
+   }
+  ]
  }
 }

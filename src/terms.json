@@ -1,0 +1,312 @@
+{
+ "default_mode": "field",
+ "modes": {
+  "field": "현장 용어",
+  "lab": "장비 원명칭"
+ },
+ "note": "화면에 보이는 이름만 바꾼다. 코드의 태그 ID(예: SUP_FWD_SOL), PLC 프로그램, 이벤트 이름은 그대로다. 장비 원명칭은 학원 실습 장비(미쓰비시 Q02H PLC, Pro-face HMI)에서 쓰던 이름이다.",
+ "terms": {
+  "magazine": {
+   "field": "부품 공급기",
+   "lab": "매거진"
+  },
+  "feed_pusher": {
+   "field": "공급 푸셔",
+   "lab": "공급 실린더"
+  },
+  "drill": {
+   "field": "드릴링 유닛",
+   "lab": "드릴"
+  },
+  "transfer_pusher": {
+   "field": "이송 푸셔",
+   "lab": "송출 실린더"
+  },
+  "conveyor": {
+   "field": "벨트 컨베이어",
+   "lab": "컨베이어"
+  },
+  "sort_pusher": {
+   "field": "분류 푸셔",
+   "lab": "배출 실린더"
+  },
+  "ok_bin": {
+   "field": "정품 수납함",
+   "lab": "금속 배출 박스"
+  },
+  "ng_bin": {
+   "field": "이종품(NG) 수납함",
+   "lab": "비금속 끝"
+  },
+  "stack_light": {
+   "field": "스택 라이트",
+   "lab": "신호등"
+  },
+  "workpiece": {
+   "field": "워크",
+   "lab": "작업물"
+  },
+  "ok_part": {
+   "field": "정품",
+   "lab": "금속"
+  },
+  "ng_part": {
+   "field": "이종품",
+   "lab": "비금속"
+  },
+  "total": {
+   "field": "합계",
+   "lab": "합계"
+  },
+  "stock_ok": {
+   "field": "재고 감지",
+   "lab": "적재 감지"
+  },
+  "stock_empty": {
+   "field": "공급기 비어 있음",
+   "lab": "비어 있음"
+  },
+  "classified": {
+   "field": "판별한 워크",
+   "lab": "분류된 작업물"
+  },
+  "ng_label": {
+   "field": "이종품(NG)",
+   "lab": "불량(비금속)"
+  },
+  "ok_label": {
+   "field": "정품 (OK)",
+   "lab": "금속 (정상)"
+  },
+  "ng_long": {
+   "field": "이종품 (재질 불일치)",
+   "lab": "비금속 (이종 재질 혼입)"
+  },
+  "ng_reason": {
+   "field": "이종품 혼입(재질 불일치)",
+   "lab": "이종 재질 혼입(비금속)"
+  },
+  "quality_basis": {
+   "field": "정품(금속) 워크 수 / 판별한 워크 수",
+   "lab": "금속(정상) 작업물 수 / 분류된 작업물 수"
+  },
+  "step.supply_back": {
+   "field": "공급 푸셔 후진",
+   "lab": "공급 후진"
+  },
+  "step.drill_motor": {
+   "field": "드릴 모터 기동",
+   "lab": "드릴 모터 기동"
+  },
+  "step.drill_down": {
+   "field": "드릴 하강",
+   "lab": "드릴 하강"
+  },
+  "step.drilling": {
+   "field": "드릴링 중",
+   "lab": "가공 중"
+  },
+  "step.drill_up": {
+   "field": "드릴 상승",
+   "lab": "드릴 상승"
+  },
+  "step.out_forward": {
+   "field": "이송 푸셔 전진",
+   "lab": "송출 전진"
+  },
+  "step.out_back": {
+   "field": "이송 푸셔 후진",
+   "lab": "송출 후진"
+  },
+  "step.belt": {
+   "field": "벨트 컨베이어 진입",
+   "lab": "컨베이어 진입"
+  },
+  "step.eject": {
+   "field": "분류 푸셔 동작 (정품 배출)",
+   "lab": "금속 배출"
+  },
+  "step.bin_metal": {
+   "field": "정품 수납함 도착",
+   "lab": "금속 박스 도착"
+  },
+  "step.end_nonmetal": {
+   "field": "이종품 수납함 도착(추정)",
+   "lab": "비금속 끝 도착"
+  },
+  "inbound_dock": {
+   "field": "입고 도크",
+   "lab": "입고 도크"
+  },
+  "raw_rack": {
+   "field": "자재 창고",
+   "lab": "자재 창고"
+  },
+  "fg_rack": {
+   "field": "완제품 창고",
+   "lab": "완제품 창고"
+  },
+  "agv": {
+   "field": "AGV (무인 운반차)",
+   "lab": "AGV (무인 운반차)"
+  },
+  "outbound_dock": {
+   "field": "출하 도크",
+   "lab": "출하 도크"
+  },
+  "steel_stock": {
+   "field": "냉연강판 재고",
+   "lab": "냉연강판 재고"
+  },
+  "bolt_stock": {
+   "field": "볼트 재고",
+   "lab": "볼트 재고"
+  },
+  "paint_stock": {
+   "field": "도료 재고",
+   "lab": "도료 재고"
+  }
+ },
+ "tags": {
+  "SUP_BWD_LS": {
+   "field": "공급 푸셔 후진단 센서",
+   "lab": "공급 후진 센서"
+  },
+  "SUP_FWD_LS": {
+   "field": "공급 푸셔 전진단 센서",
+   "lab": "공급 전진 센서"
+  },
+  "DRILL_DN_LS": {
+   "field": "드릴 하강단 센서",
+   "lab": "드릴 하강 센서"
+  },
+  "DRILL_UP_LS": {
+   "field": "드릴 상승단 센서",
+   "lab": "드릴 상승 센서"
+  },
+  "OUT_BWD_LS": {
+   "field": "이송 푸셔 후진단 센서",
+   "lab": "송출 후진 센서"
+  },
+  "OUT_FWD_LS": {
+   "field": "이송 푸셔 전진단 센서",
+   "lab": "송출 전진 센서"
+  },
+  "EJECT_BWD_LS": {
+   "field": "분류 푸셔 후진단 센서",
+   "lab": "배출 후진 센서"
+  },
+  "EJECT_FWD_LS": {
+   "field": "분류 푸셔 전진단 센서",
+   "lab": "배출 전진 센서"
+  },
+  "MAGAZINE_LOADED": {
+   "field": "공급기 재고 감지 센서",
+   "lab": "매거진 적재 센서"
+  },
+  "SENS_METAL": {
+   "field": "재질 판별 센서 (정품, 인덕티브)",
+   "lab": "금속 센서"
+  },
+  "SENS_NONMETAL": {
+   "field": "재질 판별 센서 (이종품)",
+   "lab": "비금속 센서"
+  },
+  "PB_SINGLE": {
+   "field": "조작반 PB1 단속",
+   "lab": "PB1 단속"
+  },
+  "PB_CONT": {
+   "field": "조작반 PB2 연속",
+   "lab": "PB2 연속"
+  },
+  "PB_STOP": {
+   "field": "조작반 PB3 정지",
+   "lab": "PB3 연속 정지"
+  },
+  "PB_RESET": {
+   "field": "조작반 PB4 리셋",
+   "lab": "PB4 리셋"
+  },
+  "SUP_FWD_SOL": {
+   "field": "공급 푸셔 전진 솔레노이드",
+   "lab": "공급 전진"
+  },
+  "SUP_BWD_SOL": {
+   "field": "공급 푸셔 후진 솔레노이드",
+   "lab": "공급 후진"
+  },
+  "DRILL_DN_SOL": {
+   "field": "드릴 하강 솔레노이드",
+   "lab": "드릴 하강"
+  },
+  "OUT_FWD_SOL": {
+   "field": "이송 푸셔 전진 솔레노이드",
+   "lab": "송출 전진"
+  },
+  "OUT_BWD_SOL": {
+   "field": "이송 푸셔 후진 솔레노이드",
+   "lab": "송출 후진"
+  },
+  "EJECT_FWD_SOL": {
+   "field": "분류 푸셔 전진 솔레노이드",
+   "lab": "배출 전진"
+  },
+  "EJECT_BWD_SOL": {
+   "field": "분류 푸셔 후진 솔레노이드",
+   "lab": "배출 후진"
+  },
+  "CONVEYOR": {
+   "field": "벨트 컨베이어 모터",
+   "lab": "컨베이어"
+  },
+  "DRILL_MOTOR": {
+   "field": "드릴 모터",
+   "lab": "드릴 모터"
+  },
+  "LAMP_RED": {
+   "field": "스택 라이트 적색 (이상)",
+   "lab": "적색 램프"
+  },
+  "LAMP_YELLOW": {
+   "field": "스택 라이트 황색 (가공 중 점멸)",
+   "lab": "황색 램프"
+  },
+  "LAMP_GREEN": {
+   "field": "스택 라이트 녹색 (가동)",
+   "lab": "녹색 램프"
+  },
+  "HMI_START_SINGLE": {
+   "field": "HMI 단속 시작",
+   "lab": "HMI 단속 시작"
+  },
+  "HMI_START_CONT": {
+   "field": "HMI 연속 시작",
+   "lab": "HMI 연속 시작"
+  },
+  "HMI_STOP": {
+   "field": "HMI 정지",
+   "lab": "HMI 정지"
+  },
+  "HMI_COUNT_RESET": {
+   "field": "HMI 카운트 초기화",
+   "lab": "HMI 카운트 초기화"
+  },
+  "COUNT_METAL": {
+   "field": "정품 카운트",
+   "lab": "금속 카운트"
+  },
+  "COUNT_NONMETAL": {
+   "field": "이종품 카운트",
+   "lab": "비금속 카운트"
+  },
+  "COUNT_TOTAL": {
+   "field": "합계 카운트",
+   "lab": "합계 카운트"
+  },
+  "DRILL_TIME_SET": {
+   "field": "드릴링 시간 설정",
+   "lab": "드릴 가공 시간 설정"
+  }
+ }
+}

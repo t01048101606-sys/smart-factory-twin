@@ -17,14 +17,19 @@ import json
 
 import pandas as pd
 
+try:
+    from src import terms          # MES 에 설치된 상태
+except ImportError:                # 트윈 저장소에서 바로 시험할 때
+    import importlib.util as _u
+    from pathlib import Path as _P
+    _spec = _u.spec_from_file_location("terms", _P(__file__).with_name("terms.py"))
+    terms = _u.module_from_spec(_spec)
+    _spec.loader.exec_module(terms)
+
 STATE_KO = {"running_continuous": "연속 운전", "running_single": "단속 운전", "idle": "대기",
             "stopped": "정지", "alarm": "경보"}
 COMMAND_KO = {"start_single": "단속 시작", "start_continuous": "연속 시작", "stop": "정지",
               "reset": "리셋(PB4)", "count_reset": "카운트 초기화"}
-STEP_KO = {"supply_back": "공급 후진", "drill_motor": "드릴 모터 기동", "drill_down": "드릴 하강",
-           "drilling": "가공 중", "drill_up": "드릴 상승", "out_forward": "송출 전진", "out_back": "송출 후진",
-           "belt": "컨베이어 진입", "eject": "금속 배출", "bin_metal": "금속 박스 도착",
-           "end_nonmetal": "비금속 끝 도착"}
 TYPE_KO = {"command.issued": "조작", "machine.state": "운전 상태", "cycle.started": "사이클 시작",
            "cycle.step": "단계", "cycle.completed": "사이클 완료", "piece.classified": "분류",
            "count.updated": "카운트", "param.changed": "설정 변경", "io.changed": "입출력",
@@ -116,7 +121,7 @@ def compute_oee(events: pd.DataFrame, ideal_overhead_s: float | None = None) -> 
     }
 
 
-def describe(row) -> str:
+def describe(row, mode: str = "field") -> str:
     p, t = row["payload"], row["event_type"]
     if t == "command.issued":
         return f"{COMMAND_KO.get(p['command'], p['command'])} ({p['origin']})"
@@ -125,13 +130,13 @@ def describe(row) -> str:
     if t == "cycle.started":
         return "연속" if p.get("mode") == "continuous" else "단속"
     if t == "cycle.step":
-        return STEP_KO.get(p["step"], p["step"])
+        return terms.t("step." + p["step"], mode)
     if t == "cycle.completed":
         return f"{p['cycle_time_s']}초 (가공 {p['drill_time_set_ds'] / 10:g}초 설정)"
     if t == "piece.classified":
-        return "금속 (정상)" if p["kind"] == "metal" else "비금속 (이종 재질 혼입)"
+        return terms.t("ok_label", mode) if p["kind"] == "metal" else terms.t("ng_long", mode)
     if t == "count.updated":
-        return f"금속 {p['metal']} / 비금속 {p['nonmetal']} / 합계 {p['total']}"
+        return f"{terms.t('ok_part', mode)} {p['metal']} / {terms.t('ng_part', mode)} {p['nonmetal']} / {terms.t('total', mode)} {p['total']}"
     if t == "station.completed":
         extra = " (용접 불량)" if p.get("defect") else ""
         return f"{STATION_KO.get(p['station'], p['station'])} {p['duration_s']}초 (공칭 {p['nominal_s']}초){extra}"
@@ -146,7 +151,7 @@ def describe(row) -> str:
     return json.dumps(p, ensure_ascii=False)
 
 
-def recent_events(events: pd.DataFrame, n: int = 40) -> pd.DataFrame:
+def recent_events(events: pd.DataFrame, n: int = 40, mode: str = "field") -> pd.DataFrame:
     """최근 이벤트를 사람이 읽기 쉬운 표로 만든다 (io.changed 제외)."""
     cols = ["시각", "유형", "작업물", "내용"]
     if events is None or events.empty:
@@ -156,5 +161,5 @@ def recent_events(events: pd.DataFrame, n: int = 40) -> pd.DataFrame:
         "시각": ev["ts"].dt.tz_convert("Asia/Seoul").dt.strftime("%H:%M:%S"),
         "유형": ev["event_type"].map(lambda x: TYPE_KO.get(x, x)),
         "작업물": ev["piece_id"].fillna(""),
-        "내용": ev.apply(describe, axis=1),
+        "내용": ev.apply(lambda r: describe(r, mode), axis=1),
     })

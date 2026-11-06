@@ -201,3 +201,4 @@ class PressLineMes:
         b["closed"] = True
         a.log(f"[MES] (프레스 라인) {b['wo_no']} 완료 -> {b['last_lot_no']} | 양품 {qty - len(bad)} / 불량 {len(bad)} | 검사 {result}")
         a.state["press_batches"] = [x for x in self.batches if not x["closed"]]
+        a.logi.retry()      # 이 묶음의 완제품 LOT 가 생겼으니, 기다리던 출하가 있으면 다시 시도

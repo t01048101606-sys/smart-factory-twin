@@ -40,7 +40,7 @@
   <div class="panel">
     <svg viewBox="0 0 760 300" role="img" aria-label="가공 공정 도식">
       <!-- 공급 실린더 -->
-      <text x="30" y="40">공급 실린더</text>
+      <text x="30" y="40" data-term="feed_pusher">공급 실린더</text>
       <rect x="30" y="140" width="70" height="36" rx="4" fill="var(--metal)"/>
       <rect id="supRod" x="100" y="152" width="40" height="12" fill="var(--blue)"/>
       <path id="mag" d="M150 112 L150 200 A22 6 0 0 0 194 200 L194 112" fill="#232b35" stroke="var(--line)" stroke-width="2"/>
@@ -50,28 +50,28 @@
         <g fill="#6fa8dc"><rect x="157" y="130" width="30" height="14"/><ellipse cx="172" cy="144" rx="15" ry="4"/><ellipse cx="172" cy="130" rx="15" ry="4" fill="#8fc0ee"/></g>
       </g>
       <ellipse cx="172" cy="112" rx="22" ry="6" fill="#2f3944" stroke="var(--line)" stroke-width="2"/>
-      <text x="150" y="104">매거진</text>
+      <text x="150" y="104" data-term="magazine">매거진</text>
       <text id="magTxt" x="150" y="230">비어 있음</text>
       <!-- 드릴 -->
-      <text x="250" y="40">드릴</text>
+      <text x="250" y="40" data-term="drill">드릴</text>
       <rect x="250" y="55" width="60" height="30" rx="4" id="motor" fill="var(--metal)"/>
       <rect id="drillRod" x="274" y="85" width="12" height="40" fill="var(--blue)"/>
       <!-- 송출 실린더 -->
-      <text x="130" y="262">송출 실린더</text>
+      <text x="130" y="262" data-term="transfer_pusher">송출 실린더</text>
       <rect x="130" y="270" width="60" height="22" rx="4" fill="var(--metal)"/>
       <rect id="outRod" x="168" y="262" width="12" height="10" fill="var(--blue)"/>
       <!-- 컨베이어 -->
       <rect x="330" y="150" width="330" height="26" rx="4" class="belt"/>
       <line id="beltLine" x1="334" y1="163" x2="656" y2="163" stroke="#6fd3c1" stroke-width="3" stroke-dasharray="12 12"/>
-      <text x="330" y="196">컨베이어</text>
+      <text x="330" y="196" data-term="conveyor">컨베이어</text>
       <!-- 배출 실린더 -->
-      <text x="470" y="40">배출 실린더</text>
+      <text x="470" y="40" data-term="sort_pusher">배출 실린더</text>
       <rect x="470" y="55" width="60" height="26" rx="4" fill="var(--metal)"/>
       <rect id="ejRod" x="494" y="81" width="12" height="20" fill="var(--blue)"/>
       <rect x="470" y="214" width="60" height="38" rx="4" fill="#1d242c" stroke="var(--line)"/>
-      <text x="470" y="268">금속 배출 박스</text>
+      <text x="470" y="268" data-term="ok_bin">금속 배출 박스</text>
       <rect x="662" y="146" width="40" height="34" rx="4" fill="#1d242c" stroke="var(--line)"/>
-      <text x="650" y="198">비금속 끝</text>
+      <text x="650" y="198" data-term="ng_bin">비금속 끝</text>
       <g id="pieces"></g>
       <!-- 신호등 -->
       <circle id="lampR" cx="700" cy="50" r="12" fill="#3a1d1d"/>
@@ -88,6 +88,10 @@
       <button data-dev="X0E">리셋(PB4)</button>
       <button data-dev="M103">카운트 초기화</button>
       <div style="margin-top:8px">
+        <label for="termsMode">용어</label>
+        <select id="termsMode" style="background:#0e1216;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:4px 8px 0 0">
+          <option value="field">현장 용어</option><option value="lab">장비 원명칭</option>
+        </select><br>
         <label for="mode">작업물 종류(시뮬레이터)</label><br>
         <select id="mode" style="background:#0e1216;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:4px">
           <option value="alternate">번갈아(금속, 비금속)</option>
@@ -107,9 +111,9 @@
       </div>
     </div>
     <div class="panel">
-      <div class="cnt"><span>금속</span><b id="d0">0</b></div>
-      <div class="cnt"><span>비금속</span><b id="d2">0</b></div>
-      <div class="cnt"><span>합계</span><b id="d4">0</b></div>
+      <div class="cnt"><span data-term="ok_part">금속</span><b id="d0">0</b></div>
+      <div class="cnt"><span data-term="ng_part">비금속</span><b id="d2">0</b></div>
+      <div class="cnt"><span data-term="total">합계</span><b id="d4">0</b></div>
       <div class="cnt"><span>AI 이상 감지</span><b id="aiState">-</b></div>
       <div style="margin-top:10px">
         <label>드릴 가공 시간 D10 (0.1초)</label><br>
@@ -124,6 +128,7 @@
     <div class="sens" id="sens"></div>
   </div>
 </main>
+<script src="/static/terms.js"></script>
 <script>
 const _embed = new URLSearchParams(location.search).get('embed');
 document.getElementById('to3d').href = '/3d' + location.search;
@@ -138,7 +143,11 @@ $('d10btn').onclick = () => post('/api/d10', {value: parseInt($('d10in').value, 
 
 const keys = [...Array(11).keys()].map(i => i < 10 ? 'X' + i : 'X0' + i.toString(16).toUpperCase())
   .concat([...Array(12).keys()].map(i => 'Y' + (0x20 + i).toString(16).toUpperCase()));
-$('sens').innerHTML = keys.map(k => `<span class="dot" id="s_${k}">${k}</span>`).join('');
+const TAGID = { X0: 'SUP_BWD_LS', X1: 'SUP_FWD_LS', X2: 'DRILL_DN_LS', X3: 'DRILL_UP_LS', X4: 'OUT_BWD_LS', X5: 'OUT_FWD_LS', X6: 'EJECT_BWD_LS',
+  X7: 'EJECT_FWD_LS', X8: 'MAGAZINE_LOADED', X9: 'SENS_METAL', X0A: 'SENS_NONMETAL', Y20: 'SUP_FWD_SOL', Y21: 'SUP_BWD_SOL', Y22: 'DRILL_DN_SOL',
+  Y23: 'OUT_FWD_SOL', Y24: 'OUT_BWD_SOL', Y25: 'EJECT_FWD_SOL', Y26: 'EJECT_BWD_SOL', Y27: 'CONVEYOR', Y28: 'DRILL_MOTOR', Y29: 'LAMP_RED',
+  Y2A: 'LAMP_YELLOW', Y2B: 'LAMP_GREEN' };
+$('sens').innerHTML = keys.map(k => `<span class="dot" id="s_${k}"${TAGID[k] ? ` data-tag="${TAGID[k]}"` : ''}>${k}</span>`).join('');
 
 // 센서 상태로 로드 길이 계산: 전진 센서 ON=최대, 후진 센서 ON=최소, 둘 다 OFF=이동 중
 const pos = (fwd, back, min, max) => fwd ? max : back ? min : (min + max) / 2;
@@ -166,7 +175,7 @@ function render(s) {
   }).join('');
   $('magParts').style.display = s.X8 ? 'block' : 'none';
   $('mag').setAttribute('stroke', s.X8 ? 'var(--on)' : 'var(--line)');
-  $('magTxt').textContent = s.X8 ? '적재 감지(X8)' : '비어 있음';
+  $('magTxt').textContent = s.X8 ? Terms.t('stock_ok') + '(X8)' : Terms.t('stock_empty');
   if (document.activeElement !== $('mode')) $('mode').value = s.mode;
   if (document.activeElement !== $('fault') && s.fault) $('fault').value = s.fault;
   const ai = s.ai || {};
@@ -179,7 +188,8 @@ async function tick() {
   try { render(await (await fetch('/api/state')).json()); } catch (e) {}
   setTimeout(tick, 100);
 }
-tick();
+$('termsMode').onchange = () => { Terms.setMode($('termsMode').value); Terms.apply(); };
+Terms.init().then(() => { $('termsMode').value = Terms.mode(); Terms.apply(); tick(); });   // 용어 사전을 읽은 뒤 갱신 시작
 </script>
 </body>
 </html>

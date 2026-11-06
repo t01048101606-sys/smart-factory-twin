@@ -1,0 +1,798 @@
+{
+ "title": "물류 · 출하 구역",
+ "background": "#111418",
+ "camera": {
+  "position": [
+   10,
+   18,
+   22
+  ],
+  "target": [
+   9,
+   0.6,
+   0
+  ]
+ },
+ "fit": {
+  "width": 54.0,
+  "height": 22.0
+ },
+ "views": {
+  "diag": {
+   "position": [
+    10,
+    18,
+    22
+   ],
+   "target": [
+    9,
+    0.6,
+    0
+   ]
+  },
+  "top": {
+   "position": [
+    10,
+    34,
+    1
+   ],
+   "target": [
+    10,
+    0,
+    0
+   ]
+  }
+ },
+ "objects": [
+  {
+   "id": "floor",
+   "shape": "box",
+   "size": [
+    56,
+    0.4,
+    24
+   ],
+   "pos": [
+    10,
+    -0.2,
+    0
+   ],
+   "color": "#2a323d"
+  },
+  {
+   "id": "in_road",
+   "shape": "box",
+   "size": [
+    20,
+    0.06,
+    3.6
+   ],
+   "pos": [
+    -8,
+    0.03,
+    5
+   ],
+   "color": "#2d323b"
+  },
+  {
+   "id": "in_dock",
+   "shape": "box",
+   "size": [
+    4.0,
+    0.3,
+    3.8
+   ],
+   "pos": [
+    -3.0,
+    0.15,
+    5
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "in_truck_cargo",
+   "shape": "box",
+   "size": [
+    6.0,
+    2.0,
+    2.8
+   ],
+   "pos": [
+    -15.0,
+    1.4,
+    5
+   ],
+   "color": "#8a94a3",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.truck",
+     "from": -15.0,
+     "to": -5.5
+    }
+   ]
+  },
+  {
+   "id": "in_truck_cab",
+   "shape": "box",
+   "size": [
+    2.0,
+    1.6,
+    2.6
+   ],
+   "pos": [
+    -11.0,
+    1.0,
+    5
+   ],
+   "color": "#2f6fb0",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.truck",
+     "from": -11.0,
+     "to": -1.5
+    }
+   ]
+  },
+  {
+   "id": "raw_bin_steel",
+   "shape": "box",
+   "size": [
+    2.0,
+    1.2,
+    1.4
+   ],
+   "pos": [
+    -8.5,
+    0.6,
+    1.0
+   ],
+   "color": "#3a4452",
+   "opacity": 0.55
+  },
+  {
+   "id": "raw_fill_steel",
+   "shape": "box",
+   "size": [
+    1.5,
+    1.0,
+    0.3
+   ],
+   "pos": [
+    -8.5,
+    0.15,
+    1.85
+   ],
+   "color": "#9aa7b5",
+   "anim": [
+    {
+     "prop": "fill",
+     "path": "stock.steel.pct",
+     "base_y": 0.1,
+     "size_y": 1.0
+    }
+   ]
+  },
+  {
+   "id": "raw_lamp_steel",
+   "shape": "sphere",
+   "r": 0.2,
+   "pos": [
+    -8.5,
+    1.55,
+    1.0
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "stock.steel.level",
+     "map": {
+      "ok": "#33c27f",
+      "low": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "raw_bin_bolt",
+   "shape": "box",
+   "size": [
+    2.0,
+    1.2,
+    1.4
+   ],
+   "pos": [
+    -6.0,
+    0.6,
+    1.0
+   ],
+   "color": "#3a4452",
+   "opacity": 0.55
+  },
+  {
+   "id": "raw_fill_bolt",
+   "shape": "box",
+   "size": [
+    1.5,
+    1.0,
+    0.3
+   ],
+   "pos": [
+    -6.0,
+    0.15,
+    1.85
+   ],
+   "color": "#d8a060",
+   "anim": [
+    {
+     "prop": "fill",
+     "path": "stock.bolt.pct",
+     "base_y": 0.1,
+     "size_y": 1.0
+    }
+   ]
+  },
+  {
+   "id": "raw_lamp_bolt",
+   "shape": "sphere",
+   "r": 0.2,
+   "pos": [
+    -6.0,
+    1.55,
+    1.0
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "stock.bolt.level",
+     "map": {
+      "ok": "#33c27f",
+      "low": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "raw_bin_paint",
+   "shape": "box",
+   "size": [
+    2.0,
+    1.2,
+    1.4
+   ],
+   "pos": [
+    -3.5,
+    0.6,
+    1.0
+   ],
+   "color": "#3a4452",
+   "opacity": 0.55
+  },
+  {
+   "id": "raw_fill_paint",
+   "shape": "box",
+   "size": [
+    1.5,
+    1.0,
+    0.3
+   ],
+   "pos": [
+    -3.5,
+    0.15,
+    1.85
+   ],
+   "color": "#4aa3ff",
+   "anim": [
+    {
+     "prop": "fill",
+     "path": "stock.paint.pct",
+     "base_y": 0.1,
+     "size_y": 1.0
+    }
+   ]
+  },
+  {
+   "id": "raw_lamp_paint",
+   "shape": "sphere",
+   "r": 0.2,
+   "pos": [
+    -3.5,
+    1.55,
+    1.0
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "stock.paint.level",
+     "map": {
+      "ok": "#33c27f",
+      "low": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fg_mat",
+   "shape": "box",
+   "size": [
+    8.2,
+    0.1,
+    5.6
+   ],
+   "pos": [
+    4.6,
+    0.05,
+    -3.6
+   ],
+   "color": "#26362c"
+  },
+  {
+   "id": "fg_post_-4.0_-2.6",
+   "shape": "box",
+   "size": [
+    0.2,
+    1.8,
+    0.2
+   ],
+   "pos": [
+    0.5999999999999996,
+    0.9,
+    -6.2
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "id": "fg_post_-4.0_2.6",
+   "shape": "box",
+   "size": [
+    0.2,
+    1.8,
+    0.2
+   ],
+   "pos": [
+    0.5999999999999996,
+    0.9,
+    -1.0
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "id": "fg_post_4.0_-2.6",
+   "shape": "box",
+   "size": [
+    0.2,
+    1.8,
+    0.2
+   ],
+   "pos": [
+    8.6,
+    0.9,
+    -6.2
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "id": "fg_post_4.0_2.6",
+   "shape": "box",
+   "size": [
+    0.2,
+    1.8,
+    0.2
+   ],
+   "pos": [
+    8.6,
+    0.9,
+    -1.0
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "id": "fg_slot0",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    2.4,
+    0.12,
+    -2.6
+   ],
+   "color": "#3d5a47"
+  },
+  {
+   "id": "fg_slot1",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    4.6,
+    0.12,
+    -2.6
+   ],
+   "color": "#3d5a47"
+  },
+  {
+   "id": "fg_slot2",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    6.800000000000001,
+    0.12,
+    -2.6
+   ],
+   "color": "#3d5a47"
+  },
+  {
+   "id": "fg_slot3",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    2.4,
+    0.12,
+    -4.6
+   ],
+   "color": "#3d5a47"
+  },
+  {
+   "id": "fg_slot4",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    4.6,
+    0.12,
+    -4.6
+   ],
+   "color": "#3d5a47"
+  },
+  {
+   "id": "fg_slot5",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    6.800000000000001,
+    0.12,
+    -4.6
+   ],
+   "color": "#3d5a47"
+  },
+  {
+   "id": "agv_path",
+   "shape": "box",
+   "size": [
+    12.0,
+    0.04,
+    0.5
+   ],
+   "pos": [
+    10.1,
+    0.02,
+    0.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "agv_body",
+   "shape": "box",
+   "size": [
+    1.8,
+    0.45,
+    1.3
+   ],
+   "pos": [
+    4.6,
+    0.3,
+    0.0
+   ],
+   "color": "#d8a020",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "agv.pos",
+     "from": 4.6,
+     "to": 15.6
+    }
+   ]
+  },
+  {
+   "id": "agv_light",
+   "shape": "sphere",
+   "r": 0.15,
+   "pos": [
+    4.6,
+    0.7,
+    0.0
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "agv.pos",
+     "from": 4.6,
+     "to": 15.6
+    },
+    {
+     "prop": "lamp",
+     "path": "agv.state",
+     "map": {
+      "idle": "#7a8696",
+      "loading": "#f2c230",
+      "moving": "#33c27f",
+      "unloading": "#f2c230",
+      "returning": "#2f9bff"
+     }
+    }
+   ]
+  },
+  {
+   "id": "out_dock",
+   "shape": "box",
+   "size": [
+    2.6,
+    0.3,
+    6.8
+   ],
+   "pos": [
+    17.4,
+    0.15,
+    0
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "dock_slot0",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    17.4,
+    0.32,
+    -2.0
+   ],
+   "color": "#5a4a2a"
+  },
+  {
+   "id": "dock_slot1",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    17.4,
+    0.32,
+    0.0
+   ],
+   "color": "#5a4a2a"
+  },
+  {
+   "id": "dock_slot2",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.04,
+    1.5
+   ],
+   "pos": [
+    17.4,
+    0.32,
+    2.0
+   ],
+   "color": "#5a4a2a"
+  },
+  {
+   "id": "out_road",
+   "shape": "box",
+   "size": [
+    20,
+    0.06,
+    5.4
+   ],
+   "pos": [
+    27,
+    0.03,
+    0
+   ],
+   "color": "#2d323b"
+  },
+  {
+   "id": "out_truck_bed",
+   "shape": "box",
+   "size": [
+    6.4,
+    0.4,
+    3.2
+   ],
+   "pos": [
+    33.0,
+    0.9,
+    0
+   ],
+   "color": "#8a94a3",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "outbound.truck",
+     "from": 33.0,
+     "to": 21.0
+    }
+   ]
+  },
+  {
+   "id": "out_truck_cab",
+   "shape": "box",
+   "size": [
+    2.0,
+    1.6,
+    2.8
+   ],
+   "pos": [
+    37.2,
+    1.0,
+    0
+   ],
+   "color": "#2f6fb0",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "outbound.truck",
+     "from": 37.2,
+     "to": 25.2
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "key": "inbound_dock",
+   "pos": [
+    -3.0,
+    3.2,
+    5.0
+   ],
+   "w": 2.6
+  },
+  {
+   "shape": "label",
+   "key": "raw_rack",
+   "pos": [
+    -6.0,
+    2.4,
+    1.0
+   ],
+   "w": 2.6
+  },
+  {
+   "shape": "label",
+   "key": "fg_rack",
+   "pos": [
+    4.6,
+    2.6,
+    -3.6
+   ],
+   "w": 2.6
+  },
+  {
+   "shape": "label",
+   "key": "agv",
+   "pos": [
+    10.1,
+    1.6,
+    0.0
+   ],
+   "w": 2.6
+  },
+  {
+   "shape": "label",
+   "key": "outbound_dock",
+   "pos": [
+    17.4,
+    2.6,
+    0.0
+   ],
+   "w": 2.6
+  }
+ ],
+ "parts": {
+  "shape": "box",
+  "size": [
+   1.3,
+   0.6,
+   1.3
+  ],
+  "colors": {
+   "normal": "#c9a76a",
+   "wait": "#8a6f3a"
+  },
+  "rules": [
+   {
+    "if": {
+     "stage": [
+      "wait"
+     ]
+    },
+    "color": "wait"
+   }
+  ],
+  "default": "normal",
+  "segments": {}
+ },
+ "summary": {
+  "title": "물류 · 출하 구역",
+  "status": {
+   "path": "agv.state",
+   "map": {
+    "idle": "AGV 대기",
+    "loading": "AGV 적재",
+    "moving": "AGV 운반",
+    "unloading": "AGV 하역",
+    "returning": "AGV 복귀"
+   }
+  },
+  "metrics": [
+   {
+    "key": "steel_stock",
+    "path": "stock.steel.qty",
+    "suffix": " kg"
+   },
+   {
+    "key": "bolt_stock",
+    "path": "stock.bolt.qty",
+    "suffix": " 개"
+   },
+   {
+    "key": "paint_stock",
+    "path": "stock.paint.qty",
+    "suffix": " L"
+   },
+   {
+    "label": "완제품 창고",
+    "path": "counts.rack",
+    "suffix": " 파렛트"
+   },
+   {
+    "label": "출하 완료",
+    "path": "counts.shipped_pcs",
+    "suffix": " 개"
+   },
+   {
+    "label": "입고 횟수",
+    "path": "counts.received"
+   }
+  ],
+  "actions": [
+   {
+    "label": "입고 요청",
+    "post": "/api/logistics/request_inbound",
+    "body": {}
+   }
+  ]
+ }
+}

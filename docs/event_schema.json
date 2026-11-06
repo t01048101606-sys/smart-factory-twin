@@ -58,6 +58,9 @@
         "station.state",
         "station.completed",
         "piece.exited",
+        "lot.received",
+        "pallet.stored",
+        "shipment.dispatched",
         "ai.judgement",
         "alarm.raised",
         "alarm.cleared"
@@ -716,6 +719,141 @@
                   "good",
                   "scrap"
                 ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "lot.received"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "lot_no",
+              "item_code",
+              "qty",
+              "unit",
+              "supplier"
+            ],
+            "properties": {
+              "lot_no": {
+                "type": "string"
+              },
+              "item_code": {
+                "type": "string"
+              },
+              "qty": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "unit": {
+                "type": "string"
+              },
+              "supplier": {
+                "type": "string"
+              },
+              "material": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "pallet.stored"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "pallet_id",
+              "qty",
+              "pieces"
+            ],
+            "properties": {
+              "pallet_id": {
+                "type": "string"
+              },
+              "qty": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "pieces": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "shipment.dispatched"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "shipment_no",
+              "customer",
+              "pallets"
+            ],
+            "properties": {
+              "shipment_no": {
+                "type": "string"
+              },
+              "customer": {
+                "type": "string"
+              },
+              "pallets": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "pallet_id",
+                    "pieces"
+                  ],
+                  "properties": {
+                    "pallet_id": {
+                      "type": "string"
+                    },
+                    "pieces": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
               }
             },
             "additionalProperties": false

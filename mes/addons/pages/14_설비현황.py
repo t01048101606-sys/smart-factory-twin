@@ -5,12 +5,14 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src import oee
+from src import oee, terms
 from src.db import fetch_dataframe
 from src.ui import alert_badge, kpi_row, require_role, setup_page, show_dataframe
 
 setup_page("설비 현황 / OEE")
 require_role("ADMIN", "OPERATOR", "INSPECTOR")
+mode = terms.mode_selector(st)   # 사이드바: 현장 용어 / 장비 원명칭
+T = lambda k: terms.t(k, mode)
 st.title("설비 현황 · OEE")
 st.caption("PLC 트윈이 보내는 설비 이벤트(machine_event)로 가동 상태와 OEE를 계산합니다.")
 
@@ -82,8 +84,8 @@ else:
             ("가용률", pct(result["availability"]), "kpi-blue"),
             ("성능률", pct(result["performance"]), "kpi-purple"),
             ("품질률", pct(result["quality"]), "kpi-green"),
-            ("분류된 작업물", f"{result['total']:,} 개", "kpi-gold"),
-            ("불량(비금속)", f"{result['defect']:,} 개", "kpi-teal"),
+            (T("classified"), f"{result['total']:,} 개", "kpi-gold"),
+            (T("ng_label"), f"{result['defect']:,} 개", "kpi-teal"),
         ],
         columns=3,
     )
@@ -98,8 +100,8 @@ else:
 - **성능률** = 이상 사이클 시간 합 / 가동 시간 = {result['ideal_total_s']:.0f}초 / {result['run_s']:.0f}초 = **{pct(result['performance'])}**
   - 이상 사이클 시간 = 고정 소요 시간({'-' if overhead is None else f'{overhead:.2f}'}초) + 가공 시간(D10 설정)
   - 완료 사이클 {result['cycles']}회
-- **품질률** = 금속(정상) / 분류된 작업물 = {result['good']} / {result['total']} = **{pct(result['quality'])}**
-- 비금속은 이종 재질 혼입 불량으로 봅니다 (MES 검사의 불량 사유 `MAT_MIX`와 같은 기준).
+- **품질률** = {T('quality_basis')} = {result['good']} / {result['total']} = **{pct(result['quality'])}**
+- {T('ng_part')}은 재질 불일치(이종 재질 혼입) 불량으로 봅니다 (MES 검사의 불량 사유 `MAT_MIX`와 같은 기준).
 """
         )
 
@@ -126,7 +128,7 @@ else:
         st.plotly_chart(fig2, use_container_width=True)
 
     st.subheader("최근 설비 이벤트")
-    show_dataframe(oee.recent_events(events, 40), "표시할 이벤트가 없습니다.")
+    show_dataframe(oee.recent_events(events, 40, mode), "표시할 이벤트가 없습니다.")
 
 # ------------------------------------------------------------------ 작업지시별 이벤트
 st.subheader("작업지시별 설비 이벤트 수")

@@ -37,6 +37,7 @@ FAKE = (ROOT / "tests" / "fake_three.js").read_text(encoding="utf-8")
 missing = [n for n in names if f"export class {n}" not in FAKE and f"export const {n}" not in FAKE and f"{n} =" not in FAKE]
 assert not missing, f"가짜 three.js 에 없는 이름: {missing} (twin3d.js 가 새 API를 쓰기 시작했다면 가짜에도 추가하세요)"
 shutil.copy(ROOT / "src" / "static" / "twin3d.js", tmp / "twin3d.js")
+shutil.copy(ROOT / "src" / "static" / "terms.js", tmp / "terms.js")
 
 STATE = {
     "X0": 0, "X1": 1, "X2": 1, "X3": 0, "X4": 1, "X5": 0, "X6": 1, "X7": 0, "X8": 1, "X9": 1, "X0A": 0,
@@ -55,7 +56,8 @@ import { registry, check } from 'three';
 const state = JSON.parse(process.env.STATE);
 const els = {};
 const el = id => (els[id] ||= { id, textContent: '', style: {}, classList: { add() {} }, value: '', href: '' });
-const ctx = new Proxy({}, { get: () => () => {}, set: () => true });
+const texts = [];
+const ctx = new Proxy({}, { get: (t, k) => (k === 'fillText' ? (txt) => { texts.push(txt); } : () => {}), set: () => true });
 globalThis.window = globalThis;
 globalThis.addEventListener = () => {};
 globalThis.innerWidth = 1000; globalThis.innerHeight = 700; globalThis.devicePixelRatio = 1;
@@ -65,12 +67,19 @@ globalThis.document = {
   getElementById: el, createElement: () => ({ width: 0, height: 0, getContext: () => ctx }),
   querySelectorAll: () => [{ dataset: { dev: 'M101' } }],
 };
-globalThis.fetch = async () => ({ json: async () => state });
+globalThis.localStorage = { getItem: () => null, setItem() {} };
+const terms = JSON.parse(process.env.TERMS);
+globalThis.fetch = async url => ({ json: async () => (String(url).includes('terms') ? terms : state) });
+await import('./terms.js');
 let frames = 0, t = 0; const pending = [];
 globalThis.requestAnimationFrame = cb => { if (frames++ < 150) { t += 33; setTimeout(() => cb(t), 0); } };
 await import('./twin3d.js');
 await new Promise(r => setTimeout(r, 400));
 check();
+const labelsField = texts.slice();                                  // 처음(현장 용어)에 이름표에 그려진 글자
+texts.length = 0;
+els.termsMode.value = 'lab'; els.termsMode.onchange();               // 장비 원명칭으로 전환
+const labelsLab = texts.slice();
 const pieces = registry.meshes.filter(m => m.geometry.type === 'Cylinder' && m.geometry.args[0] === 0.42);
 const out = {
   ready: !!globalThis.__twin3dReady, renders: registry.renders, meshes: registry.meshes.length, sprites: registry.sprites.length,
@@ -78,7 +87,7 @@ const out = {
   hud: { d0: els.d0.textContent, d4: els.d4.textContent, ai: els.aiState.textContent, fault: els.faultTxt.textContent },
   alarmLight: registry.lights[0].intensity,
   lampsEmissive: registry.meshes.filter(m => m.geometry.type === 'Sphere').map(m => +m.material.emissiveIntensity.toFixed(2)),
-  to2d: els.to2d.href,
+  to2d: els.to2d.href, labelsField, labelsLab,
 };
 console.log(JSON.stringify(out));
 process.exit(0);
@@ -86,13 +95,18 @@ process.exit(0);
 (tmp / "run.mjs").write_text(HARNESS)
 import os
 r = subprocess.run(["node", "run.mjs"], cwd=tmp, capture_output=True, text=True, timeout=60,
-                   env={**os.environ, "STATE": json.dumps(STATE)})
+                   env={**os.environ, "STATE": json.dumps(STATE), "TERMS": (ROOT / "src" / "terms.json").read_text(encoding="utf-8")})
 assert r.returncode == 0, f"실행 오류:\n{r.stderr[-1500:]}"
 out = json.loads(r.stdout.strip().splitlines()[-1])
 print("3D 화면 실행:", {k: out[k] for k in ("ready", "renders", "meshes", "sprites")})
 assert out["ready"] and out["renders"] > 50 and out["sprites"] == 8
 assert {k: str(v) for k, v in out["hud"].items()} == {"d0": "5", "d4": "9", "ai": "이상 감지!", "fault": "실린더 속도 저하"}, out["hud"]
 assert out["to2d"] == "/?embed=1"
+terms = json.loads((ROOT / "src" / "terms.json").read_text(encoding="utf-8"))["terms"]
+keys = ["feed_pusher", "magazine", "drill", "transfer_pusher", "conveyor", "sort_pusher", "ok_bin", "ng_bin"]
+assert sorted(out["labelsField"]) == sorted(terms[k]["field"] for k in keys), out["labelsField"]
+assert sorted(out["labelsLab"]) == sorted(terms[k]["lab"] for k in keys), out["labelsLab"]
+print("이름표: 현장 용어", sorted(out["labelsField"]), "-> 전환 후 장비 원명칭", sorted(out["labelsLab"]))
 
 # 작업물 위치: workpiece.py 단계와 같은 규칙. (x, y, z) 허용 오차 0.05
 exp = [(-5.2, 0.8, 0), (-3.5, 0.8, 0), (-3.5, 0.8, 1.6), (2.75, 0.8, 3.2), (9.0, 0.8, 3.2),

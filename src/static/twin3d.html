@@ -27,10 +27,10 @@
 <body>
 <div id="msg" class="box">3D 화면을 불러오는 중입니다...</div>
 <div id="hud" class="box">
-  <h1>가공 공정 3D 트윈 <a id="to2d" href="/">2D로 보기</a> <a href="/3d/line" style="margin-left:6px">프레스·용접·도장 라인</a></h1>
-  <div class="cnt"><span>금속</span><b id="d0">0</b></div>
-  <div class="cnt"><span>비금속</span><b id="d2">0</b></div>
-  <div class="cnt"><span>합계</span><b id="d4">0</b></div>
+  <h1>가공 공정 3D 트윈 <a id="to2d" href="/">2D로 보기</a> <a href="/3d/line" style="margin-left:6px">프레스·용접·도장 라인</a> <a href="/3d/factory" style="margin-left:6px">공장 전체</a></h1>
+  <div class="cnt"><span data-term="ok_part">정품</span><b id="d0">0</b></div>
+  <div class="cnt"><span data-term="ng_part">이종품</span><b id="d2">0</b></div>
+  <div class="cnt"><span data-term="total">합계</span><b id="d4">0</b></div>
   <div class="cnt"><span>가공 시간(D10)</span><b id="d10">30</b></div>
   <div class="cnt"><span>AI 이상 감지</span><b id="aiState">-</b></div>
   <div class="cnt"><span>결함 주입</span><b id="faultTxt">정상</b></div>
@@ -51,6 +51,7 @@
   <button data-view="top">위에서</button>
   <button data-view="side">옆에서</button>
   <label><input type="checkbox" id="labels" checked> 이름표</label>
+  <label>용어 <select id="termsMode"><option value="field">현장 용어</option><option value="lab">장비 원명칭</option></select></label>
 </div>
 <script>
   // three.js 를 불러오지 못했을 때(인터넷 연결 없음 등) 안내를 보여 준다
@@ -62,6 +63,7 @@
   window.addEventListener('error', () => { if (!window.__twin3dReady) show3dError(); });
   setTimeout(() => { if (!window.__twin3dReady) show3dError(); }, 10000);
 </script>
+<script src="/static/terms.js"></script>
 <script type="module" src="/static/twin3d.js" onerror="show3dError()"></script>
 </body>
 </html>

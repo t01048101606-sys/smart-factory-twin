@@ -29,16 +29,20 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))   # line_events, mes_press_line (같은 폴더의 모듈)
 from line_events import LINE_ID                # noqa: E402
 from mes_press_line import PressLineMes        # noqa: E402
+from logistics_events import LINE_ID as LOGISTICS_LINE_ID   # noqa: E402
+from mes_logistics import LogisticsMes         # noqa: E402
 TWIN_ROOT = HERE.parent
 DEFAULT_MES = Path(os.environ.get("MES_ROOT", TWIN_ROOT.parent / "AutoParts-MES-Arduino"))
 
-PROCESSES = [("DRILL", "드릴 가공"), ("SORT", "분류/배출")]
-EQUIPMENT = [("EQ-FEED-01", "공급 실린더", "DRILL"), ("EQ-DRILL-01", "드릴", "DRILL"),
-             ("EQ-CONV-01", "컨베이어·배출 실린더", "SORT")]
+_TERMS = json.loads((HERE / "terms.json").read_text(encoding="utf-8"))["terms"]
+_f = lambda key: _TERMS[key]["field"]           # MES 기준정보는 현장 용어로 등록한다 (화면 이름 사전: src/terms.json)
+PROCESSES = [("DRILL", "드릴링"), ("SORT", "재질 분류")]
+EQUIPMENT = [("EQ-FEED-01", _f("feed_pusher"), "DRILL"), ("EQ-DRILL-01", _f("drill"), "DRILL"),
+             ("EQ-CONV-01", f"{_f('conveyor')}·{_f('sort_pusher')}", "SORT")]
 ITEMS = [("RM-BLANK", "가공용 블랭크", "MATERIAL", "EA"),
-         ("SP-DRILLED", "드릴 가공품", "SEMI_PRODUCT", "EA"),
+         ("SP-DRILLED", "드릴링 가공품", "SEMI_PRODUCT", "EA"),
          ("FG-DRILLPART", "가공 부품", "PRODUCT", "EA")]
-REASON = ("MAT_MIX", "이종 재질 혼입(비금속)")
+REASON = ("MAT_MIX", _f("ng_reason"))
 FINAL_STEPS = {"bin_metal", "end_nonmetal"}
 BACKUP_ON_OVERWRITE = {"pages/13_현장모니터링.py"}  # 이미 MES에 있는 파일을 대체하는 추가 파일
 
@@ -53,6 +57,7 @@ class MesAdapter:
         self.ids = {}
         self.state = {"last_seq": -1, "batches": []}
         self.press = PressLineMes(self, press_batch)   # 프레스 -> 용접 -> 도장 라인 (mes_press_line.py)
+        self.logi = LogisticsMes(self)                 # 물류 · 출하 구역: 입고, 출하 (mes_logistics.py)
         self._import_mes()
         self._load_state()
 
@@ -96,6 +101,7 @@ class MesAdapter:
             self.log(f"[MES] DB 생성: {self.db}")
         c = sqlite3.connect(self.db)
         c.executescript((TWIN_ROOT / "mes" / "machine_event.sql").read_text(encoding="utf-8"))
+        c.executescript((TWIN_ROOT / "mes" / "handling_event.sql").read_text(encoding="utf-8"))   # 원본 스키마에 빠진 테이블 (출하 관리 페이지가 읽는다)
         if "sim_t" not in [r[1] for r in c.execute("PRAGMA table_info(machine_event)")]:
             c.execute("ALTER TABLE machine_event ADD COLUMN sim_t REAL")   # 예전 버전으로 만든 DB
         c.commit()
@@ -115,6 +121,9 @@ class MesAdapter:
                     self.log(f"[MES] 원본 백업: {bak.relative_to(self.root)}")
                 shutil.copy2(f, dst)
                 self.log(f"[MES] 설치: {dst.relative_to(self.root)}")
+        dst = self.root / "src" / "terms.json"                    # 화면 이름 사전은 트윈 저장소의 것을 그대로 쓴다
+        shutil.copy2(HERE / "terms.json", dst)
+        self.log(f"[MES] 설치: {dst.relative_to(self.root)}")
 
     def reset_demo(self, latest_seq):
         """시연 데이터(작업지시, 공정 실행, LOT, 시리얼, 검사, 출하, 설비 이벤트)를 지운다.
@@ -132,7 +141,7 @@ class MesAdapter:
             c.commit()
         finally:
             c.close()
-        self.state = {"last_seq": latest_seq, "batches": [], "press_batches": []}
+        self.state = {"last_seq": latest_seq, "batches": [], "press_batches": [], "pending_shipments": []}
         self.save_state()
 
     def seed_master(self):
@@ -153,6 +162,15 @@ class MesAdapter:
         if not self._one("SELECT 1 FROM defect_reason_code WHERE reason_code=?", (REASON[0],)):
             s.register_defect_reason_code(s.DefectReasonCodeRegistration(*REASON))
 
+        c = self._conn()
+        try:   # 이미 등록된 이름도 현장 용어로 맞춘다 (코드는 그대로)
+            c.executemany("UPDATE process_master SET process_name=? WHERE process_code=?", [(n, k) for k, n in PROCESSES])
+            c.executemany("UPDATE equipment SET equipment_name=? WHERE equipment_code=?", [(n, k) for k, n, _ in EQUIPMENT])
+            c.executemany("UPDATE item SET item_name=? WHERE item_code=?", [(n, k) for k, n, _, _ in ITEMS])
+            c.execute("UPDATE defect_reason_code SET reason_name=? WHERE reason_code=?", (REASON[1], REASON[0]))
+            c.commit()
+        finally:
+            c.close()
         item = lambda code: self._one("SELECT item_id FROM item WHERE item_code=?", (code,))
         rm, sp, fg = item("RM-BLANK"), item("SP-DRILLED"), item("FG-DRILLPART")
         s.get_or_create_routing(fg, "가공 부품 표준공정")
@@ -223,6 +241,10 @@ class MesAdapter:
         return None
 
     def _handle(self, ev):
+        if ev.get("line_id") == LOGISTICS_LINE_ID:   # 물류 · 출하 구역
+            self.logi.handle(ev)
+            self._store(ev)
+            return
         if ev.get("line_id") == LINE_ID:      # 프레스 -> 용접 -> 도장 라인
             self.press.handle(ev)
             self._store(ev)
@@ -376,7 +398,7 @@ class MesAdapter:
         result = "PASS" if bad == 0 else ("FAIL" if bad == n else "PARTIAL")
         s.register_inspection(s.InspectionRegistration(
             lot_id, "FINISHED", d, n, bad, result, REASON[0] if bad else None,
-            f"비금속 {bad}개 (X0A 감지)" if bad else None))
+            f"{_f('ng_part')} {bad}개 ({_f('ng_part')} 판별, 재질 판별 센서 X0A)" if bad else None))
         b["closed"] = True
         self.log(f"[MES] {b['wo_no']} 완료 -> {r['output_lot_no']} | 금속 {len(metal)} / 비금속 {bad} | 검사 {result}")
         self.state["batches"] = [x for x in self.state["batches"] if not x["closed"]]

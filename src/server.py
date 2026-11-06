@@ -21,6 +21,9 @@ from anomaly import CycleAnomalyDetector
 from plc_sim import FAULTS
 from line_sim import LineSim, FAULTS as LINE_FAULTS
 from line_events import LineEventBridge
+from machining_view import MachiningView
+from logistics_sim import LogisticsSim
+from logistics_events import LogisticsEventBridge
 
 BASE = Path(__file__).resolve().parent
 ARG = sys.argv[1] if len(sys.argv) > 1 else str(BASE.parent / "plc" / "1102")
@@ -32,6 +35,7 @@ if ARG == "modbus":
 else:
     sim = PlcSim(ARG)
 tracker = Tracker()
+view = MachiningView()      # 3D 화면용 실린더 위치 값
 events = EventEmitter(log_path=BASE.parent / "logs" / "events.jsonl", detector=CycleAnomalyDetector())
 lock = threading.Lock()
 pending = set()  # 다음 스캔에서 한 번만 켜질 입력
@@ -51,6 +55,7 @@ def scan_loop():
             sim.scan(list(pending))
             pending.clear()
             tracker.update(sim.dev)
+            view.update(sim.dev)
             events.observe(sim.dev)
         time.sleep(0.05)
 
@@ -97,9 +102,71 @@ def line_loop():
         last = now
 
 
+# ---- 물류 · 출하 구역: 프레스 라인의 이벤트로 재고가 줄고 파렛트가 만들어진다 (logistics_events.py)
+logi = LogisticsSim()
+logi_lock = threading.RLock()
+logi_bridge = LogisticsEventBridge(events, logi, logi_lock)
+
+
+def logistics_loop():
+    last = time.time()
+    while True:
+        time.sleep(0.05)
+        now = time.time()
+        with logi_lock:
+            logi.speed = line.speed          # 프레스 라인과 같은 배속
+            logi.advance(now - last)         # advance 가 배속을 곱한다
+        last = now
+
+
+@app.get("/api/logistics/state")
+def logistics_state():
+    with logi_lock:
+        return jsonify(logi.state())
+
+
+@app.post("/api/logistics/request_inbound")
+def logistics_request_inbound():
+    with logi_lock:
+        logi.request_inbound()
+    return jsonify(ok=True)
+
+
 @app.get("/3d/line")
 def line_3d():
     return _page_3d("linescene.html")
+
+
+# ---- 스마트 팩토리 통합 화면: 라인별 장면(JSON)을 위치만 달리해서 한 장면에 배치한다
+SCENES = {"machining": "machining.json", "press_weld_paint": "press_weld_paint.json", "logistics": "logistics.json"}
+
+
+@app.get("/3d/factory")
+def factory_3d():
+    return _page_3d("factory.html")
+
+
+@app.get("/api/factory/layout")
+def factory_layout():
+    return jsonify(json.loads((BASE / "scenes" / "factory.json").read_text(encoding="utf-8")))
+
+
+@app.get("/api/scene/<name>")
+def scene_by_name(name):
+    if name not in SCENES:
+        return jsonify(error=f"{', '.join(SCENES)} 중 하나"), 404
+    return jsonify(json.loads((BASE / "scenes" / SCENES[name]).read_text(encoding="utf-8")))
+
+
+@app.get("/api/factory/state")
+def factory_state():
+    with lock:
+        m = machining_state()
+    with line_lock:
+        p = line.state()
+    with logi_lock:
+        lg = logi.state()
+    return jsonify({"machining": m, "press": p, "logistics": lg})
 
 
 @app.get("/api/line/scene")
@@ -143,17 +210,29 @@ def line_speed():
     return jsonify(ok=True)
 
 
+def machining_state():
+    """가공 라인의 화면용 상태 (lock 을 잡은 상태에서 부른다)."""
+    out = {k: int(sim.dev[k]) for k in STATE_KEYS}
+    out["pieces"] = tracker.snapshot()
+    out["mode"] = sim.piece_mode
+    out["fault"] = getattr(sim, "fault_mode", "none")
+    out["ai"] = events.detector.status()
+    out["connected"] = getattr(sim, "connected", True)
+    out["error"] = getattr(sim, "error", "")
+    out["derived"] = view.snapshot()
+    return out
+
+
+@app.get("/api/terms")
+def terms():
+    """화면에 보이는 이름 사전 (현장 용어 / 장비 원명칭). src/terms.json"""
+    return jsonify(json.loads((BASE / "terms.json").read_text(encoding="utf-8")))
+
+
 @app.get("/api/state")
 def state():
     with lock:
-        out = {k: int(sim.dev[k]) for k in STATE_KEYS}
-        out["pieces"] = tracker.snapshot()
-        out["mode"] = sim.piece_mode
-        out["fault"] = getattr(sim, "fault_mode", "none")
-        out["ai"] = events.detector.status()
-        out["connected"] = getattr(sim, "connected", True)
-        out["error"] = getattr(sim, "error", "")
-        return jsonify(out)
+        return jsonify(machining_state())
 
 
 @app.post("/api/press")
@@ -222,4 +301,5 @@ def get_events():
 if __name__ == "__main__":
     threading.Thread(target=scan_loop, daemon=True).start()
     threading.Thread(target=line_loop, daemon=True).start()
+    threading.Thread(target=logistics_loop, daemon=True).start()
     app.run(host="127.0.0.1", port=5001, debug=False)

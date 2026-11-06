@@ -104,6 +104,8 @@ MES에 원래 있던 `13_현장모니터링.py`(아두이노 센서용, 저장�
 두 번째 공정(PLC 없는 시뮬레이터)도 같은 어댑터로 MES에 연결됩니다. 작업지시, 공정 실행 3단계(PRESS, WELD, PAINT), LOT 추적, OEE는 `line_mes.md`를 보세요.
 이벤트의 `line_id`로 가공 라인과 구분해서 처리하며, MES 페이지도 라인별로 이벤트를 따로 읽습니다.
 
+물류 · 출하 구역의 입고(`lot.received`)는 MES 원자재 입고로, 출하(`shipment.dispatched`)는 MES 출하 관리로 등록됩니다 (`logistics.md`).
+
 ## 검증
 
 ```

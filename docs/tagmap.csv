@@ -1,59 +1,59 @@
-﻿tag_id,plc_device,direction,type,name_ko,description,st_addr,modbus_kind,modbus_addr,twin_object,mes_use
-SUP_BWD_LS,X0,IN,BOOL,공급 후진 센서,공급 실린더가 후진 끝에 있음,%IX0.0 (실제) / %QX3.0 (SIM_X0),discrete_input / coil,di 0 / coil 24,supply_cylinder,이벤트 기록
-SUP_FWD_LS,X1,IN,BOOL,공급 전진 센서,공급 실린더가 전진 끝에 있음,%IX0.1 (실제) / %QX3.1 (SIM_X1),discrete_input / coil,di 1 / coil 25,supply_cylinder,이벤트 기록
-DRILL_DN_LS,X2,IN,BOOL,드릴 하강 센서,드릴이 하강 끝에 있음,%IX0.2 (실제) / %QX3.2 (SIM_X2),discrete_input / coil,di 2 / coil 26,drill,이벤트 기록
-DRILL_UP_LS,X3,IN,BOOL,드릴 상승 센서,드릴이 상승 끝에 있음,%IX0.3 (실제) / %QX3.3 (SIM_X3),discrete_input / coil,di 3 / coil 27,drill,이벤트 기록
-OUT_BWD_LS,X4,IN,BOOL,송출 후진 센서,송출 실린더가 후진 끝에 있음,%IX0.4 (실제) / %QX3.4 (SIM_X4),discrete_input / coil,di 4 / coil 28,out_cylinder,이벤트 기록
-OUT_FWD_LS,X5,IN,BOOL,송출 전진 센서,송출 실린더가 전진 끝에 있음 (작업물이 컨베이어에 올라감),%IX0.5 (실제) / %QX3.5 (SIM_X5),discrete_input / coil,di 5 / coil 29,out_cylinder,이벤트 기록
-EJECT_BWD_LS,X6,IN,BOOL,배출 후진 센서,배출 실린더가 후진 끝에 있음,%IX0.6 (실제) / %QX3.6 (SIM_X6),discrete_input / coil,di 6 / coil 30,eject_cylinder,이벤트 기록
-EJECT_FWD_LS,X7,IN,BOOL,배출 전진 센서,배출 실린더가 전진 끝에 있음 (금속 배출),%IX0.7 (실제) / %QX3.7 (SIM_X7),discrete_input / coil,di 7 / coil 31,eject_cylinder,이벤트 기록
-MAGAZINE_LOADED,X8,IN,BOOL,매거진 적재 센서,매거진에 작업물이 있음,%IX1.0 (실제) / %QX4.0 (SIM_X8),discrete_input / coil,di 8 / coil 32,magazine,이벤트 기록
-SENS_METAL,X9,IN,BOOL,금속 센서,금속 작업물 감지 (분류 기준),%IX1.1 (실제) / %QX4.1 (SIM_X9),discrete_input / coil,di 9 / coil 33,sort_sensor,이벤트 기록
-SENS_NONMETAL,X0A,IN,BOOL,비금속 센서,비금속 작업물 감지 (D2 카운트 기준),%IX1.2 (실제) / %QX4.2 (SIM_X0A),discrete_input / coil,di 10 / coil 34,sort_sensor,이벤트 기록
-PB_SINGLE,X0B,IN,BOOL,PB1 단속,푸시버튼 단속 동작,%IX1.3 (실제) / %QX4.3 (SIM_X0B),discrete_input / coil,di 11 / coil 35,panel_buttons,조작 명령 이벤트로 기록
-PB_CONT,X0C,IN,BOOL,PB2 연속,푸시버튼 연속 동작,%IX1.4 (실제) / %QX4.4 (SIM_X0C),discrete_input / coil,di 12 / coil 36,panel_buttons,조작 명령 이벤트로 기록
-PB_STOP,X0D,IN,BOOL,PB3 연속 정지,푸시버튼 연속 정지,%IX1.5 (실제) / %QX4.5 (SIM_X0D),discrete_input / coil,di 13 / coil 37,panel_buttons,조작 명령 이벤트로 기록
-PB_RESET,X0E,IN,BOOL,PB4 리셋,"푸시버튼 리셋 (상태 초기화, 카운트 초기화)",%IX1.6 (실제) / %QX4.6 (SIM_X0E),discrete_input / coil,di 14 / coil 38,panel_buttons,조작 명령 이벤트로 기록
-SUP_FWD_SOL,Y20,OUT,BOOL,공급 전진,공급 실린더 전진 솔레노이드,%QX0.0,coil,coil 0,supply_cylinder,가공 사이클 단계 판단에 사용
-SUP_BWD_SOL,Y21,OUT,BOOL,공급 후진,공급 실린더 후진 솔레노이드,%QX0.1,coil,coil 1,supply_cylinder,가공 사이클 단계 판단에 사용
-DRILL_DN_SOL,Y22,OUT,BOOL,드릴 하강,드릴 하강 솔레노이드,%QX0.2,coil,coil 2,drill,가공 사이클 단계 판단에 사용
-OUT_FWD_SOL,Y23,OUT,BOOL,송출 전진,송출 실린더 전진 솔레노이드,%QX0.3,coil,coil 3,out_cylinder,가공 사이클 단계 판단에 사용
-OUT_BWD_SOL,Y24,OUT,BOOL,송출 후진,송출 실린더 후진 솔레노이드,%QX0.4,coil,coil 4,out_cylinder,가공 사이클 단계 판단에 사용
-EJECT_FWD_SOL,Y25,OUT,BOOL,배출 전진,배출 실린더 전진 솔레노이드,%QX0.5,coil,coil 5,eject_cylinder,가공 사이클 단계 판단에 사용
-EJECT_BWD_SOL,Y26,OUT,BOOL,배출 후진,배출 실린더 후진 솔레노이드,%QX0.6,coil,coil 6,eject_cylinder,가공 사이클 단계 판단에 사용
-CONVEYOR,Y27,OUT,BOOL,컨베이어,컨베이어 모터,%QX0.7,coil,coil 7,conveyor,가공 사이클 단계 판단에 사용
-DRILL_MOTOR,Y28,OUT,BOOL,드릴 모터,드릴 회전 모터,%QX1.0,coil,coil 8,drill,가공 사이클 단계 판단에 사용
-LAMP_RED,Y29,OUT,BOOL,적색 램프,대기(운전 중 아님),%QX1.1,coil,coil 9,lamp_red,가공 사이클 단계 판단에 사용
-LAMP_YELLOW,Y2A,OUT,BOOL,황색 램프,드릴 가공 중 점멸,%QX1.2,coil,coil 10,lamp_yellow,가공 사이클 단계 판단에 사용
-LAMP_GREEN,Y2B,OUT,BOOL,녹색 램프,운전 중,%QX1.3,coil,coil 11,lamp_green,가공 사이클 단계 판단에 사용
-HMI_START_SINGLE,M100,CMD,BOOL,HMI 단속 시작,HMI 터치 단속 시작 (한 사이클),%QX2.0,coil,coil 16,control_panel,조작 명령 이벤트로 기록
-HMI_START_CONT,M101,CMD,BOOL,HMI 연속 시작,HMI 터치 연속 시작,%QX2.1,coil,coil 17,control_panel,조작 명령 이벤트로 기록
-HMI_STOP,M102,CMD,BOOL,HMI 정지,HMI 터치 연속 정지,%QX2.2,coil,coil 18,control_panel,조작 명령 이벤트로 기록
-HMI_COUNT_RESET,M103,CMD,BOOL,HMI 카운트 초기화,"D0, D2 카운트를 0으로",%QX2.3,coil,coil 19,control_panel,조작 명령 이벤트로 기록
-COUNT_METAL,D0,DATA,INT,금속 카운트,금속 배출 시작 시 +1 (M11 상승),%MW0,holding_register,hr 1024,counter,생산 실적(금속)
-COUNT_NONMETAL,D2,DATA,INT,비금속 카운트,비금속 센서(X0A) 상승 시 +1,%MW1,holding_register,hr 1025,counter,생산 실적(비금속)
-COUNT_TOTAL,D4,DATA,INT,합계 카운트,D0 + D2,%MW2,holding_register,hr 1026,counter,생산 실적(합계)
-DRILL_TIME_SET,D10,DATA,INT,드릴 가공 시간 설정,"단위 0.1초, PLC가 5~100(0.5~10초)으로 제한",%MW3,holding_register,hr 1027,setting,공정 파라미터 이력
-RUN_CONT,M0,INTERNAL,BOOL,연속운전 유지,연속 동작 중,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-CYCLE_ACTIVE,M1,INTERNAL,BOOL,사이클 진행,가공 사이클 진행 중 (M10에서 해제),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_SUP_FWD_DONE,M2,INTERNAL,BOOL,공급 전진 완료,X1 도달 후 유지 -> 공급 후진,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_SUP_BWD_DONE,M3,INTERNAL,BOOL,공급 후진 완료,X0 도달 후 유지 -> T0 대기,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_DRILL_MOTOR,M4,INTERNAL,BOOL,드릴 모터 단계,T0 1초 경과 후 (드릴 모터 ON),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_DRILL_DN,M5,INTERNAL,BOOL,드릴 하강 단계,T1 1초 경과 후 (드릴 하강),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_DRILLING,M6,INTERNAL,BOOL,가공 중,X2 도달 후 (T2 가공 시간 시작),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_DRILL_DONE,M7,INTERNAL,BOOL,가공 시간 경과,T2 경과 후 (드릴 상승),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_DRILL_UP_DONE,M8,INTERNAL,BOOL,드릴 상승 완료,X3 도달 후 (송출 전진),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_OUT_FWD_DONE,M9,INTERNAL,BOOL,송출 전진 완료,"X5 도달 후 (송출 후진, 분류 시작)",내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STEP_CYCLE_END,M10,INTERNAL,BOOL,사이클 종료,X4 도달 후 (M1 해제),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-SORT_METAL,M11,INTERNAL,BOOL,금속 분류 동작,금속 센서 + 배출 후진 시 시작,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-SORT_EJECT_CMD,M12,INTERNAL,BOOL,배출 전진 지시,T3 1.5초 경과 후,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-SORT_EJECT_FWD_DONE,M13,INTERNAL,BOOL,배출 전진 완료,X7 도달 후,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-SORT_EJECT_BWD_DONE,M14,INTERNAL,BOOL,배출 후진 완료,X6 도달 후 (M11 해제),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-CONVEYOR_HOLD,M15,INTERNAL,BOOL,컨베이어 유지,"송출 완료 후 가동, T4 5초 정지 지연",내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-RUNNING_LAMP,M17,INTERNAL,BOOL,운전 중 표시,"M0, M1, M11, M15 중 하나라도 ON",내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-STOP_CMD,M110,INTERNAL,BOOL,정지 명령,PB3 또는 HMI 정지,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
-TMR_SUP_WAIT,T0,INTERNAL,TON,공급 후진 후 대기,1.0초 (K10),내부(외부 미노출),-,-,-,-
-TMR_MOTOR_WAIT,T1,INTERNAL,TON,드릴 모터 기동 대기,1.0초 (K10),내부(외부 미노출),-,-,-,-
-TMR_DRILL_TIME,T2,INTERNAL,TON,드릴 가공 시간,D10 x 0.1초,내부(외부 미노출),-,-,-,-
-TMR_EJECT_DELAY,T3,INTERNAL,TON,배출 전진 지연,1.5초 (K15),내부(외부 미노출),-,-,-,-
-TMR_CONV_STOP,T4,INTERNAL,TON,컨베이어 자동 정지,5.0초 (K50),내부(외부 미노출),-,-,-,-
+﻿tag_id,plc_device,direction,type,name_ko,field_name,description,st_addr,modbus_kind,modbus_addr,twin_object,mes_use
+SUP_BWD_LS,X0,IN,BOOL,공급 후진 센서,공급 푸셔 후진단 센서,공급 실린더가 후진 끝에 있음,%IX0.0 (실제) / %QX3.0 (SIM_X0),discrete_input / coil,di 0 / coil 24,supply_cylinder,이벤트 기록
+SUP_FWD_LS,X1,IN,BOOL,공급 전진 센서,공급 푸셔 전진단 센서,공급 실린더가 전진 끝에 있음,%IX0.1 (실제) / %QX3.1 (SIM_X1),discrete_input / coil,di 1 / coil 25,supply_cylinder,이벤트 기록
+DRILL_DN_LS,X2,IN,BOOL,드릴 하강 센서,드릴 하강단 센서,드릴이 하강 끝에 있음,%IX0.2 (실제) / %QX3.2 (SIM_X2),discrete_input / coil,di 2 / coil 26,drill,이벤트 기록
+DRILL_UP_LS,X3,IN,BOOL,드릴 상승 센서,드릴 상승단 센서,드릴이 상승 끝에 있음,%IX0.3 (실제) / %QX3.3 (SIM_X3),discrete_input / coil,di 3 / coil 27,drill,이벤트 기록
+OUT_BWD_LS,X4,IN,BOOL,송출 후진 센서,이송 푸셔 후진단 센서,송출 실린더가 후진 끝에 있음,%IX0.4 (실제) / %QX3.4 (SIM_X4),discrete_input / coil,di 4 / coil 28,out_cylinder,이벤트 기록
+OUT_FWD_LS,X5,IN,BOOL,송출 전진 센서,이송 푸셔 전진단 센서,송출 실린더가 전진 끝에 있음 (작업물이 컨베이어에 올라감),%IX0.5 (실제) / %QX3.5 (SIM_X5),discrete_input / coil,di 5 / coil 29,out_cylinder,이벤트 기록
+EJECT_BWD_LS,X6,IN,BOOL,배출 후진 센서,분류 푸셔 후진단 센서,배출 실린더가 후진 끝에 있음,%IX0.6 (실제) / %QX3.6 (SIM_X6),discrete_input / coil,di 6 / coil 30,eject_cylinder,이벤트 기록
+EJECT_FWD_LS,X7,IN,BOOL,배출 전진 센서,분류 푸셔 전진단 센서,배출 실린더가 전진 끝에 있음 (금속 배출),%IX0.7 (실제) / %QX3.7 (SIM_X7),discrete_input / coil,di 7 / coil 31,eject_cylinder,이벤트 기록
+MAGAZINE_LOADED,X8,IN,BOOL,매거진 적재 센서,공급기 재고 감지 센서,매거진에 작업물이 있음,%IX1.0 (실제) / %QX4.0 (SIM_X8),discrete_input / coil,di 8 / coil 32,magazine,이벤트 기록
+SENS_METAL,X9,IN,BOOL,금속 센서,"재질 판별 센서 (정품, 인덕티브)",금속 작업물 감지 (분류 기준),%IX1.1 (실제) / %QX4.1 (SIM_X9),discrete_input / coil,di 9 / coil 33,sort_sensor,이벤트 기록
+SENS_NONMETAL,X0A,IN,BOOL,비금속 센서,재질 판별 센서 (이종품),비금속 작업물 감지 (D2 카운트 기준),%IX1.2 (실제) / %QX4.2 (SIM_X0A),discrete_input / coil,di 10 / coil 34,sort_sensor,이벤트 기록
+PB_SINGLE,X0B,IN,BOOL,PB1 단속,조작반 PB1 단속,푸시버튼 단속 동작,%IX1.3 (실제) / %QX4.3 (SIM_X0B),discrete_input / coil,di 11 / coil 35,panel_buttons,조작 명령 이벤트로 기록
+PB_CONT,X0C,IN,BOOL,PB2 연속,조작반 PB2 연속,푸시버튼 연속 동작,%IX1.4 (실제) / %QX4.4 (SIM_X0C),discrete_input / coil,di 12 / coil 36,panel_buttons,조작 명령 이벤트로 기록
+PB_STOP,X0D,IN,BOOL,PB3 연속 정지,조작반 PB3 정지,푸시버튼 연속 정지,%IX1.5 (실제) / %QX4.5 (SIM_X0D),discrete_input / coil,di 13 / coil 37,panel_buttons,조작 명령 이벤트로 기록
+PB_RESET,X0E,IN,BOOL,PB4 리셋,조작반 PB4 리셋,"푸시버튼 리셋 (상태 초기화, 카운트 초기화)",%IX1.6 (실제) / %QX4.6 (SIM_X0E),discrete_input / coil,di 14 / coil 38,panel_buttons,조작 명령 이벤트로 기록
+SUP_FWD_SOL,Y20,OUT,BOOL,공급 전진,공급 푸셔 전진 솔레노이드,공급 실린더 전진 솔레노이드,%QX0.0,coil,coil 0,supply_cylinder,가공 사이클 단계 판단에 사용
+SUP_BWD_SOL,Y21,OUT,BOOL,공급 후진,공급 푸셔 후진 솔레노이드,공급 실린더 후진 솔레노이드,%QX0.1,coil,coil 1,supply_cylinder,가공 사이클 단계 판단에 사용
+DRILL_DN_SOL,Y22,OUT,BOOL,드릴 하강,드릴 하강 솔레노이드,드릴 하강 솔레노이드,%QX0.2,coil,coil 2,drill,가공 사이클 단계 판단에 사용
+OUT_FWD_SOL,Y23,OUT,BOOL,송출 전진,이송 푸셔 전진 솔레노이드,송출 실린더 전진 솔레노이드,%QX0.3,coil,coil 3,out_cylinder,가공 사이클 단계 판단에 사용
+OUT_BWD_SOL,Y24,OUT,BOOL,송출 후진,이송 푸셔 후진 솔레노이드,송출 실린더 후진 솔레노이드,%QX0.4,coil,coil 4,out_cylinder,가공 사이클 단계 판단에 사용
+EJECT_FWD_SOL,Y25,OUT,BOOL,배출 전진,분류 푸셔 전진 솔레노이드,배출 실린더 전진 솔레노이드,%QX0.5,coil,coil 5,eject_cylinder,가공 사이클 단계 판단에 사용
+EJECT_BWD_SOL,Y26,OUT,BOOL,배출 후진,분류 푸셔 후진 솔레노이드,배출 실린더 후진 솔레노이드,%QX0.6,coil,coil 6,eject_cylinder,가공 사이클 단계 판단에 사용
+CONVEYOR,Y27,OUT,BOOL,컨베이어,벨트 컨베이어 모터,컨베이어 모터,%QX0.7,coil,coil 7,conveyor,가공 사이클 단계 판단에 사용
+DRILL_MOTOR,Y28,OUT,BOOL,드릴 모터,드릴 모터,드릴 회전 모터,%QX1.0,coil,coil 8,drill,가공 사이클 단계 판단에 사용
+LAMP_RED,Y29,OUT,BOOL,적색 램프,스택 라이트 적색 (이상),대기(운전 중 아님),%QX1.1,coil,coil 9,lamp_red,가공 사이클 단계 판단에 사용
+LAMP_YELLOW,Y2A,OUT,BOOL,황색 램프,스택 라이트 황색 (가공 중 점멸),드릴 가공 중 점멸,%QX1.2,coil,coil 10,lamp_yellow,가공 사이클 단계 판단에 사용
+LAMP_GREEN,Y2B,OUT,BOOL,녹색 램프,스택 라이트 녹색 (가동),운전 중,%QX1.3,coil,coil 11,lamp_green,가공 사이클 단계 판단에 사용
+HMI_START_SINGLE,M100,CMD,BOOL,HMI 단속 시작,HMI 단속 시작,HMI 터치 단속 시작 (한 사이클),%QX2.0,coil,coil 16,control_panel,조작 명령 이벤트로 기록
+HMI_START_CONT,M101,CMD,BOOL,HMI 연속 시작,HMI 연속 시작,HMI 터치 연속 시작,%QX2.1,coil,coil 17,control_panel,조작 명령 이벤트로 기록
+HMI_STOP,M102,CMD,BOOL,HMI 정지,HMI 정지,HMI 터치 연속 정지,%QX2.2,coil,coil 18,control_panel,조작 명령 이벤트로 기록
+HMI_COUNT_RESET,M103,CMD,BOOL,HMI 카운트 초기화,HMI 카운트 초기화,"D0, D2 카운트를 0으로",%QX2.3,coil,coil 19,control_panel,조작 명령 이벤트로 기록
+COUNT_METAL,D0,DATA,INT,금속 카운트,정품 카운트,금속 배출 시작 시 +1 (M11 상승),%MW0,holding_register,hr 1024,counter,생산 실적(금속)
+COUNT_NONMETAL,D2,DATA,INT,비금속 카운트,이종품 카운트,비금속 센서(X0A) 상승 시 +1,%MW1,holding_register,hr 1025,counter,생산 실적(비금속)
+COUNT_TOTAL,D4,DATA,INT,합계 카운트,합계 카운트,D0 + D2,%MW2,holding_register,hr 1026,counter,생산 실적(합계)
+DRILL_TIME_SET,D10,DATA,INT,드릴 가공 시간 설정,드릴링 시간 설정,"단위 0.1초, PLC가 5~100(0.5~10초)으로 제한",%MW3,holding_register,hr 1027,setting,공정 파라미터 이력
+RUN_CONT,M0,INTERNAL,BOOL,연속운전 유지,,연속 동작 중,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+CYCLE_ACTIVE,M1,INTERNAL,BOOL,사이클 진행,,가공 사이클 진행 중 (M10에서 해제),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_SUP_FWD_DONE,M2,INTERNAL,BOOL,공급 전진 완료,,X1 도달 후 유지 -> 공급 후진,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_SUP_BWD_DONE,M3,INTERNAL,BOOL,공급 후진 완료,,X0 도달 후 유지 -> T0 대기,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_DRILL_MOTOR,M4,INTERNAL,BOOL,드릴 모터 단계,,T0 1초 경과 후 (드릴 모터 ON),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_DRILL_DN,M5,INTERNAL,BOOL,드릴 하강 단계,,T1 1초 경과 후 (드릴 하강),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_DRILLING,M6,INTERNAL,BOOL,가공 중,,X2 도달 후 (T2 가공 시간 시작),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_DRILL_DONE,M7,INTERNAL,BOOL,가공 시간 경과,,T2 경과 후 (드릴 상승),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_DRILL_UP_DONE,M8,INTERNAL,BOOL,드릴 상승 완료,,X3 도달 후 (송출 전진),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_OUT_FWD_DONE,M9,INTERNAL,BOOL,송출 전진 완료,,"X5 도달 후 (송출 후진, 분류 시작)",내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STEP_CYCLE_END,M10,INTERNAL,BOOL,사이클 종료,,X4 도달 후 (M1 해제),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+SORT_METAL,M11,INTERNAL,BOOL,금속 분류 동작,,금속 센서 + 배출 후진 시 시작,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+SORT_EJECT_CMD,M12,INTERNAL,BOOL,배출 전진 지시,,T3 1.5초 경과 후,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+SORT_EJECT_FWD_DONE,M13,INTERNAL,BOOL,배출 전진 완료,,X7 도달 후,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+SORT_EJECT_BWD_DONE,M14,INTERNAL,BOOL,배출 후진 완료,,X6 도달 후 (M11 해제),내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+CONVEYOR_HOLD,M15,INTERNAL,BOOL,컨베이어 유지,,"송출 완료 후 가동, T4 5초 정지 지연",내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+RUNNING_LAMP,M17,INTERNAL,BOOL,운전 중 표시,,"M0, M1, M11, M15 중 하나라도 ON",내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+STOP_CMD,M110,INTERNAL,BOOL,정지 명령,,PB3 또는 HMI 정지,내부(외부 미노출),-,-,-,이벤트 판단 근거(게이트웨이는 Y/센서로 추정)
+TMR_SUP_WAIT,T0,INTERNAL,TON,공급 후진 후 대기,,1.0초 (K10),내부(외부 미노출),-,-,-,-
+TMR_MOTOR_WAIT,T1,INTERNAL,TON,드릴 모터 기동 대기,,1.0초 (K10),내부(외부 미노출),-,-,-,-
+TMR_DRILL_TIME,T2,INTERNAL,TON,드릴 가공 시간,,D10 x 0.1초,내부(외부 미노출),-,-,-,-
+TMR_EJECT_DELAY,T3,INTERNAL,TON,배출 전진 지연,,1.5초 (K15),내부(외부 미노출),-,-,-,-
+TMR_CONV_STOP,T4,INTERNAL,TON,컨베이어 자동 정지,,5.0초 (K50),내부(외부 미노출),-,-,-,-

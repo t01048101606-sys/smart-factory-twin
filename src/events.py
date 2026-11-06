@@ -59,6 +59,7 @@ class EventEmitter:
         self.belt = []             # X5 이후 컨베이어에 있는 작업물
         self.last_nonmetal = None
         self._d10_origin = ("hmi", -10.0)
+        self.listeners = []        # 이벤트가 나올 때마다 부를 함수들 (잠금 밖에서 부른다)
 
     # ---- 파일에서 이어 받기 (재시작해도 seq와 일련번호가 이어지게) ----
     def _load_tail(self):
@@ -73,6 +74,10 @@ class EventEmitter:
                     self._piece_no[m.group(1)] = max(self._piece_no.get(m.group(1), 0), int(m.group(2)))
         except Exception:
             pass
+
+    def subscribe(self, fn):
+        """이벤트를 받을 함수를 등록한다. 예: 프레스 라인의 라인 끝 이벤트로 물류 파렛트를 만든다."""
+        self.listeners.append(fn)
 
     def alloc_id(self, prefix, t=None):
         """작업물 번호 'P-20261106-0001' 형태를 새로 받는다. 서버를 다시 켜도 이어서 센다."""
@@ -107,6 +112,11 @@ class EventEmitter:
                         f.write(json.dumps(e, ensure_ascii=False) + "\n")
                 except OSError:
                     pass
+        for fn in list(self.listeners):     # 잠금 밖: 구독자가 다시 이벤트를 내보내도 막히지 않는다
+            try:
+                fn(e)
+            except Exception:               # 구독자의 오류가 이벤트 발행을 막지 않게 한다
+                pass
         return e
 
     def since(self, after=-1, limit=200):

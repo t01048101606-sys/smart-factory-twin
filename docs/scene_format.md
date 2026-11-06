@@ -64,3 +64,33 @@
 1. 공정 시뮬레이터가 위와 같은 모양의 상태를 돌려주게 만든다 (`src/line_sim.py` 참고).
 2. `src/scenes/` 에 장면 JSON을 만든다 (오브젝트와 `anim`, `parts.segments`).
 3. 서버(`server.py`)에서 그 시뮬레이터와 장면 파일을 연결한다.
+
+## 확장 형식 (공장 통합 화면용, `factory.js`)
+
+`machining.json`(가공 라인)과 `press_weld_paint.json`이 쓰는 추가 형식입니다. 공장 통합 뷰어(`/3d/factory`)가 이 형식을 읽습니다.
+
+| 추가 | 내용 |
+|---|---|
+| `shape: "rod"` | 길이가 변하는 막대(실린더 로드). `axis`(x, y, z), `dir`(1 또는 -1), `r`, `start`(시작점), `len`(처음 길이) |
+| `shape: "light"` | 점 조명. `color`, `intensity`, `distance` |
+| `shape: "label"` + `key` | 이름표 글자를 용어 사전(`src/terms.json`)의 키로 정함. 현장 용어 / 장비 원명칭 전환이 이름표에도 반영됨 |
+| `anim.prop: "len"` | 로드 길이를 값(0~1)에 따라 `from` ~ `to` 로 |
+| `anim.prop: "intensity"` | 조명 세기를 `on` / `off` 로, `blink: true` 면 값이 참인 동안 깜박임 |
+| `anim.prop: "lamp"` + `blink_path` | 값이 참인 동안 깜박이는 램프 (예: AI 이상 감지 경보 때 스택 라이트 적색) |
+| `anim.prop: "emissive"` + `ei` | 빛남 세기 |
+| `parts.shape` | `"cylinder"`(`r`, `h`) 또는 상자(`size`) |
+| `parts.colors` | 색은 문자열 또는 `{color, metalness, roughness}` |
+| `parts.rules` / `parts.default` | 부품 색 규칙. 위에서부터 첫 번째로 맞는 규칙의 색, 예: `{"if": {"stage": ["feed", "drill"]}, "color": "pre"}` |
+| `summary` | 공장 화면의 라인별 요약 카드: `title`, `status`(상태 값과 표시 이름), `metrics`(이름 또는 용어 키와 값의 path), `actions`(버튼과 POST 주소) |
+
+값(path)은 라인의 상태 JSON 안의 경로입니다. 가공 라인은 PLC 출력(`Y20` 등)과 `derived.*`(실린더 위치 0~1, `src/machining_view.py`)를 씁니다.
+
+## 공장 배치 (`src/scenes/factory.json`)
+
+```
+{ "lines": [ {"id": "machining", "name": "가공 라인", "scene": "machining", "state": "machining", "offset": [0, 0, -12], "title_pos": [x, y, z]}, ... ],
+  "camera": {...}, "fit": {"width": 36, "height": 26} }
+```
+
+각 라인의 장면을 `offset` 만큼 옮겨서 한 장면에 놓습니다. `state`는 `/api/factory/state` 안에서 그 라인의 상태가 들어 있는 키입니다.
+새 라인을 추가하려면 장면 JSON과 상태를 만들고 이 파일에 한 줄을 추가합니다.

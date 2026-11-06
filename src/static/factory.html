@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>스마트 팩토리</title>
+<style>
+  :root { --bg:#0f1216; --panel:rgba(27,32,39,.9); --line:#2c3440; --txt:#e6e9ee; --mut:#8a94a3; --blue:#2f9bff; --red:#ef4b4b; --grn:#33c27f; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--txt); font-family:system-ui,"Malgun Gothic",sans-serif; overflow:hidden; }
+  canvas { display:block; }
+  .box { position:absolute; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px; }
+  #cards { top:10px; left:10px; width:250px; display:flex; flex-direction:column; gap:10px; background:none; border:none; padding:0;
+           max-height:calc(100vh - 92px); overflow-y:auto; }   /* 창이 낮으면 카드 목록이 스크롤된다 (아래 막대에 가려지지 않게) */
+  @media (max-height: 760px) { #cards { gap:6px; } .card { padding:6px 10px; } .card h2 { margin-bottom:3px; } .row { font-size:12px; padding:0; } button { padding:4px 8px; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .card h2 { font-size:14px; margin:0 0 6px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .chip { font-size:11px; padding:2px 8px; border-radius:10px; background:#232b35; color:var(--mut); white-space:nowrap; }
+  .chip.on { background:var(--grn); color:#06130d; }
+  .chip.alarm { background:var(--red); color:#fff; }
+  .row { display:flex; justify-content:space-between; padding:1px 0; gap:10px; }
+  .row b { font-variant-numeric:tabular-nums; }
+  .acts { margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
+  button, select { background:#232b35; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }
+  button:hover { border-color:var(--blue); }
+  label { color:var(--mut); font-size:12px; }
+  #bar { left:10px; bottom:10px; right:10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  #msg { top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; max-width:420px; font-size:14px; line-height:1.5; }
+  body.embed #title { display:none; }
+  body.view #bar { display:none; }
+</style>
+<script type="importmap">__IMPORTMAP__</script>
+</head>
+<body>
+<div id="msg" class="box">공장 화면을 불러오는 중입니다...</div>
+<div id="cards" class="box"></div>
+<div id="bar" class="box">
+  <span id="title" style="font-weight:600;margin-right:6px">스마트 팩토리</span>
+  <label>시점</label><span id="views" style="display:flex;gap:6px"></span>
+  <span style="margin-left:auto"></span>
+  <label><input type="checkbox" id="labels" checked> 이름표</label>
+  <label>용어 <select id="termsMode"><option value="field">현장 용어</option><option value="lab">장비 원명칭</option></select></label>
+</div>
+<script src="/static/terms.js"></script>
+<script>
+  function show3dError() {
+    const m = document.getElementById('msg');
+    m.style.display = 'block';
+    m.innerHTML = '3D 라이브러리(three.js)를 불러오지 못했습니다.<br>인터넷 연결을 확인하거나, 인터넷이 되는 곳에서 <code>python tools\\fetch_three.py</code>를 한 번 실행하세요.';
+  }
+  window.addEventListener('error', () => { if (!window.__twin3dReady) show3dError(); });
+  setTimeout(() => { if (!window.__twin3dReady) show3dError(); }, 12000);
+</script>
+<script type="module" src="/static/factory.js" onerror="show3dError()"></script>
+</body>
+</html>

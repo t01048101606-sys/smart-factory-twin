@@ -3,6 +3,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+const Terms = window.Terms;           // 화면에 보이는 이름 (현장 용어 / 장비 원명칭), src/terms.json
+await Terms.init();
 const $ = id => document.getElementById(id);
 const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
 const embed = new URLSearchParams(location.search).get('embed');
@@ -61,16 +63,20 @@ function rod(r, color, axis) {
   if (axis === 'z') m.rotation.x = Math.PI / 2;
   m.castShadow = true; scene.add(m); return m;
 }
-function label(text, x, y, z, w = 2.7) {
-  const c = document.createElement('canvas'); c.width = 320; c.height = 80;
-  const g = c.getContext('2d');
+function drawLabel(s) {               // 이름표 그림을 (다시) 그린다. 용어 모드가 바뀌면 다시 부른다
+  const c = s.userData.canvas, g = c.getContext('2d');
+  g.clearRect(0, 0, 320, 80);
   g.fillStyle = 'rgba(20,24,30,0.78)'; g.fillRect(0, 0, 320, 80);
   g.fillStyle = '#e6e9ee'; g.font = 'bold 34px "Malgun Gothic", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, 160, 42);
+  g.fillText(Terms.t(s.userData.key), 160, 42, 300);
+  s.material.map.needsUpdate = true;
+}
+function label(key, x, y, z, w = 2.7) {   // key: terms.json 의 이름 (예: 'feed_pusher')
+  const c = document.createElement('canvas'); c.width = 320; c.height = 80;
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true }));
-  s.renderOrder = 10;
-  s.position.set(x, y, z); s.scale.set(w, w / 4, 1); scene.add(s); return s;
+  s.renderOrder = 10; s.userData = { key, canvas: c };
+  s.position.set(x, y, z); s.scale.set(w, w / 4, 1); scene.add(s); drawLabel(s); return s;
 }
 
 // 바닥과 작업대
@@ -131,10 +137,10 @@ const lamps = [[0xef4b4b, 3.7], [0xf2c230, 3.0], [0x33c27f, 2.3]].map(([c, y]) =
 });
 
 const labels = [
-  label('공급 실린더', -10.9, 2.0, 0), label('매거진', MAG_X, 4.2, 0, 2.0), label('드릴', ST_X, 5.5, 0, 1.8),
-  label('송출 실린더', ST_X + 2.6, 1.2, -4.3), label('컨베이어', 6.8, 1.1, BELT_Z + 1.5, 2.2),
-  label('배출 실린더', SORT_X, 2.1, 0.9), label('금속 배출 박스', SORT_X, 1.7, BIN_Z, 3.0),
-  label('비금속 끝', END_X + 1.0, 1.7, BELT_Z + 1.3, 2.2),
+  label('feed_pusher', -10.9, 2.0, 0), label('magazine', MAG_X, 4.2, 0, 2.2), label('drill', ST_X, 5.5, 0, 2.2),
+  label('transfer_pusher', ST_X + 2.6, 1.2, -4.3), label('conveyor', 6.8, 1.1, BELT_Z + 1.5, 2.6),
+  label('sort_pusher', SORT_X, 2.1, 0.9), label('ok_bin', SORT_X, 1.35, BIN_Z + 0.2, 2.4),
+  label('ng_bin', END_X + 1.6, 2.5, BELT_Z - 0.3, 2.6),
 ];
 
 // ---------------------------------------------------------------- 작업물
@@ -249,6 +255,9 @@ $('fault').onchange = () => post('/api/fault', { mode: $('fault').value });
 $('relearn').onclick = () => post('/api/ai/relearn', {});
 document.querySelectorAll('button[data-view]').forEach(b => { b.onclick = () => setView(b.dataset.view); });
 $('labels').onchange = () => { labels.forEach(l => { l.visible = $('labels').checked; }); };
+$('termsMode').value = Terms.mode();
+Terms.apply(document);
+$('termsMode').onchange = () => { Terms.setMode($('termsMode').value); Terms.apply(document); labels.forEach(drawLabel); };
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;

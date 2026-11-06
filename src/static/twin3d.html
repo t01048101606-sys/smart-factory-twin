@@ -44,6 +44,13 @@
   <label>작업물 <select id="mode"><option value="alternate">번갈아</option><option value="metal">금속만</option><option value="nonmetal">비금속만</option></select></label>
   <label>결함 주입 <select id="fault"><option value="none">정상</option><option value="cyl_slow">실린더 속도 저하</option><option value="cyl_degrade">실린더 점진 열화</option><option value="sensor_flaky">센서 응답 지연</option></select></label>
   <button id="relearn">기준 다시 학습</button>
+  <span style="margin-left:auto"></span>
+  <label>시점</label>
+  <button data-view="diag">대각선</button>
+  <button data-view="front">정면</button>
+  <button data-view="top">위에서</button>
+  <button data-view="side">옆에서</button>
+  <label><input type="checkbox" id="labels" checked> 이름표</label>
 </div>
 <script>
   // three.js 를 불러오지 못했을 때(인터넷 연결 없음 등) 안내를 보여 준다

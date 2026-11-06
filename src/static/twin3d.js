@@ -23,13 +23,13 @@ const BIN_Z = 6.2;                     // 금속 배출 박스
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111418);
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
-camera.position.set(2, 13, 21);
+camera.position.set(1.5, 10.5, 16.5);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(2, 1, 2.5);
+controls.target.set(1.2, 0.8, 2.0);
 controls.enableDamping = true;
 controls.update();
 
@@ -42,7 +42,7 @@ sun.shadow.mapSize.height = 2048;
 sun.shadow.camera.left = -20; sun.shadow.camera.right = 20; sun.shadow.camera.top = 20; sun.shadow.camera.bottom = -20;
 scene.add(sun);
 const alarmLight = new THREE.PointLight(0xff3030, 0, 30);
-alarmLight.position.set(11.8, 5, 0.5);
+alarmLight.position.set(12.8, 5, 0.5);
 scene.add(alarmLight);
 
 const mat = (color, opts = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.25, ...opts });
@@ -61,19 +61,20 @@ function rod(r, color, axis) {
   if (axis === 'z') m.rotation.x = Math.PI / 2;
   m.castShadow = true; scene.add(m); return m;
 }
-function label(text, x, y, z, w = 3.4) {
+function label(text, x, y, z, w = 2.7) {
   const c = document.createElement('canvas'); c.width = 320; c.height = 80;
   const g = c.getContext('2d');
   g.fillStyle = 'rgba(20,24,30,0.78)'; g.fillRect(0, 0, 320, 80);
   g.fillStyle = '#e6e9ee'; g.font = 'bold 34px "Malgun Gothic", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(text, 160, 42);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true }));
+  s.renderOrder = 10;
   s.position.set(x, y, z); s.scale.set(w, w / 4, 1); scene.add(s); return s;
 }
 
 // 바닥과 작업대
-box(30, 0.4, 17, 0x1b2027, 0.5, -0.2, 2.2);
+box(30, 0.4, 17, 0x2a323d, 0.5, -0.2, 2.2);
 // 매거진 -> 가공 위치 레일
 box(5.4, TOP, 1.5, 0x39424f, -5.3, TOP / 2, 0);
 // 송출 이송판 (가공 위치 -> 컨베이어)
@@ -123,16 +124,18 @@ function bin(x, z, size) {
 bin(SORT_X, BIN_Z, 2.4);
 bin(END_X + 1.0, BELT_Z, 1.8);
 // 신호등
-cyl(0.12, 3.8, 0x6a7686, 11.8, 1.9, 0.5);
+cyl(0.12, 3.8, 0x6a7686, 12.8, 1.9, 0.5);
 const lamps = [[0xef4b4b, 3.7], [0xf2c230, 3.0], [0x33c27f, 2.3]].map(([c, y]) => {
   const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 16), new THREE.MeshStandardMaterial({ color: 0x222222, emissive: c, emissiveIntensity: 0 }));
-  m.position.set(11.8, y, 0.5); scene.add(m); return m;
+  m.position.set(12.8, y, 0.5); scene.add(m); return m;
 });
 
-label('공급 실린더', -10.9, 2.2, 0); label('매거진', MAG_X, 4.1, 0, 2.2); label('드릴', ST_X, 5.5, 0, 2.0);
-label('송출 실린더', ST_X, 2.0, -4.3, 3.0); label('컨베이어', 2.5, 1.7, BELT_Z + 1.3, 2.6);
-label('배출 실린더', SORT_X, 2.0, 0.9, 3.0); label('금속 배출 박스', SORT_X, 1.9, BIN_Z + 1.6, 3.4);
-label('비금속 끝', END_X + 1.0, 1.7, BELT_Z - 1.4, 2.4);
+const labels = [
+  label('공급 실린더', -10.9, 2.0, 0), label('매거진', MAG_X, 4.2, 0, 2.0), label('드릴', ST_X, 5.5, 0, 1.8),
+  label('송출 실린더', ST_X + 2.6, 1.2, -4.3), label('컨베이어', 6.8, 1.1, BELT_Z + 1.5, 2.2),
+  label('배출 실린더', SORT_X, 2.1, 0.9), label('금속 배출 박스', SORT_X, 1.7, BIN_Z, 3.0),
+  label('비금속 끝', END_X + 1.0, 1.7, BELT_Z + 1.3, 2.2),
+];
 
 // ---------------------------------------------------------------- 작업물
 const pieceMat = { pre: mat(0x9aa7b5), metal: mat(0xd5dbe3, { metalness: 0.9, roughness: 0.25 }), non: mat(0x6fa8dc) };
@@ -156,6 +159,16 @@ function piecePos(p) {            // workpiece.py 의 단계와 같은 이름: f
 let state = null;
 const cur = { sup: 0, out: 0, ej: 0, tip: 2.8, red: 0, yel: 0, grn: 0 };
 const ease = (a, b, k) => a + (b - a) * k;
+const VIEWS = {                       // [카메라 위치], [바라보는 점]
+  diag: [[1.5, 10.5, 16.5], [1.2, 0.8, 2.0]],
+  front: [[1.5, 4.5, 19.0], [1.2, 1.2, 2.0]],
+  top: [[1.2, 24.0, 2.6], [1.2, 0.0, 2.0]],
+  side: [[-17.0, 7.0, 6.0], [1.2, 1.0, 2.0]],
+};
+function setView(name) {
+  const v = VIEWS[name]; if (!v) return;
+  camera.position.set(...v[0]); controls.target.set(...v[1]); controls.update();
+}
 
 function applyHud(s) {
   $('d0').textContent = s.D0; $('d2').textContent = s.D2; $('d4').textContent = s.D4; $('d10').textContent = s.D10;
@@ -234,6 +247,8 @@ document.querySelectorAll('button[data-dev]').forEach(b => { b.onclick = () => p
 $('mode').onchange = () => post('/api/mode', { mode: $('mode').value });
 $('fault').onchange = () => post('/api/fault', { mode: $('fault').value });
 $('relearn').onclick = () => post('/api/ai/relearn', {});
+document.querySelectorAll('button[data-view]').forEach(b => { b.onclick = () => setView(b.dataset.view); });
+$('labels').onchange = () => { labels.forEach(l => { l.visible = $('labels').checked; }); };
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;

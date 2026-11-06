@@ -28,18 +28,27 @@ STEP_KO = {"supply_back": "공급 후진", "drill_motor": "드릴 모터 기동"
 TYPE_KO = {"command.issued": "조작", "machine.state": "운전 상태", "cycle.started": "사이클 시작",
            "cycle.step": "단계", "cycle.completed": "사이클 완료", "piece.classified": "분류",
            "count.updated": "카운트", "param.changed": "설정 변경", "io.changed": "입출력",
-           "ai.judgement": "AI 판정", "alarm.raised": "경보", "alarm.cleared": "경보 해제"}
+           "ai.judgement": "AI 판정", "alarm.raised": "경보", "alarm.cleared": "경보 해제",
+           "station.completed": "공정 완료", "station.state": "공정 상태", "piece.exited": "라인 끝", "sim.fault": "결함 주입"}
+STATION_KO = {"press": "프레스", "weld": "용접", "paint": "도장"}
+FAULT_KO = {"none": "해제", "cyl_slow": "실린더 속도 저하", "cyl_degrade": "실린더 점진 열화", "sensor_flaky": "센서 응답 지연",
+            "weld_slow": "용접 속도 저하", "press_down": "프레스 정지", "paint_down": "도장 정지"}
 
 
-def load_events(since: pd.Timestamp | None = None) -> pd.DataFrame:
-    """machine_event 테이블을 읽는다. 테이블이 아직 없으면 빈 표를 돌려준다."""
+def load_events(since: pd.Timestamp | None = None, line_id: str | None = None) -> pd.DataFrame:
+    """machine_event 테이블을 읽는다. line_id 를 주면 그 라인의 이벤트만 (가공 라인 = LINE-MACHINING-01).
+    테이블이 아직 없으면 빈 표를 돌려준다."""
     from src.db import get_connection  # MES 쪽 모듈 (DB 경로가 여기에 정해져 있다)
 
     conn = get_connection()
+    where, params = ("WHERE line_id = ? ", (line_id,)) if line_id else ("", ())
     try:
-        df = pd.read_sql_query(
-            "SELECT event_id, seq, ts, source, event_type, piece_id, work_order_id, payload "
-            "FROM machine_event ORDER BY seq", conn)
+        try:
+            df = pd.read_sql_query("SELECT event_id, seq, ts, source, line_id, event_type, piece_id, work_order_id, payload, sim_t "
+                                   f"FROM machine_event {where}ORDER BY seq", conn, params=params)
+        except Exception:   # sim_t 열이 없는 예전 DB
+            df = pd.read_sql_query("SELECT event_id, seq, ts, source, line_id, event_type, piece_id, work_order_id, payload "
+                                   f"FROM machine_event {where}ORDER BY seq", conn, params=params)
     except Exception:
         return pd.DataFrame()
     finally:
@@ -123,6 +132,15 @@ def describe(row) -> str:
         return "금속 (정상)" if p["kind"] == "metal" else "비금속 (이종 재질 혼입)"
     if t == "count.updated":
         return f"금속 {p['metal']} / 비금속 {p['nonmetal']} / 합계 {p['total']}"
+    if t == "station.completed":
+        extra = " (용접 불량)" if p.get("defect") else ""
+        return f"{STATION_KO.get(p['station'], p['station'])} {p['duration_s']}초 (공칭 {p['nominal_s']}초){extra}"
+    if t == "station.state":
+        return f"{STATION_KO.get(p['station'], p['station'])}: {p['from']} -> {p['to']}"
+    if t == "piece.exited":
+        return "양품" if p["result"] == "good" else "불량 (용접 불량)"
+    if t == "sim.fault":
+        return FAULT_KO.get(p["mode"], p["mode"])
     if t == "param.changed":
         return f"가공 시간 {p['from'] / 10:g}초 -> {p['to'] / 10:g}초 ({p.get('origin', '')})"
     return json.dumps(p, ensure_ascii=False)
@@ -133,7 +151,7 @@ def recent_events(events: pd.DataFrame, n: int = 40) -> pd.DataFrame:
     cols = ["시각", "유형", "작업물", "내용"]
     if events is None or events.empty:
         return pd.DataFrame(columns=cols)
-    ev = events[events["event_type"] != "io.changed"].tail(n).iloc[::-1]
+    ev = events[~events["event_type"].isin(["io.changed", "station.state"])].tail(n).iloc[::-1]
     return pd.DataFrame({
         "시각": ev["ts"].dt.tz_convert("Asia/Seoul").dt.strftime("%H:%M:%S"),
         "유형": ev["event_type"].map(lambda x: TYPE_KO.get(x, x)),

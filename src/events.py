@@ -8,6 +8,7 @@ server.py의 스캔 루프가 스캔마다 observe(sim.dev)를 부르면, 센서
 - 비금속 작업물의 컨베이어 끝 도착(end_nonmetal)은 컨베이어 가동 시간(약 3초)으로 추정합니다.
 """
 import json
+import re
 import threading
 import time
 import uuid
@@ -49,7 +50,7 @@ class EventEmitter:
         self.events = deque(maxlen=keep)
         self._lock = threading.Lock()
         self.seq = 0
-        self._piece_no = {}        # 날짜 -> 마지막 일련번호
+        self._piece_no = {}        # 'P-20261106' 같은 접두어와 날짜 -> 마지막 일련번호 (라인마다 접두어가 다르다)
         self._load_tail()
         self.prev = None
         self._last_t = None
@@ -67,26 +68,37 @@ class EventEmitter:
             for line in self.log_path.read_text(encoding="utf-8").splitlines():
                 e = json.loads(line)
                 self.seq = max(self.seq, e["seq"] + 1)
-                pid = e.get("piece_id")
-                if pid and pid.startswith("P-"):
-                    _, day, no = pid.split("-")
-                    self._piece_no[day] = max(self._piece_no.get(day, 0), int(no))
+                m = re.match(r"^([A-Z]+-\d{8})-(\d+)$", e.get("piece_id") or "")
+                if m:
+                    self._piece_no[m.group(1)] = max(self._piece_no.get(m.group(1), 0), int(m.group(2)))
         except Exception:
             pass
 
+    def alloc_id(self, prefix, t=None):
+        """작업물 번호 'P-20261106-0001' 형태를 새로 받는다. 서버를 다시 켜도 이어서 센다."""
+        day = time.strftime("%Y%m%d", time.localtime(self.now() if t is None else t))
+        key = f"{prefix}-{day}"
+        with self._lock:
+            self._piece_no[key] = self._piece_no.get(key, 0) + 1
+            return f"{key}-{self._piece_no[key]:04d}"
+
     def _new_piece_id(self, t):
-        day = time.strftime("%Y%m%d", time.localtime(t))
-        self._piece_no[day] = self._piece_no.get(day, 0) + 1
-        return {"id": f"P-{day}-{self._piece_no[day]:04d}", "kind": None,
+        return {"id": self.alloc_id("P", t), "kind": None,
                 "belt_t": 0.0, "ejecting": False, "t0": t, "drill_ds": 0}
 
     # ---- 이벤트 만들기 ----
-    def _emit(self, typ, payload, t, piece_id=None, source="gateway"):
+    def emit(self, typ, payload, piece_id=None, source="gateway", line_id=None, sim_t=None):
+        """다른 라인(프레스·용접·도장 등)이 같은 순번과 파일을 쓰며 이벤트를 내보낼 때 쓴다."""
+        return self._emit(typ, payload, self.now(), piece_id, source, line_id, sim_t)
+
+    def _emit(self, typ, payload, t, piece_id=None, source="gateway", line_id=None, sim_t=None):
         iso = datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(t % 1 * 1000):03d}Z"
-        e = {"event_id": str(uuid.uuid4()), "ts": iso, "seq": self.seq, "source": source,
-             "line_id": self.line_id, "type": typ, "piece_id": piece_id, "payload": payload}
-        self.seq += 1
-        with self._lock:
+        with self._lock:   # 서로 다른 스레드(PLC 스캔, 라인 시뮬레이터)가 함께 부르므로 순번 배정부터 잠근다
+            e = {"event_id": str(uuid.uuid4()), "ts": iso, "seq": self.seq, "source": source,
+                 "line_id": line_id or self.line_id, "type": typ, "piece_id": piece_id, "payload": payload}
+            if sim_t is not None:
+                e["sim_t"] = round(float(sim_t), 2)   # 시뮬레이터가 흐른 시간(초). 배속과 무관하게 공정 시간을 계산할 때 쓴다
+            self.seq += 1
             self.events.append(e)
             if self.log_path:
                 try:

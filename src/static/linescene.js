@@ -178,6 +178,7 @@ function applyHud(s) {
   $('c_in').textContent = s.counts.in; $('c_good').textContent = s.counts.good; $('c_scrap').textContent = s.counts.scrap;
   $('k_tput').textContent = s.kpi.throughput_per_min ? `${s.kpi.throughput_per_min} 개/분` : '-';
   $('k_bott').textContent = s.kpi.bottleneck_name || '-';
+  $('k_run').textContent = s.draining ? '정지 중 (남은 부품 배출)' : (s.running ? '가동' : '정지');
   for (const name of ['press', 'weld', 'paint']) {
     const st = s.stations[name], u = s.util[name];
     $('d_' + name).style.background = STATE_COLOR[st.state] || '#7a8696';

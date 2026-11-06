@@ -20,6 +20,7 @@ from events import EventEmitter
 from anomaly import CycleAnomalyDetector
 from plc_sim import FAULTS
 from line_sim import LineSim, FAULTS as LINE_FAULTS
+from line_events import LineEventBridge
 
 BASE = Path(__file__).resolve().parent
 ARG = sys.argv[1] if len(sys.argv) > 1 else str(BASE.parent / "plc" / "1102")
@@ -81,6 +82,7 @@ def twin_3d():
 
 # ---- 프레스 -> 용접 -> 도장 라인 (PLC 없이 파이썬 시뮬레이터, 장면은 JSON 으로 정의)
 line = LineSim()
+line.hook = LineEventBridge(events)   # 라인의 변화를 공통 이벤트로 내보낸다 (MES 연동, OEE)
 line_lock = threading.Lock()
 SCENE_FILE = BASE / "scenes" / "press_weld_paint.json"
 

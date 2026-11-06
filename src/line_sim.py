@@ -5,6 +5,7 @@
 - 각 공정에는 한 번에 부품 1개가 들어가고, 정해진 사이클 시간 동안 작업한다.
 - 사이클이 끝났는데 다음 칸이 차 있으면 "막힘(blocked)", 칸이 비어 일감을 기다리면 "대기(starved)"가 된다.
 - 병목(가장 오래 일하는 공정)이 라인 전체 처리량을 결정하는 것을 볼 수 있다.
+- 정지: 새 블랭크 투입을 멈추고, 라인에 남은 부품이 모두 나온 뒤에 멈춘다 (run-out). 그래서 작업지시가 중간에 얼어붙지 않는다.
 - 결함 주입: weld_slow(용접이 2.2배 느려짐), press_down(프레스 정지), paint_down(도장 정지)
 - 용접이 끝난 부품은 일정 확률로 불량(defect)이 되고, 라인 끝에서 불량으로 집계된다.
 
@@ -25,25 +26,61 @@ class LineSim:
         self.seed, self.defect_rate = seed, defect_rate
         self.fault = "none"
         self.speed = 1.0
+        self.hook = None   # hook(kind, data): 이벤트 발행 등. kind = spawn, completed, exit, state, running, fault, reset
         self.reset()
 
+    def _h(self, kind, **data):
+        if self.hook:
+            self.hook(kind, {"sim_t": self.time, **data})
+
     def reset(self):
+        self._h("reset")   # 지우기 전의 시뮬레이터 시간을 알려 준다 (이벤트 시간이 리셋해도 이어지도록)
         self.rng = random.Random(self.seed)
         self.time = 0.0
         self.running = False
+        self.feeding = True          # False 이면 새 블랭크를 넣지 않는다 (정지를 눌러 라인을 비우는 중)
         self.occ = {e: None for e in ELEMENTS}
         self.counts = {"in": 0, "good": 0, "scrap": 0}
         self.acc = {s: {"working": 0.0, "blocked": 0.0, "starved": 0.0, "down": 0.0} for s in STATIONS}
         self._next_id = 1
+        self._prev_state = {s: "starved" for s in STATIONS}
         self.first_exit = self.last_exit = None   # 첫 완성, 마지막 완성 시각 (처리량 계산용)
 
-    def start(self): self.running = True
-    def stop(self): self.running = False
+    def start(self):
+        if not self.running:
+            self.running, self.feeding = True, True
+            self._h("running", on=True)
+        elif not self.feeding:           # 비우는 중에 다시 시작
+            self.feeding = True
+            self._h("running", on=True)
+
+    def stop(self):
+        """투입을 멈추고 라인에 남은 부품을 모두 내보낸 뒤 정지한다 (이미 비어 있으면 바로 정지)."""
+        if not self.running:
+            return
+        if all(o is None for o in self.occ.values()):
+            self.running = False
+            self._h("running", on=False)
+        elif self.feeding:
+            self.feeding = False
+            self._h("drain")
 
     def set_fault(self, mode):
         if mode not in FAULTS:
             raise ValueError(f"알 수 없는 결함: {mode}")
+        if mode != self.fault:
+            self.fault = mode
+            self._h("fault", mode=mode)
+            self._track_states()   # 정지 결함은 시간이 흐르기 전에도 공정 상태를 바꾼다
         self.fault = mode
+
+    def _track_states(self):
+        """공정 상태(작업 중, 막힘, 대기, 정지)가 바뀌었으면 알린다."""
+        for st in STATIONS:
+            now = self._station_state(st)
+            if now != self._prev_state[st]:
+                self._h("state", station=st, frm=self._prev_state[st], to=now)
+                self._prev_state[st] = now
 
     def set_speed(self, value):
         self.speed = max(0.5, min(8.0, float(value)))
@@ -73,6 +110,11 @@ class LineSim:
             part["defect"] = self.rng.random() < self.defect_rate  # 용접 불량은 용접이 끝나는 시점에 정해진다
         elif name == "paint":
             part["painted"] = True
+        if name in STATIONS:
+            extra = {"defect": bool(part["defect"])} if name == "weld" else {}
+            worked = min(part["t_el"], self.duration(name))   # 작업한 시간 (다음 칸이 차서 기다린 시간은 제외)
+            self._h("completed", id=part["id"], station=name, duration_s=round(worked, 2),
+                    nominal_s=CYCLE[name], **extra)
         part["t_el"] = 0.0
         self.occ[nxt] = part
         self.occ[name] = None
@@ -91,6 +133,7 @@ class LineSim:
                 if name == "c3":                  # 라인 끝: 양품 / 불량 집계
                     self.counts["scrap" if o["defect"] else "good"] += 1
                     self.occ[name] = None
+                    self._h("exit", id=o["id"], result="scrap" if o["defect"] else "good")
                     if self.first_exit is None:
                         self.first_exit = self.time
                     self.last_exit = self.time
@@ -98,13 +141,18 @@ class LineSim:
                     nxt = ELEMENTS[ELEMENTS.index(name) + 1]
                     if self.occ[nxt] is None:
                         self._move(name, nxt)
-        if self.occ["press"] is None and not self._down("press"):   # 투입 (프레스 칸이 비면 새 블랭크)
+        if self.feeding and self.occ["press"] is None and not self._down("press"):   # 투입 (프레스 칸이 비면 새 블랭크)
             self.occ["press"] = {"id": self._next_id, "t_el": 0.0, "pressed": False, "welded": False,
                                  "painted": False, "defect": False}
+            self._h("spawn", id=self._next_id)
             self._next_id += 1
             self.counts["in"] += 1
         for s in STATIONS:                          # 가동률 집계
-            self.acc[s][self._station_state(s) if self._station_state(s) != "starved" else "starved"] += dt
+            self.acc[s][self._station_state(s)] += dt
+        self._track_states()
+        if not self.feeding and all(o is None for o in self.occ.values()):   # 다 비었으면 정지
+            self.running = False
+            self._h("running", on=False)
 
     def advance(self, seconds, dt=0.05):
         """실제 경과 시간 seconds 를 배속에 맞춰 진행한다."""
@@ -151,7 +199,7 @@ class LineSim:
         if self.time >= 60:
             bott = max(STATIONS, key=lambda s: util[s]["working"] + util[s]["down"])
         return {
-            "time": round(self.time, 1), "running": self.running, "fault": self.fault, "speed": self.speed,
+            "time": round(self.time, 1), "running": self.running, "draining": self.running and not self.feeding, "fault": self.fault, "speed": self.speed,
             "stations": st, "conveyors": conv, "parts": parts, "counts": dict(self.counts),
             "util": util, "kpi": {"throughput_per_min": self._throughput(done),
                                    "good_rate": round(self.counts["good"] / done, 3) if done else None,

@@ -26,6 +26,9 @@ from datetime import date
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))   # line_events, mes_press_line (같은 폴더의 모듈)
+from line_events import LINE_ID                # noqa: E402
+from mes_press_line import PressLineMes        # noqa: E402
 TWIN_ROOT = HERE.parent
 DEFAULT_MES = Path(os.environ.get("MES_ROOT", TWIN_ROOT.parent / "AutoParts-MES-Arduino"))
 
@@ -42,13 +45,14 @@ BACKUP_ON_OVERWRITE = {"pages/13_현장모니터링.py"}  # 이미 MES에 있는
 
 class MesAdapter:
     def __init__(self, mes_root=DEFAULT_MES, batch=5, auto_next=True, auto_receipt=True,
-                 store_io=False, state_path=None, today=date.today, log=print):
+                 store_io=False, state_path=None, today=date.today, log=print, press_batch=5):
         self.root = Path(mes_root).resolve()
         self.db = self.root / "sql" / "auto_parts.db"
         self.batch, self.auto_next, self.auto_receipt = batch, auto_next, auto_receipt
         self.store_io, self.state_path, self.today, self.log = store_io, state_path, today, log
         self.ids = {}
         self.state = {"last_seq": -1, "batches": []}
+        self.press = PressLineMes(self, press_batch)   # 프레스 -> 용접 -> 도장 라인 (mes_press_line.py)
         self._import_mes()
         self._load_state()
 
@@ -92,6 +96,8 @@ class MesAdapter:
             self.log(f"[MES] DB 생성: {self.db}")
         c = sqlite3.connect(self.db)
         c.executescript((TWIN_ROOT / "mes" / "machine_event.sql").read_text(encoding="utf-8"))
+        if "sim_t" not in [r[1] for r in c.execute("PRAGMA table_info(machine_event)")]:
+            c.execute("ALTER TABLE machine_event ADD COLUMN sim_t REAL")   # 예전 버전으로 만든 DB
         c.commit()
         c.close()
 
@@ -126,7 +132,7 @@ class MesAdapter:
             c.commit()
         finally:
             c.close()
-        self.state = {"last_seq": latest_seq, "batches": []}
+        self.state = {"last_seq": latest_seq, "batches": [], "press_batches": []}
         self.save_state()
 
     def seed_master(self):
@@ -188,6 +194,7 @@ class MesAdapter:
         except sqlite3.IntegrityError as e:  # 기억하던 작업지시가 DB에서 사라진 경우 등: 상태를 비우고 계속
             self.log(f"[MES DB 불일치] seq {ev['seq']} {ev['type']}: {e} -> 진행 중이던 묶음을 버리고 이어갑니다")
             self.state["batches"] = []
+            self.state["press_batches"] = []
         except sqlite3.Error as e:  # DB가 잠겨 있는 등: 기록만 남기고 계속
             self.log(f"[MES DB 오류] seq {ev['seq']} {ev['type']}: {e}")
         self.state["last_seq"] = ev["seq"]
@@ -216,6 +223,10 @@ class MesAdapter:
         return None
 
     def _handle(self, ev):
+        if ev.get("line_id") == LINE_ID:      # 프레스 -> 용접 -> 도장 라인
+            self.press.handle(ev)
+            self._store(ev)
+            return
         typ, pid, pl = ev["type"], ev.get("piece_id"), ev["payload"]
         if typ == "command.issued" and pl["command"] == "reset":
             self._abort_open_batches()
@@ -240,14 +251,15 @@ class MesAdapter:
     def _store(self, ev):
         if ev["type"] == "io.changed" and not self.store_io:
             return
-        b = self._batch_of(ev.get("piece_id")) if ev.get("piece_id") else None
+        pid = ev.get("piece_id")
+        b = (self._batch_of(pid) or self.press.batch_of(pid)) if pid else None
         c = self._conn()
         try:
             c.execute(
-                "INSERT OR IGNORE INTO machine_event (event_id, seq, ts, source, line_id, event_type, piece_id, work_order_id, payload)"
-                " VALUES (?,?,?,?,?,?,?,?,?)",
-                (ev["event_id"], ev["seq"], ev["ts"], ev["source"], ev["line_id"], ev["type"], ev.get("piece_id"),
-                 b["wo_id"] if b else None, json.dumps(ev["payload"], ensure_ascii=False)))
+                "INSERT OR IGNORE INTO machine_event (event_id, seq, ts, source, line_id, event_type, piece_id, work_order_id, payload, sim_t)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (ev["event_id"], ev["seq"], ev["ts"], ev["source"], ev["line_id"], ev["type"], pid,
+                 b["wo_id"] if b else None, json.dumps(ev["payload"], ensure_ascii=False), ev.get("sim_t")))
             c.commit()
         finally:
             c.close()
@@ -404,7 +416,8 @@ def main():
     ap.add_argument("--mes", default=str(DEFAULT_MES), help="Auto Parts MES 폴더 (기본: 형제 폴더 AutoParts-MES-Arduino)")
     ap.add_argument("--url", default="http://127.0.0.1:5001", help="트윈 서버 주소")
     ap.add_argument("--file", help="서버 대신 logs/events.jsonl 파일에서 읽기")
-    ap.add_argument("--batch", type=int, default=5, help="작업지시 1건당 작업물 수")
+    ap.add_argument("--batch", type=int, default=5, help="작업지시 1건당 작업물 수 (가공 라인)")
+    ap.add_argument("--press-batch", type=int, default=5, help="작업지시 1건당 작업물 수 (프레스·용접·도장 라인)")
     ap.add_argument("--no-auto-next", action="store_true", help="첫 작업지시만 처리하고 다음 작업지시는 만들지 않음")
     ap.add_argument("--no-auto-receipt", action="store_true", help="블랭크 재고가 모자라도 자동 입고하지 않음")
     ap.add_argument("--store-io", action="store_true", help="io.changed(센서/출력 변화)도 machine_event에 저장")
@@ -422,12 +435,13 @@ def main():
     state_path = Path(a.state)
     if a.reset_state and state_path.exists():
         state_path.write_text('{"last_seq": -1, "batches": []}', encoding="utf-8")
-    ad = MesAdapter(a.mes, a.batch, not a.no_auto_next, not a.no_auto_receipt, a.store_io, state_path)
+    ad = MesAdapter(a.mes, a.batch, not a.no_auto_next, not a.no_auto_receipt, a.store_io, state_path, press_batch=a.press_batch)
     if a.install_addons:
         ad.install_addons()
         return
     ad.init_db(a.with_sample)
     ad.seed_master()
+    ad.press.ensure()
     if a.reset_demo:
         src0 = (lambda after: fetch_file(a.file, after, 100000)) if a.file else (lambda after: fetch_http(a.url, after, 1000))
         if input("MES의 작업지시, 공정 실행, LOT, 시리얼, 검사, 출하, 설비 이벤트를 모두 지웁니다. 계속할까요? (y/N) ").strip().lower() != "y":

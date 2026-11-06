@@ -69,6 +69,19 @@ except ValueError:
     pass
 print("정지/배속/리셋/잘못된 결함 확인")
 
+# 정지는 투입을 멈추고 라인에 남은 부품을 모두 내보낸 뒤에 멈춘다 (작업이 중간에 얼어붙지 않게)
+s = LineSim(); s.start(); s.advance(70)
+n_in = s.counts["in"]; assert len(s.state()["parts"]) >= 4
+s.stop(); assert s.running and s.state()["draining"]
+s.advance(5); assert s.counts["in"] == n_in and s.running                   # 새 투입은 없고 아직 가동 중
+s.advance(60); st = s.state()
+assert not s.running and not st["draining"] and not st["parts"] and s.counts["good"] + s.counts["scrap"] == n_in
+print(f"정지: 투입 중단 후 라인 비움 ({n_in}개 모두 나온 뒤 정지)")
+s = LineSim(); s.start(); s.advance(40); s.stop(); s.advance(3); s.start()   # 비우는 중에 다시 시작
+assert s.running and not s.state()["draining"]
+s.advance(20); assert s.counts["in"] > 6
+s = LineSim(); s.start(); s.stop(); assert not s.running                      # 비어 있으면 바로 정지
+
 # 5) 같은 시드면 같은 결과 (재현 가능)
 a, b = run(), run()
 assert a.counts == b.counts and a.state()["util"] == b.state()["util"]

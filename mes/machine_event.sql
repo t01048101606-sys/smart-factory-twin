@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS machine_event (
     piece_id TEXT,
     work_order_id INTEGER,
     payload TEXT NOT NULL,
+    sim_t REAL,
     FOREIGN KEY (work_order_id) REFERENCES work_order (work_order_id)
 );
 CREATE INDEX IF NOT EXISTS idx_machine_event_type_ts ON machine_event (event_type, ts);

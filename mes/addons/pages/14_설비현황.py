@@ -60,7 +60,7 @@ with st.expander("가공 공정 2D 트윈", expanded=True):
 st.markdown("---")
 
 # ------------------------------------------------------------------ OEE
-events = oee.load_events(since)
+events = oee.load_events(since, line_id="LINE-MACHINING-01")
 result = oee.compute_oee(events, ideal_override)
 
 if result is None:

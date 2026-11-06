@@ -55,6 +55,9 @@
         "piece.classified",
         "count.updated",
         "sim.fault",
+        "station.state",
+        "station.completed",
+        "piece.exited",
         "ai.judgement",
         "alarm.raised",
         "alarm.cleared"
@@ -69,6 +72,10 @@
     },
     "payload": {
       "type": "object"
+    },
+    "sim_t": {
+      "type": "number",
+      "description": "시뮬레이터가 흐른 시간(초, 리셋해도 이어짐). 배속(x1~x8)과 상관없이 공정 시간을 계산할 때 쓴다. 시뮬레이터 라인에만 있음"
     }
   },
   "allOf": [
@@ -571,15 +578,143 @@
                   "none",
                   "cyl_slow",
                   "cyl_degrade",
-                  "sensor_flaky"
+                  "sensor_flaky",
+                  "weld_slow",
+                  "press_down",
+                  "paint_down"
                 ],
-                "description": "none=해제, cyl_slow=실린더 속도 저하, cyl_degrade=점진 열화, sensor_flaky=센서 응답 지연"
+                "description": "none=해제. 가공 라인: cyl_slow, cyl_degrade, sensor_flaky. 프레스·용접·도장 라인: weld_slow(용접 2.2배 느림), press_down, paint_down"
               },
               "origin": {
                 "enum": [
                   "hmi",
                   "web",
                   "mes"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "station.state"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "station",
+              "from",
+              "to"
+            ],
+            "properties": {
+              "station": {
+                "enum": [
+                  "press",
+                  "weld",
+                  "paint"
+                ]
+              },
+              "from": {
+                "enum": [
+                  "working",
+                  "blocked",
+                  "starved",
+                  "down"
+                ]
+              },
+              "to": {
+                "enum": [
+                  "working",
+                  "blocked",
+                  "starved",
+                  "down"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "station.completed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "station",
+              "duration_s",
+              "nominal_s"
+            ],
+            "properties": {
+              "station": {
+                "enum": [
+                  "press",
+                  "weld",
+                  "paint"
+                ]
+              },
+              "duration_s": {
+                "type": "number",
+                "minimum": 0
+              },
+              "nominal_s": {
+                "type": "number",
+                "minimum": 0,
+                "description": "결함이 없을 때의 사이클 시간 (성능률 계산 기준)"
+              },
+              "defect": {
+                "type": "boolean",
+                "description": "용접 공정이 끝나는 시점에 정해지는 용접 불량 여부 (weld 에만 있음)"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "piece.exited"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "result"
+            ],
+            "properties": {
+              "result": {
+                "enum": [
+                  "good",
+                  "scrap"
                 ]
               }
             },

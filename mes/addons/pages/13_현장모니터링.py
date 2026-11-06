@@ -47,7 +47,7 @@ with st.expander("가공 공정 2D 트윈 · 결함 주입", expanded=True):
 
 st.markdown("---")
 
-events = oee.load_events(since)
+events = oee.load_events(since, line_id="LINE-MACHINING-01")
 j = monitor.judgements(events)
 if events is None or events.empty or j.empty:
     st.info("아직 AI 판정이 없습니다. 트윈 서버(`server.py`)와 어댑터(`mes_adapter.py`)가 켜져 있는지 확인하고, "

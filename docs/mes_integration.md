@@ -1,0 +1,77 @@
+# MES 연동 (Auto Parts MES)
+
+트윈이 내보내는 공통 이벤트(`event_schema.json`)를 기존 **Auto Parts MES**(Streamlit + SQLite)에 넣는 방법입니다.
+MES 코드는 수정하지 않고, MES의 `services.py` 함수를 그대로 불러 씁니다. 그래서 MES의 검증 규칙이 그대로 적용됩니다.
+
+```
+PLC/시뮬레이터 -> server.py (events.py) -> /api/events, logs/events.jsonl
+                                                |
+                                  src/mes_adapter.py  (MES services.py 호출)
+                                                |
+                        AutoParts-MES-Arduino/sql/auto_parts.db  <- Streamlit 화면
+```
+
+## 대응 규칙
+
+MES는 작업지시당 공정 단계별 실행을 **1번만**, 검사와 시리얼 부여는 LOT당 **1번만** 허용합니다.
+그래서 작업물 하나하나가 아니라, 작업물 N개(기본 5개)를 작업지시 1건으로 묶습니다.
+
+| 트윈 이벤트 | MES 동작 |
+|---|---|
+| 첫 `cycle.started` | 작업지시(WO) 생성 (`planned_qty` = N) |
+| N개 모두 `cycle.completed` | 1단계(DRILL, 드릴 가공) 공정 실행 1건. 블랭크 LOT를 N개 소비하고 WIP LOT 생성 |
+| N개 모두 `bin_metal` / `end_nonmetal` | 2단계(SORT, 분류/배출) 공정 실행 1건. WIP를 소비하고 완제품(FINISHED) LOT 생성, WO 완료 |
+| `piece_id` | 시리얼 번호. 금속 = `COMPLETED`, 비금속 = `SCRAPPED` |
+| `piece.classified` | 완제품 LOT 검사: 비금속 수 = 불량 수, 사유 `MAT_MIX`(이종 재질 혼입) |
+| 모든 이벤트 | `machine_event` 테이블에 보관 (`io.changed`는 기본 제외, `--store-io`로 포함) |
+| `command.issued` 중 `reset` | 공정 실행이 없는 진행 중 WO는 취소 |
+
+검사 결과: 불량 0개 = `PASS`, 일부 = `PARTIAL`, 전부 = `FAIL`. `FAIL` LOT는 MES가 출하를 자동으로 막습니다.
+
+## 어댑터가 등록하는 기준정보 (처음 실행 시 자동, 여러 번 해도 안전)
+
+- 공정: `DRILL`(드릴 가공), `SORT`(분류/배출)
+- 설비: `EQ-FEED-01` 공급 실린더, `EQ-DRILL-01` 드릴, `EQ-CONV-01` 컨베이어·배출 실린더
+- 품목: `RM-BLANK`(블랭크, 원자재) -> `SP-DRILLED`(드릴 가공품) -> `FG-DRILLPART`(가공 부품, 완제품)
+- 라우팅: 가공 부품 표준공정 (1 DRILL, 2 SORT), BOM은 각 단계 1:1
+- 불량 사유: `MAT_MIX` 이종 재질 혼입(비금속)
+- 블랭크 재고가 모자라면 시연용으로 자동 입고합니다 (`--no-auto-receipt`로 끔).
+
+## 실행
+
+```
+# 1) 준비 (처음 한 번): MES DB 만들기 + 기준정보 등록
+python src\mes_adapter.py --init-only
+
+# 2) 터미널 A: 트윈 서버
+python src\server.py plc\1102
+
+# 3) 터미널 B: 어댑터 (트윈 화면에서 연속동작을 누르면 MES에 쌓입니다)
+python src\mes_adapter.py --batch 5
+
+# 4) 터미널 C: MES 화면 (MES 폴더에서)
+cd ..\AutoParts-MES-Arduino
+python seed_admin.py            # 최초 관리자 계정 (직접 입력)
+streamlit run app.py
+```
+
+- 어댑터는 처리한 위치를 `logs\mes_adapter_state.json`에 저장해서, 껐다 켜도 이어서 처리합니다. 처음부터 다시 하려면 `--reset-state`.
+- 서버 없이 파일에서 읽으려면 `--file logs\events.jsonl`.
+- MES 폴더 위치는 기본이 형제 폴더 `..\AutoParts-MES-Arduino`입니다. 다르면 `--mes <경로>` 또는 환경변수 `MES_ROOT`.
+- 어댑터는 MES의 `db.py`를 쓰므로 `pandas`가 필요합니다 (`pip install pandas`).
+
+## 검증
+
+```
+python tests\test_mes_adapter.py     # MES를 임시 폴더로 복사해서 확인 (원본 MES는 바뀌지 않음)
+```
+
+확인하는 것: 작업지시 완료(공정 실행 2단계, 완제품 LOT, 시리얼, 검사), 리셋 시 작업지시 취소, `machine_event` 중복 없음, 블랭크 소비량, 비금속만 투입했을 때 `FAIL`과 출하 차단.
+
+## 알려진 한계
+
+- 작업물 묶음 크기(N)에 도달해야 MES에 공정 실행이 기록됩니다. N보다 적게 돌리고 멈추면 해당 작업지시는 PLANNED/IN_PROGRESS로 남습니다.
+- 단방향입니다 (트윈 -> MES). MES에서 작업지시를 내려 트윈을 제어하는 방향은 다음 단계입니다.
+- SQLite는 파일 기반이라 트윈과 MES가 같은 컴퓨터에서 돌아야 합니다. 확장 시 PostgreSQL 전환을 고려합니다.
+- 비금속의 컨베이어 끝 도착(`end_nonmetal`)은 컨베이어 가동 시간으로 추정한 값입니다.
+- MES 저장소의 `13_현장모니터링.py`는 저장소에 없는 `log_handling_event` 함수와 `handling_event` 테이블을 쓰고 있어서, 저장소 그대로는 오류가 납니다 (이 연동과는 별개).

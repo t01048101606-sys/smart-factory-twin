@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>가공 공정 2D 트윈</title>
+<style>
+  :root { --bg:#111418; --panel:#1b2027; --line:#2c3440; --txt:#e6e9ee; --mut:#8a94a3;
+          --on:#33c27f; --metal:#5a6677; --blue:#2f9bff; --red:#ef4b4b; --yel:#f2c230; --grn:#33c27f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font-family:system-ui,"Malgun Gothic",sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:16px; }
+  h1 { font-size:18px; margin:0 0 12px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  svg { width:100%; height:auto; display:block; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+  .row > .panel { flex:1 1 220px; }
+  button { background:#232b35; color:var(--txt); border:1px solid var(--line); border-radius:8px;
+           padding:10px 14px; font-size:15px; cursor:pointer; margin:0 6px 6px 0; }
+  button:hover { border-color:var(--blue); }
+  .cnt { display:flex; justify-content:space-between; padding:3px 0; }
+  .cnt b { font-variant-numeric:tabular-nums; }
+  label { color:var(--mut); font-size:13px; }
+  input { background:#0e1216; color:var(--txt); border:1px solid var(--line); border-radius:6px; padding:6px 8px; width:90px; }
+  .belt { fill:#2a4a44; }
+  @keyframes slide { to { stroke-dashoffset:-24; } }
+  .belt-run { animation:slide .5s linear infinite; }
+  text { fill:var(--mut); font-size:12px; }
+  .sens { display:flex; flex-wrap:wrap; gap:6px; }
+  .dot { font-size:11px; padding:2px 6px; border-radius:10px; background:#232b35; color:var(--mut); }
+  .dot.on { background:var(--on); color:#06130d; }
+</style>
+</head>
+<body>
+<main>
+  <h1>가공 공정 2D 트윈 <span style="color:var(--mut);font-weight:400;font-size:13px">(시뮬레이터 연결)</span></h1>
+  <div class="panel">
+    <svg viewBox="0 0 760 300" role="img" aria-label="가공 공정 도식">
+      <!-- 공급 실린더 -->
+      <text x="30" y="40">공급 실린더</text>
+      <rect x="30" y="140" width="70" height="36" rx="4" fill="var(--metal)"/>
+      <rect id="supRod" x="100" y="152" width="40" height="12" fill="var(--blue)"/>
+      <path id="mag" d="M150 112 L150 200 A22 6 0 0 0 194 200 L194 112" fill="#232b35" stroke="var(--line)" stroke-width="2"/>
+      <g id="magParts" style="display:none">
+        <g fill="#6fa8dc"><rect x="157" y="170" width="30" height="14"/><ellipse cx="172" cy="184" rx="15" ry="4"/><ellipse cx="172" cy="170" rx="15" ry="4" fill="#8fc0ee"/></g>
+        <g fill="#6fa8dc"><rect x="157" y="150" width="30" height="14"/><ellipse cx="172" cy="164" rx="15" ry="4"/><ellipse cx="172" cy="150" rx="15" ry="4" fill="#8fc0ee"/></g>
+        <g fill="#6fa8dc"><rect x="157" y="130" width="30" height="14"/><ellipse cx="172" cy="144" rx="15" ry="4"/><ellipse cx="172" cy="130" rx="15" ry="4" fill="#8fc0ee"/></g>
+      </g>
+      <ellipse cx="172" cy="112" rx="22" ry="6" fill="#2f3944" stroke="var(--line)" stroke-width="2"/>
+      <text x="150" y="104">매거진</text>
+      <text id="magTxt" x="150" y="230">비어 있음</text>
+      <!-- 드릴 -->
+      <text x="250" y="40">드릴</text>
+      <rect x="250" y="55" width="60" height="30" rx="4" id="motor" fill="var(--metal)"/>
+      <rect id="drillRod" x="274" y="85" width="12" height="40" fill="var(--blue)"/>
+      <!-- 송출 실린더 -->
+      <text x="130" y="262">송출 실린더</text>
+      <rect x="130" y="270" width="60" height="22" rx="4" fill="var(--metal)"/>
+      <rect id="outRod" x="168" y="262" width="12" height="10" fill="var(--blue)"/>
+      <!-- 컨베이어 -->
+      <rect x="330" y="150" width="330" height="26" rx="4" class="belt"/>
+      <line id="beltLine" x1="334" y1="163" x2="656" y2="163" stroke="#6fd3c1" stroke-width="3" stroke-dasharray="12 12"/>
+      <text x="330" y="196">컨베이어</text>
+      <!-- 배출 실린더 -->
+      <text x="470" y="40">배출 실린더</text>
+      <rect x="470" y="55" width="60" height="26" rx="4" fill="var(--metal)"/>
+      <rect id="ejRod" x="494" y="81" width="12" height="20" fill="var(--blue)"/>
+      <rect x="470" y="214" width="60" height="38" rx="4" fill="#1d242c" stroke="var(--line)"/>
+      <text x="470" y="268">금속 배출 박스</text>
+      <rect x="662" y="146" width="40" height="34" rx="4" fill="#1d242c" stroke="var(--line)"/>
+      <text x="650" y="198">비금속 끝</text>
+      <g id="pieces"></g>
+      <!-- 신호등 -->
+      <circle id="lampR" cx="700" cy="50" r="12" fill="#3a1d1d"/>
+      <circle id="lampY" cx="700" cy="82" r="12" fill="#3a331a"/>
+      <circle id="lampG" cx="700" cy="114" r="12" fill="#1b3326"/>
+    </svg>
+  </div>
+  <div class="row">
+    <div class="panel">
+      <div style="margin-bottom:8px;color:var(--mut);font-size:13px">조작</div>
+      <button data-dev="M100">단속동작</button>
+      <button data-dev="M101">연속동작</button>
+      <button data-dev="M102">연속정지</button>
+      <button data-dev="X0E">리셋(PB4)</button>
+      <button data-dev="M103">카운트 초기화</button>
+      <div style="margin-top:8px">
+        <label for="mode">작업물 종류(시뮬레이터)</label><br>
+        <select id="mode" style="background:#0e1216;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:4px">
+          <option value="alternate">번갈아(금속, 비금속)</option>
+          <option value="metal">금속만</option>
+          <option value="nonmetal">비금속만</option>
+        </select>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="cnt"><span>금속</span><b id="d0">0</b></div>
+      <div class="cnt"><span>비금속</span><b id="d2">0</b></div>
+      <div class="cnt"><span>합계</span><b id="d4">0</b></div>
+      <div style="margin-top:10px">
+        <label>드릴 가공 시간 D10 (0.1초)</label><br>
+        <input id="d10in" type="number" min="0" max="999" value="30">
+        <button id="d10btn">설정</button>
+        <div style="color:var(--mut);font-size:12px">현재 D10 = <span id="d10">30</span> (PLC가 5~100으로 제한)</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:12px">
+    <div style="margin-bottom:6px;color:var(--mut);font-size:13px">센서(X) / 출력(Y)</div>
+    <div class="sens" id="sens"></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const post = (u, b) => fetch(u, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
+document.querySelectorAll('button[data-dev]').forEach(b => b.onclick = () => post('/api/press', {dev:b.dataset.dev}));
+$('mode').onchange = () => post('/api/mode', {mode: $('mode').value});
+$('d10btn').onclick = () => post('/api/d10', {value: parseInt($('d10in').value, 10)});
+
+const keys = [...Array(11).keys()].map(i => i < 10 ? 'X' + i : 'X0' + i.toString(16).toUpperCase())
+  .concat([...Array(12).keys()].map(i => 'Y' + (0x20 + i).toString(16).toUpperCase()));
+$('sens').innerHTML = keys.map(k => `<span class="dot" id="s_${k}">${k}</span>`).join('');
+
+// 센서 상태로 로드 길이 계산: 전진 센서 ON=최대, 후진 센서 ON=최소, 둘 다 OFF=이동 중
+const pos = (fwd, back, min, max) => fwd ? max : back ? min : (min + max) / 2;
+
+function render(s) {
+  $('supRod').setAttribute('width', pos(s.X1, s.X0, 6, 90));
+  $('drillRod').setAttribute('height', s.X2 ? 70 : s.X3 ? 20 : 45);
+  $('motor').setAttribute('fill', s.Y28 ? '#e08a2f' : 'var(--metal)');
+  $('outRod').setAttribute('width', pos(s.X5, s.X4, 6, 46));
+  $('outRod').setAttribute('x', 190 - pos(s.X5, s.X4, 6, 46) - 0);
+  $('ejRod').setAttribute('height', pos(s.X7, s.X6, 6, 60));
+  $('beltLine').setAttribute('class', s.Y27 ? 'belt-run' : '');
+  $('lampR').setAttribute('fill', s.Y29 ? 'var(--red)' : '#3a1d1d');
+  $('lampY').setAttribute('fill', s.Y2A ? 'var(--yel)' : '#3a331a');
+  $('lampG').setAttribute('fill', s.Y2B ? 'var(--grn)' : '#1b3326');
+  const cyl = (x, y, c) => `<rect x="${x-10}" y="${y-6}" width="20" height="12" fill="${c}"/><ellipse cx="${x}" cy="${y+6}" rx="10" ry="4" fill="${c}"/><ellipse cx="${x}" cy="${y-6}" rx="10" ry="4" fill="${c}" stroke="#0007"/>`;
+  const where = p => ({
+    feed:[172+p.t*108,165], drill:[280,165], out:[280+p.t*65,165-p.t*2],
+    belt:[345+p.t*310,163], eject:[500,163+p.t*62], binm:[500,225], end:[655,163]
+  })[p.stage];
+  $('pieces').innerHTML = (s.pieces || []).map(p => {
+    const [x,y] = where(p);
+    const pre = ['feed','drill','out'].includes(p.stage);
+    return cyl(x, y, pre ? '#9aa7b5' : p.metal ? '#d5dbe3' : '#6fa8dc');
+  }).join('');
+  $('magParts').style.display = s.X8 ? 'block' : 'none';
+  $('mag').setAttribute('stroke', s.X8 ? 'var(--on)' : 'var(--line)');
+  $('magTxt').textContent = s.X8 ? '적재 감지(X8)' : '비어 있음';
+  if (document.activeElement !== $('mode')) $('mode').value = s.mode;
+  $('d0').textContent = s.D0; $('d2').textContent = s.D2; $('d4').textContent = s.D4; $('d10').textContent = s.D10;
+  keys.forEach(k => $('s_' + k).classList.toggle('on', !!s[k]));
+}
+async function tick() {
+  try { render(await (await fetch('/api/state')).json()); } catch (e) {}
+  setTimeout(tick, 100);
+}
+tick();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+[
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000001", "ts": "2026-11-06T00:10:00.000Z", "seq": 1, "source": "web", "line_id": "LINE-MACHINING-01",
+    "type": "command.issued", "piece_id": null, "payload": { "command": "start_continuous", "origin": "web", "tag": "HMI_START_CONT" } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000002", "ts": "2026-11-06T00:10:00.050Z", "seq": 2, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "machine.state", "piece_id": null, "payload": { "state": "running_continuous", "reason": "RUNNING_LAMP on" } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000003", "ts": "2026-11-06T00:10:00.100Z", "seq": 3, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "cycle.started", "piece_id": "P-20261106-0001", "payload": { "mode": "continuous" } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000004", "ts": "2026-11-06T00:10:00.100Z", "seq": 4, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "io.changed", "piece_id": "P-20261106-0001", "payload": { "tag": "SUP_FWD_SOL", "from": 0, "to": 1 } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000005", "ts": "2026-11-06T00:10:04.300Z", "seq": 5, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "cycle.step", "piece_id": "P-20261106-0001", "payload": { "step": "drilling", "evidence": "DRILL_DN_LS" } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000006", "ts": "2026-11-06T00:10:09.800Z", "seq": 6, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "piece.classified", "piece_id": "P-20261106-0001", "payload": { "kind": "metal", "sensor": "SENS_METAL" } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000007", "ts": "2026-11-06T00:10:10.400Z", "seq": 7, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "cycle.completed", "piece_id": "P-20261106-0001", "payload": { "cycle_time_s": 10.3, "drill_time_set_ds": 30 } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000008", "ts": "2026-11-06T00:10:12.300Z", "seq": 8, "source": "gateway", "line_id": "LINE-MACHINING-01",
+    "type": "count.updated", "piece_id": "P-20261106-0001", "payload": { "metal": 1, "nonmetal": 0, "total": 1, "reason": "metal_ejected" } },
+  { "event_id": "5b1f0c1e-0a3a-4c7e-9a55-000000000009", "ts": "2026-11-06T00:10:30.000Z", "seq": 9, "source": "web", "line_id": "LINE-MACHINING-01",
+    "type": "param.changed", "piece_id": null, "payload": { "tag": "DRILL_TIME_SET", "from": 30, "to": 20, "unit": "0.1s", "origin": "web" } }
+]

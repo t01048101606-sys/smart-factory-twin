@@ -38,7 +38,7 @@ if ideal_text.strip():
 
 # ------------------------------------------------------------------ 트윈 화면
 with st.expander("가공 공정 2D 트윈", expanded=True):
-    c1, c2, c3 = st.columns([3, 2, 1])
+    c1, c2, c3, c4 = st.columns([3, 2, 1, 1])
     with c1:
         twin_url = st.text_input(
             "트윈 서버 주소", value="http://localhost:5001",
@@ -46,8 +46,10 @@ with st.expander("가공 공정 2D 트윈", expanded=True):
     with c2:
         view_only = st.checkbox("조작 패널 숨기기 (보기 전용)", value=False)
     with c3:
+        use_3d = st.checkbox("3D로 보기", value=False)
+    with c4:
         height = st.number_input("높이", min_value=300, max_value=1200, value=720, step=20)
-    src = f"{twin_url.rstrip('/')}/?embed={'view' if view_only else '1'}"
+    src = f"{twin_url.rstrip('/')}/{'3d' if use_3d else ''}?embed={'view' if view_only else '1'}"
     try:
         import streamlit.components.v1 as components
         components.iframe(src, height=int(height), scrolling=True)

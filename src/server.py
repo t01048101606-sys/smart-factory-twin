@@ -6,6 +6,7 @@
     python src/server.py modbus 192.168.0.109   # 다른 PLC 주소
 접속: http://localhost:5001
 """
+import json
 import sys
 import threading
 import time
@@ -55,6 +56,22 @@ def scan_loop():
 @app.get("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
+
+
+THREE_VERSION = "0.170.0"
+
+
+@app.get("/3d")
+def twin_3d():
+    """3D 트윈 화면. static/vendor 에 three.js 가 내려받아져 있으면 그것을 쓰고(오프라인 가능), 없으면 CDN에서 불러온다."""
+    vendor = Path(app.static_folder) / "vendor"
+    if (vendor / "three.module.js").exists() and (vendor / "addons" / "controls" / "OrbitControls.js").exists():
+        imports = {"three": "/static/vendor/three.module.js", "three/addons/": "/static/vendor/addons/"}
+    else:
+        cdn = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}"
+        imports = {"three": f"{cdn}/build/three.module.js", "three/addons/": f"{cdn}/examples/jsm/"}
+    html = (Path(app.static_folder) / "twin3d.html").read_text(encoding="utf-8")
+    return html.replace("__IMPORTMAP__", json.dumps({"imports": imports}))
 
 
 @app.get("/api/state")

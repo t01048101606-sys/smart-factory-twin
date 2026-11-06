@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>가공 공정 3D 트윈</title>
+<style>
+  :root { --bg:#111418; --panel:rgba(27,32,39,.88); --line:#2c3440; --txt:#e6e9ee; --mut:#8a94a3; --blue:#2f9bff; --red:#ef4b4b; --grn:#33c27f; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--txt); font-family:system-ui,"Malgun Gothic",sans-serif; overflow:hidden; }
+  canvas { display:block; }
+  .box { position:absolute; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px; }
+  #hud { top:10px; left:10px; min-width:190px; }
+  #hud h1 { font-size:15px; margin:0 0 6px; }
+  #hud a { color:var(--blue); font-size:12px; text-decoration:none; }
+  .cnt { display:flex; justify-content:space-between; padding:2px 0; }
+  .cnt b { font-variant-numeric:tabular-nums; }
+  #ctrl { left:10px; bottom:10px; right:10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  button, select { background:#232b35; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 11px; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--blue); }
+  label { color:var(--mut); font-size:12px; }
+  #msg { top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; max-width:420px; font-size:14px; line-height:1.5; }
+  body.embed #hud h1 { display:none; }
+  body.view #ctrl { display:none; }
+</style>
+<script type="importmap">__IMPORTMAP__</script>
+</head>
+<body>
+<div id="msg" class="box">3D 화면을 불러오는 중입니다...</div>
+<div id="hud" class="box">
+  <h1>가공 공정 3D 트윈 <a id="to2d" href="/">2D로 보기</a></h1>
+  <div class="cnt"><span>금속</span><b id="d0">0</b></div>
+  <div class="cnt"><span>비금속</span><b id="d2">0</b></div>
+  <div class="cnt"><span>합계</span><b id="d4">0</b></div>
+  <div class="cnt"><span>가공 시간(D10)</span><b id="d10">30</b></div>
+  <div class="cnt"><span>AI 이상 감지</span><b id="aiState">-</b></div>
+  <div class="cnt"><span>결함 주입</span><b id="faultTxt">정상</b></div>
+</div>
+<div id="ctrl" class="box">
+  <button data-dev="M100">단속동작</button>
+  <button data-dev="M101">연속동작</button>
+  <button data-dev="M102">연속정지</button>
+  <button data-dev="X0E">리셋(PB4)</button>
+  <button data-dev="M103">카운트 초기화</button>
+  <label>작업물 <select id="mode"><option value="alternate">번갈아</option><option value="metal">금속만</option><option value="nonmetal">비금속만</option></select></label>
+  <label>결함 주입 <select id="fault"><option value="none">정상</option><option value="cyl_slow">실린더 속도 저하</option><option value="cyl_degrade">실린더 점진 열화</option><option value="sensor_flaky">센서 응답 지연</option></select></label>
+  <button id="relearn">기준 다시 학습</button>
+</div>
+<script>
+  // three.js 를 불러오지 못했을 때(인터넷 연결 없음 등) 안내를 보여 준다
+  function show3dError() {
+    const m = document.getElementById('msg');
+    m.style.display = 'block';
+    m.innerHTML = '3D 라이브러리(three.js)를 불러오지 못했습니다.<br>인터넷 연결을 확인하거나, 인터넷이 되는 곳에서 <code>python tools\\fetch_three.py</code>를 한 번 실행하세요.<br><a style="color:#2f9bff" href="/' + location.search + '">2D 화면으로 보기</a>';
+  }
+  window.addEventListener('error', () => { if (!window.__twin3dReady) show3dError(); });
+  setTimeout(() => { if (!window.__twin3dReady) show3dError(); }, 10000);
+</script>
+<script type="module" src="/static/twin3d.js" onerror="show3dError()"></script>
+</body>
+</html>

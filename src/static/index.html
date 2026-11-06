@@ -36,7 +36,7 @@
 </head>
 <body>
 <main>
-  <h1>가공 공정 2D 트윈 <span style="color:var(--mut);font-weight:400;font-size:13px">(시뮬레이터 연결)</span></h1>
+  <h1>가공 공정 2D 트윈 <span style="color:var(--mut);font-weight:400;font-size:13px">(시뮬레이터 연결)</span> <a id="to3d" href="/3d" style="color:var(--blue);font-size:13px;font-weight:400;text-decoration:none">3D로 보기</a></h1>
   <div class="panel">
     <svg viewBox="0 0 760 300" role="img" aria-label="가공 공정 도식">
       <!-- 공급 실린더 -->
@@ -126,6 +126,7 @@
 </main>
 <script>
 const _embed = new URLSearchParams(location.search).get('embed');
+document.getElementById('to3d').href = '/3d' + location.search;
 if (_embed) { document.body.classList.add('embed'); if (_embed === 'view') document.body.classList.add('view'); }
 const $ = id => document.getElementById(id);
 const post = (u, b) => fetch(u, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});

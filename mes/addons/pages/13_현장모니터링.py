@@ -26,13 +26,15 @@ since = pd.Timestamp.now(tz="UTC") - timedelta(minutes=minutes) if minutes else 
 
 # ------------------------------------------------------------------ 트윈 (결함 주입은 여기서)
 with st.expander("가공 공정 2D 트윈 · 결함 주입", expanded=True):
-    c1, c2 = st.columns([4, 1])
+    c1, c2, c3 = st.columns([4, 1, 1])
     with c1:
         twin_url = st.text_input("트윈 서버 주소", value="http://localhost:5001",
                                  help="MES를 다른 컴퓨터에서 열었다면 localhost 대신 트윈 서버가 있는 컴퓨터의 주소를 넣으세요.")
     with c2:
+        use_3d = st.checkbox("3D로 보기", value=False)
+    with c3:
         height = st.number_input("높이", min_value=300, max_value=1300, value=860, step=20)
-    src = f"{twin_url.rstrip('/')}/?embed=1"
+    src = f"{twin_url.rstrip('/')}/{'3d' if use_3d else ''}?embed=1"
     try:
         import streamlit.components.v1 as components
         components.iframe(src, height=int(height), scrolling=True)

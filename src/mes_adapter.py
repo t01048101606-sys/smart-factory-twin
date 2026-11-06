@@ -17,6 +17,7 @@ import argparse
 import importlib
 import json
 import os
+import shutil
 import sqlite3
 import sys
 import time
@@ -91,6 +92,16 @@ class MesAdapter:
         c.executescript((TWIN_ROOT / "mes" / "machine_event.sql").read_text(encoding="utf-8"))
         c.commit()
         c.close()
+
+    def install_addons(self):
+        """mes/addons 의 추가 파일(OEE 계산, 설비 현황 페이지)을 MES 폴더로 복사한다. 같은 이름은 덮어쓴다."""
+        base = TWIN_ROOT / "mes" / "addons"
+        for f in sorted(base.rglob("*")):
+            if f.is_file() and "__pycache__" not in f.parts:
+                dst = self.root / f.relative_to(base)
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(f, dst)
+                self.log(f"[MES] 설치: {dst.relative_to(self.root)}")
 
     def seed_master(self):
         """우리 라인의 기준정보(공정, 설비, 품목, 라우팅, BOM, 불량 사유)를 등록한다. 여러 번 해도 안전."""
@@ -315,6 +326,7 @@ def main():
     ap.add_argument("--no-auto-receipt", action="store_true", help="블랭크 재고가 모자라도 자동 입고하지 않음")
     ap.add_argument("--store-io", action="store_true", help="io.changed(센서/출력 변화)도 machine_event에 저장")
     ap.add_argument("--with-sample", action="store_true", help="DB를 새로 만들 때 MES 샘플 데이터도 넣기")
+    ap.add_argument("--install-addons", action="store_true", help="설비 현황/OEE 페이지를 MES 폴더에 복사하고 종료")
     ap.add_argument("--init-only", action="store_true", help="DB와 기준정보만 준비하고 종료")
     ap.add_argument("--once", action="store_true", help="한 번만 가져와서 처리하고 종료")
     ap.add_argument("--reset-state", action="store_true", help="저장된 처리 위치를 지우고 처음부터")
@@ -326,6 +338,9 @@ def main():
     if a.reset_state and state_path.exists():
         state_path.write_text('{"last_seq": -1, "batches": []}', encoding="utf-8")
     ad = MesAdapter(a.mes, a.batch, not a.no_auto_next, not a.no_auto_receipt, a.store_io, state_path)
+    if a.install_addons:
+        ad.install_addons()
+        return
     ad.init_db(a.with_sample)
     ad.seed_master()
     print(f"[MES] 준비 완료: {ad.db}")

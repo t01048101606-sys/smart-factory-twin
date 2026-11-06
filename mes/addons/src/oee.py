@@ -1,0 +1,142 @@
+"""설비 이벤트(machine_event)로 가동 상태와 OEE를 계산한다.
+
+OEE = 가용률 x 성능률 x 품질률
+  - 가용률  = 가동 시간 / 계획 시간
+              가동 시간: machine.state 가 running_* 인 구간의 합 (녹색 램프 = 운전 중)
+              계획 시간: 선택한 기간의 첫 이벤트 ~ 마지막 이벤트
+  - 성능률  = 이상 사이클 시간의 합 / 가동 시간 (최대 100%)
+              이상 사이클 시간 = 고정 소요 시간 + 그 사이클의 가공 시간(D10 설정)
+              고정 소요 시간 = 관측된 사이클 중 (사이클 시간 - 가공 시간)의 최솟값 (가장 빠르게 돈 경우)
+  - 품질률  = 금속(정상) 작업물 수 / 분류된 작업물 수  (비금속 = 이종 재질 혼입 불량)
+
+compute_oee()는 DataFrame만 받는 순수 함수라서 DB 없이 시험할 수 있다.
+"""
+from __future__ import annotations
+
+import json
+
+import pandas as pd
+
+STATE_KO = {"running_continuous": "연속 운전", "running_single": "단속 운전", "idle": "대기",
+            "stopped": "정지", "alarm": "경보"}
+COMMAND_KO = {"start_single": "단속 시작", "start_continuous": "연속 시작", "stop": "정지",
+              "reset": "리셋(PB4)", "count_reset": "카운트 초기화"}
+STEP_KO = {"supply_back": "공급 후진", "drill_motor": "드릴 모터 기동", "drill_down": "드릴 하강",
+           "drilling": "가공 중", "drill_up": "드릴 상승", "out_forward": "송출 전진", "out_back": "송출 후진",
+           "belt": "컨베이어 진입", "eject": "금속 배출", "bin_metal": "금속 박스 도착",
+           "end_nonmetal": "비금속 끝 도착"}
+TYPE_KO = {"command.issued": "조작", "machine.state": "운전 상태", "cycle.started": "사이클 시작",
+           "cycle.step": "단계", "cycle.completed": "사이클 완료", "piece.classified": "분류",
+           "count.updated": "카운트", "param.changed": "설정 변경", "io.changed": "입출력",
+           "ai.judgement": "AI 판정", "alarm.raised": "경보", "alarm.cleared": "경보 해제"}
+
+
+def load_events(since: pd.Timestamp | None = None) -> pd.DataFrame:
+    """machine_event 테이블을 읽는다. 테이블이 아직 없으면 빈 표를 돌려준다."""
+    from src.db import get_connection  # MES 쪽 모듈 (DB 경로가 여기에 정해져 있다)
+
+    conn = get_connection()
+    try:
+        df = pd.read_sql_query(
+            "SELECT event_id, seq, ts, source, event_type, piece_id, work_order_id, payload "
+            "FROM machine_event ORDER BY seq", conn)
+    except Exception:
+        return pd.DataFrame()
+    finally:
+        conn.close()
+    if df.empty:
+        return df
+    df["ts"] = pd.to_datetime(df["ts"], utc=True)
+    df["payload"] = df["payload"].apply(json.loads)
+    if since is not None:
+        df = df[df["ts"] >= since]
+    return df.reset_index(drop=True)
+
+
+def compute_oee(events: pd.DataFrame, ideal_overhead_s: float | None = None) -> dict | None:
+    """OEE와 근거 수치를 계산한다. 이벤트가 없으면 None."""
+    if events is None or events.empty:
+        return None
+    ev = events.sort_values(["ts", "seq"]).reset_index(drop=True)
+    t0, t1 = ev["ts"].iloc[0], ev["ts"].iloc[-1]
+    planned = (t1 - t0).total_seconds()
+
+    # ---- 가동 시간 ----
+    states = ev[ev["event_type"] == "machine.state"]
+    run, start = 0.0, None
+    is_run = lambda p: str(p.get("state", "")).startswith("running")
+    if not states.empty and not is_run(states.iloc[0]["payload"]):
+        run += (states.iloc[0]["ts"] - t0).total_seconds()  # 기간이 시작되기 전부터 운전 중이던 경우
+    for _, r in states.iterrows():
+        if is_run(r["payload"]):
+            if start is None:
+                start = r["ts"]
+        elif start is not None:
+            run += (r["ts"] - start).total_seconds()
+            start = None
+    if start is not None:
+        run += (t1 - start).total_seconds()  # 아직 운전 중이면 마지막 이벤트까지
+    availability = min(1.0, run / planned) if planned > 0 else 0.0
+
+    # ---- 성능률 ----
+    cyc = ev[ev["event_type"] == "cycle.completed"]
+    cdf = pd.DataFrame({
+        "ts": list(cyc["ts"]),
+        "cycle_time_s": [float(p["cycle_time_s"]) for p in cyc["payload"]],
+        "drill_s": [p["drill_time_set_ds"] / 10 for p in cyc["payload"]],
+    })
+    overhead = ideal_overhead_s
+    if overhead is None and len(cdf):
+        overhead = float((cdf["cycle_time_s"] - cdf["drill_s"]).min())
+    cdf["ideal_s"] = (overhead or 0.0) + cdf["drill_s"]
+    ideal_total = float(cdf["ideal_s"].sum()) if len(cdf) else 0.0
+    performance = min(1.0, ideal_total / run) if run > 0 else 0.0
+
+    # ---- 품질률 ----
+    kinds = [p["kind"] for p in ev[ev["event_type"] == "piece.classified"]["payload"]]
+    total = len(kinds)
+    good = sum(1 for k in kinds if k == "metal")
+    quality = good / total if total else 0.0
+
+    return {
+        "oee": availability * performance * quality,
+        "availability": availability, "performance": performance, "quality": quality,
+        "planned_s": planned, "run_s": run, "cycles": len(cdf), "ideal_overhead_s": overhead,
+        "ideal_total_s": ideal_total, "total": total, "good": good, "defect": total - good,
+        "cycle_df": cdf, "t0": t0, "t1": t1,
+    }
+
+
+def describe(row) -> str:
+    p, t = row["payload"], row["event_type"]
+    if t == "command.issued":
+        return f"{COMMAND_KO.get(p['command'], p['command'])} ({p['origin']})"
+    if t == "machine.state":
+        return STATE_KO.get(p["state"], p["state"])
+    if t == "cycle.started":
+        return "연속" if p.get("mode") == "continuous" else "단속"
+    if t == "cycle.step":
+        return STEP_KO.get(p["step"], p["step"])
+    if t == "cycle.completed":
+        return f"{p['cycle_time_s']}초 (가공 {p['drill_time_set_ds'] / 10:g}초 설정)"
+    if t == "piece.classified":
+        return "금속 (정상)" if p["kind"] == "metal" else "비금속 (이종 재질 혼입)"
+    if t == "count.updated":
+        return f"금속 {p['metal']} / 비금속 {p['nonmetal']} / 합계 {p['total']}"
+    if t == "param.changed":
+        return f"가공 시간 {p['from'] / 10:g}초 -> {p['to'] / 10:g}초 ({p.get('origin', '')})"
+    return json.dumps(p, ensure_ascii=False)
+
+
+def recent_events(events: pd.DataFrame, n: int = 40) -> pd.DataFrame:
+    """최근 이벤트를 사람이 읽기 쉬운 표로 만든다 (io.changed 제외)."""
+    cols = ["시각", "유형", "작업물", "내용"]
+    if events is None or events.empty:
+        return pd.DataFrame(columns=cols)
+    ev = events[events["event_type"] != "io.changed"].tail(n).iloc[::-1]
+    return pd.DataFrame({
+        "시각": ev["ts"].dt.tz_convert("Asia/Seoul").dt.strftime("%H:%M:%S"),
+        "유형": ev["event_type"].map(lambda x: TYPE_KO.get(x, x)),
+        "작업물": ev["piece_id"].fillna(""),
+        "내용": ev.apply(describe, axis=1),
+    })

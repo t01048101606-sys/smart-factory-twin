@@ -40,7 +40,7 @@ def simulate(mode, scans, script):
 def new_mes():
     tmp = Path(tempfile.mkdtemp(prefix="mes_test_"))
     dst = tmp / "mes"
-    shutil.copytree(MES_SRC, dst, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.docx", "*.pdf"))
+    shutil.copytree(MES_SRC, dst, ignore=shutil.ignore_patterns(".git", "__pycache__", "*.docx", "*.pdf", "*.db", "*.db-*"))
     return dst
 
 

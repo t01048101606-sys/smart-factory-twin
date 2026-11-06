@@ -29,6 +29,9 @@
   .sens { display:flex; flex-wrap:wrap; gap:6px; }
   .dot { font-size:11px; padding:2px 6px; border-radius:10px; background:#232b35; color:var(--mut); }
   .dot.on { background:var(--on); color:#06130d; }
+  body.embed main { padding:8px; }
+  body.embed h1 { display:none; }
+  body.view .row > .panel:first-child { display:none; }
 </style>
 </head>
 <body>
@@ -111,6 +114,8 @@
   </div>
 </main>
 <script>
+const _embed = new URLSearchParams(location.search).get('embed');
+if (_embed) { document.body.classList.add('embed'); if (_embed === 'view') document.body.classList.add('view'); }
 const $ = id => document.getElementById(id);
 const post = (u, b) => fetch(u, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(b)});
 document.querySelectorAll('button[data-dev]').forEach(b => b.onclick = () => post('/api/press', {dev:b.dataset.dev}));

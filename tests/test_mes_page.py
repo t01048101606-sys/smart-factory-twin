@@ -16,7 +16,15 @@ sys.path.insert(0, str(ROOT / "tests"))
 sys.argv = [sys.argv[0]] + sys.argv[1:2]
 import test_mes_adapter as T  # noqa: E402  (어댑터 시나리오를 한 번 돌려 DB를 채운다)
 
-mes, ad = T.mes, T.ad
+from mes_adapter import MesAdapter  # noqa: E402
+
+mes = T.mes
+# 앞선 테스트가 MES 폴더 두 개를 번갈아 썼고 마지막에 시연 데이터도 지웠으므로,
+# 시나리오 1의 MES 폴더로 어댑터를 새로 만들어(모듈을 다시 불러온다) 같은 이벤트를 처음부터 넣는다
+ad = MesAdapter(mes, batch=4, today=lambda: date(2026, 11, 6), log=lambda m: None)
+ad.init_db(); ad.seed_master()
+for e in T.ev:
+    ad.handle(e)
 ad.install_addons()
 page = mes / "pages" / "14_설비현황.py"
 assert page.exists() and (mes / "src" / "oee.py").exists()

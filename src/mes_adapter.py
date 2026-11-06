@@ -57,8 +57,9 @@ class MesAdapter:
             raise FileNotFoundError(f"Auto Parts MES 폴더가 아닙니다: {self.root}")
         # MES의 'src' 패키지가 먼저 잡히도록, 트윈 프로젝트 루트는 경로에서 뺀다
         sys.path[:] = [p for p in sys.path if os.path.abspath(p or ".") != str(TWIN_ROOT)]
-        if str(self.root) not in sys.path:
-            sys.path.insert(0, str(self.root))
+        if str(self.root) in sys.path:
+            sys.path.remove(str(self.root))
+        sys.path.insert(0, str(self.root))  # 이미 있어도 맨 앞으로: 다른 MES 폴더의 모듈이 먼저 잡히지 않게
         for name in [m for m in sys.modules if m == "src" or m.startswith("src.")]:
             del sys.modules[name]  # 다른 MES 폴더의 모듈이 남아 있으면 그 폴더의 DB를 쓰게 되므로 새로 불러온다
         self.svc = importlib.import_module("src.services")
@@ -102,6 +103,25 @@ class MesAdapter:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(f, dst)
                 self.log(f"[MES] 설치: {dst.relative_to(self.root)}")
+
+    def reset_demo(self, latest_seq):
+        """시연 데이터(작업지시, 공정 실행, LOT, 시리얼, 검사, 출하, 설비 이벤트)를 지운다.
+        기준정보(품목, 공정, 설비, 라우팅, BOM, 거래처, 불량 사유)와 사용자 계정은 그대로 둔다.
+        어댑터는 지금까지의 이벤트를 다시 처리하지 않도록 latest_seq 이후부터 읽는다."""
+        c = self._conn()
+        try:
+            c.execute("BEGIN IMMEDIATE")
+            for t in ("machine_event", "shipment_item", "shipment", "inspection", "unit_serial", "operation_material",
+                      "operation", "lot", "work_order", "handling_event"):
+                try:
+                    c.execute(f"DELETE FROM {t}")
+                except sqlite3.OperationalError:
+                    pass  # 테이블이 없으면 건너뛴다
+            c.commit()
+        finally:
+            c.close()
+        self.state = {"last_seq": latest_seq, "batches": []}
+        self.save_state()
 
     def seed_master(self):
         """우리 라인의 기준정보(공정, 설비, 품목, 라우팅, BOM, 불량 사유)를 등록한다. 여러 번 해도 안전."""
@@ -179,13 +199,13 @@ class MesAdapter:
         elif typ == "cycle.completed" and pid and self._batch_of(pid):
             b = self._batch_of(pid)
             b["pieces"][pid]["done"] = True
-            if len(b["pieces"]) == b["planned"] and all(p["done"] for p in b["pieces"].values()):
-                self._run_step1(b)
+            self._progress(b)
         elif typ == "cycle.step" and pl["step"] in FINAL_STEPS and pid and self._batch_of(pid):
             b = self._batch_of(pid)
             b["pieces"][pid]["final"] = True
-            if len(b["pieces"]) == b["planned"] and all(p["final"] for p in b["pieces"].values()):
-                self._finalize(b)
+            self._progress(b)
+        elif typ == "machine.state" and pl["state"] in ("idle", "stopped", "alarm"):
+            self._flush_partial()
         self._store(ev)
 
     def _store(self, ev):
@@ -204,10 +224,32 @@ class MesAdapter:
             c.close()
 
     # ------------------------------------------------------------ 작업지시 묶음
+    @staticmethod
+    def _qty(b):
+        """이 묶음의 실제 수량. 정지로 부분 마감된 묶음은 계획보다 적을 수 있다."""
+        return b.get("qty", b["planned"])
+
+    def _progress(self, b):
+        if len(b["pieces"]) != self._qty(b):
+            return
+        ps = list(b["pieces"].values())
+        if all(p["done"] for p in ps):
+            self._run_step1(b)
+        if all(p["final"] for p in ps):
+            self._finalize(b)
+
+    def _flush_partial(self):
+        """정지(대기 상태 전환) 시 계획 수량에 못 미친 묶음은 지금까지 만든 수량으로 마감한다."""
+        for b in list(self.state["batches"]):
+            if not b["closed"] and "qty" not in b and 0 < len(b["pieces"]) < b["planned"]:
+                b["qty"] = len(b["pieces"])
+                self.log(f"[MES] 정지: {b['wo_no']}를 실적 수량 {b['qty']}개로 마감합니다 (계획 {b['planned']}개)")
+                self._progress(b)
+
     def _open_batch(self):
         """새 작업물을 담을 묶음. 아직 자리가 있는 묶음이 있으면 그것, 없으면 새 작업지시를 만든다."""
         for b in self.state["batches"]:
-            if not b["closed"] and len(b["pieces"]) < b["planned"]:
+            if not b["closed"] and len(b["pieces"]) < self._qty(b):
                 return b
         if self.state["batches"] and not self.auto_next:
             return None
@@ -261,18 +303,20 @@ class MesAdapter:
         if b["step1_done"]:
             return
         s, d = self.svc, self.today()
-        rows = self._material_rows(self.ids["rm"], "RECEIPT", b["planned"])
+        qty = self._qty(b)
+        rows = self._material_rows(self.ids["rm"], "RECEIPT", qty)
         r = s.register_operation(s.OperationRegistration(b["wo_id"], self.ids["step1"], self.ids["eq_drill"],
-                                                         d, b["planned"], rows))
+                                                         d, qty, rows))
         b["step1_done"], b["wip_lot"] = True, r["output_lot_id"]
         self.log(f"[MES] {b['wo_no']} 1단계(드릴 가공) 완료 -> {r['output_lot_no']}")
 
     def _finalize(self, b):
         self._run_step1(b)
         s, d = self.svc, self.today()
-        rows = self._material_rows(self.ids["sp"], "WIP", b["planned"])
+        qty = self._qty(b)
+        rows = self._material_rows(self.ids["sp"], "WIP", qty)
         r = s.register_operation(s.OperationRegistration(b["wo_id"], self.ids["step2"], self.ids["eq_conv"],
-                                                         d, b["planned"], rows))
+                                                         d, qty, rows))
         lot_id = r["output_lot_id"]
         metal = [p for p, v in b["pieces"].items() if v["kind"] == "metal"]
         nonmetal = [p for p, v in b["pieces"].items() if v["kind"] != "metal"]
@@ -316,6 +360,16 @@ def fetch_file(path, after, limit=500):
     return out
 
 
+def latest_seq(fetch):
+    """이벤트 출처에서 가장 큰 seq를 찾는다 (없으면 -1)."""
+    after = -1
+    while True:
+        evs = fetch(after)
+        if not evs:
+            return after
+        after = evs[-1]["seq"]
+
+
 def main():
     ap = argparse.ArgumentParser(description="트윈 이벤트 -> Auto Parts MES 어댑터")
     ap.add_argument("--mes", default=str(DEFAULT_MES), help="Auto Parts MES 폴더 (기본: 형제 폴더 AutoParts-MES-Arduino)")
@@ -327,6 +381,8 @@ def main():
     ap.add_argument("--store-io", action="store_true", help="io.changed(센서/출력 변화)도 machine_event에 저장")
     ap.add_argument("--with-sample", action="store_true", help="DB를 새로 만들 때 MES 샘플 데이터도 넣기")
     ap.add_argument("--install-addons", action="store_true", help="설비 현황/OEE 페이지를 MES 폴더에 복사하고 종료")
+    ap.add_argument("--reset-demo", action="store_true",
+                    help="시연 데이터(작업지시, LOT, 시리얼, 검사, 설비 이벤트)를 지우고 지금부터 새로 시작")
     ap.add_argument("--init-only", action="store_true", help="DB와 기준정보만 준비하고 종료")
     ap.add_argument("--once", action="store_true", help="한 번만 가져와서 처리하고 종료")
     ap.add_argument("--reset-state", action="store_true", help="저장된 처리 위치를 지우고 처음부터")
@@ -343,6 +399,19 @@ def main():
         return
     ad.init_db(a.with_sample)
     ad.seed_master()
+    if a.reset_demo:
+        src0 = (lambda after: fetch_file(a.file, after, 100000)) if a.file else (lambda after: fetch_http(a.url, after, 1000))
+        if input("MES의 작업지시, 공정 실행, LOT, 시리얼, 검사, 출하, 설비 이벤트를 모두 지웁니다. 계속할까요? (y/N) ").strip().lower() != "y":
+            print("취소했습니다.")
+            return
+        try:
+            last = latest_seq(src0)
+        except Exception as e:
+            print(f"[트윈 서버에 연결하지 못했습니다] {e}\n서버를 켠 뒤 다시 실행하세요 (이미 처리한 이벤트를 다시 읽지 않기 위해 필요합니다).")
+            return
+        ad.reset_demo(last)
+        print(f"[MES] 시연 데이터를 지웠습니다. 이벤트 {last}번 이후부터 새로 처리합니다.")
+        return
     print(f"[MES] 준비 완료: {ad.db}")
     if a.init_only:
         return

@@ -4,129 +4,589 @@
   "title": "SMART LINE 공통 이벤트",
   "description": "게이트웨이가 PLC 상태 변화에서 만들어 트윈, MES, AI 모듈로 보내는 공통 이벤트 형식. tag 값은 tagmap.csv의 tag_id를 씁니다.",
   "type": "object",
-  "required": ["event_id", "ts", "seq", "source", "type", "line_id", "payload"],
+  "required": [
+    "event_id",
+    "ts",
+    "seq",
+    "source",
+    "type",
+    "line_id",
+    "payload"
+  ],
   "properties": {
-    "event_id": { "type": "string", "description": "이벤트 고유 ID (UUID)" },
-    "ts": { "type": "string", "format": "date-time", "description": "발생 시각 (ISO 8601, UTC)" },
-    "seq": { "type": "integer", "minimum": 0, "description": "게이트웨이가 붙이는 순번. 누락과 순서 확인용" },
-    "source": { "enum": ["gateway", "plc", "twin", "ai", "mes", "web"], "description": "이벤트를 만든 쪽" },
-    "line_id": { "type": "string", "description": "라인 식별자 (예: LINE-MACHINING-01)" },
+    "event_id": {
+      "type": "string",
+      "description": "이벤트 고유 ID (UUID)"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "발생 시각 (ISO 8601, UTC)"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "게이트웨이가 붙이는 순번. 누락과 순서 확인용"
+    },
+    "source": {
+      "enum": [
+        "gateway",
+        "plc",
+        "twin",
+        "ai",
+        "mes",
+        "web"
+      ],
+      "description": "이벤트를 만든 쪽"
+    },
+    "line_id": {
+      "type": "string",
+      "description": "라인 식별자 (예: LINE-MACHINING-01)"
+    },
     "type": {
       "enum": [
-        "io.changed", "machine.state", "command.issued", "param.changed",
-        "cycle.started", "cycle.step", "cycle.completed",
-        "piece.classified", "count.updated",
-        "ai.judgement", "alarm.raised", "alarm.cleared"
+        "io.changed",
+        "machine.state",
+        "command.issued",
+        "param.changed",
+        "cycle.started",
+        "cycle.step",
+        "cycle.completed",
+        "piece.classified",
+        "count.updated",
+        "sim.fault",
+        "ai.judgement",
+        "alarm.raised",
+        "alarm.cleared"
       ]
     },
-    "piece_id": { "type": ["string", "null"], "description": "작업물 일련번호. 서버가 Y20 상승 시 부여(추정). 해당 없으면 null" },
-    "payload": { "type": "object" }
+    "piece_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "작업물 일련번호. 서버가 Y20 상승 시 부여(추정). 해당 없으면 null"
+    },
+    "payload": {
+      "type": "object"
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "type": { "const": "io.changed" } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["tag", "from", "to"],
-        "properties": { "tag": { "type": "string" }, "from": { "type": "integer", "enum": [0, 1] }, "to": { "type": "integer", "enum": [0, 1] } },
-        "additionalProperties": false } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "machine.state" } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["state"],
+      "if": {
         "properties": {
-          "state": { "enum": ["idle", "running_single", "running_continuous", "stopped", "alarm"] },
-          "reason": { "type": "string" } },
-        "additionalProperties": false } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "command.issued" } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["command", "origin"],
+          "type": {
+            "const": "io.changed"
+          }
+        }
+      },
+      "then": {
         "properties": {
-          "command": { "enum": ["start_single", "start_continuous", "stop", "reset", "count_reset"] },
-          "origin": { "enum": ["panel", "hmi", "web", "mes"], "description": "panel=PB1~PB4, hmi=터치 M100~M103, web=트윈 화면, mes=작업지시" },
-          "tag": { "type": "string" } },
-        "additionalProperties": false } } }
+          "payload": {
+            "type": "object",
+            "required": [
+              "tag",
+              "from",
+              "to"
+            ],
+            "properties": {
+              "tag": {
+                "type": "string"
+              },
+              "from": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              "to": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "param.changed" } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["tag", "from", "to", "unit"],
+      "if": {
         "properties": {
-          "tag": { "const": "DRILL_TIME_SET" },
-          "from": { "type": "integer" }, "to": { "type": "integer" },
-          "unit": { "const": "0.1s" },
-          "origin": { "enum": ["hmi", "web", "mes"] } },
-        "additionalProperties": false } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "cycle.started" } } },
-      "then": { "required": ["piece_id"], "properties": { "payload": {
-        "type": "object", "required": ["mode"],
-        "properties": { "mode": { "enum": ["single", "continuous"] } },
-        "additionalProperties": false } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "cycle.step" } } },
-      "then": { "required": ["piece_id"], "properties": { "payload": {
-        "type": "object", "required": ["step"],
+          "type": {
+            "const": "machine.state"
+          }
+        }
+      },
+      "then": {
         "properties": {
-          "step": { "enum": ["feed", "supply_back", "drill_motor", "drill_down", "drilling", "drill_up", "out_forward", "out_back", "belt", "eject", "bin_metal", "end_nonmetal"],
-                    "description": "feed=공급 전진, drilling=가공 중, out_forward=송출 전진, belt=컨베이어 이동, bin_metal=금속 박스 도착, end_nonmetal=비금속 끝 도착" },
-          "evidence": { "type": "string", "description": "단계를 판단한 근거 센서/출력 (예: X2)" } },
-        "additionalProperties": false } } }
+          "payload": {
+            "type": "object",
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "enum": [
+                  "idle",
+                  "running_single",
+                  "running_continuous",
+                  "stopped",
+                  "alarm"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "cycle.completed" } } },
-      "then": { "required": ["piece_id"], "properties": { "payload": {
-        "type": "object", "required": ["cycle_time_s", "drill_time_set_ds"],
+      "if": {
         "properties": {
-          "cycle_time_s": { "type": "number", "minimum": 0, "description": "사이클 시작(Y20 상승)부터 송출 후진 완료(X4)까지" },
-          "drill_time_set_ds": { "type": "integer", "description": "그 사이클의 D10 설정값 (0.1초 단위)" } },
-        "additionalProperties": false } } }
+          "type": {
+            "const": "command.issued"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "command",
+              "origin"
+            ],
+            "properties": {
+              "command": {
+                "enum": [
+                  "start_single",
+                  "start_continuous",
+                  "stop",
+                  "reset",
+                  "count_reset"
+                ]
+              },
+              "origin": {
+                "enum": [
+                  "panel",
+                  "hmi",
+                  "web",
+                  "mes"
+                ],
+                "description": "panel=PB1~PB4, hmi=터치 M100~M103, web=트윈 화면, mes=작업지시"
+              },
+              "tag": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "piece.classified" } } },
-      "then": { "required": ["piece_id"], "properties": { "payload": {
-        "type": "object", "required": ["kind", "sensor"],
+      "if": {
         "properties": {
-          "kind": { "enum": ["metal", "nonmetal"] },
-          "sensor": { "enum": ["SENS_METAL", "SENS_NONMETAL"] },
-          "ai_label": { "type": ["string", "null"], "description": "AI 분류가 있을 때만 (예약)" } },
-        "additionalProperties": false } } }
+          "type": {
+            "const": "param.changed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "tag",
+              "from",
+              "to",
+              "unit"
+            ],
+            "properties": {
+              "tag": {
+                "const": "DRILL_TIME_SET"
+              },
+              "from": {
+                "type": "integer"
+              },
+              "to": {
+                "type": "integer"
+              },
+              "unit": {
+                "const": "0.1s"
+              },
+              "origin": {
+                "enum": [
+                  "hmi",
+                  "web",
+                  "mes"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "count.updated" } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["metal", "nonmetal", "total"],
+      "if": {
         "properties": {
-          "metal": { "type": "integer", "minimum": 0 },
-          "nonmetal": { "type": "integer", "minimum": 0 },
-          "total": { "type": "integer", "minimum": 0 },
-          "reason": { "enum": ["metal_ejected", "nonmetal_sensed", "count_reset"] } },
-        "additionalProperties": false } } }
+          "type": {
+            "const": "cycle.started"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "enum": [
+                  "single",
+                  "continuous"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "const": "ai.judgement" } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["model", "result"],
+      "if": {
         "properties": {
-          "model": { "type": "string" },
-          "result": { "enum": ["ok", "ng"] },
-          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-          "interlock_requested": { "type": "boolean", "description": "정지 판단은 PLC가 최종 수행. AI는 입력 신호만 제공 (예약)" } },
-        "additionalProperties": false } } }
+          "type": {
+            "const": "cycle.step"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "step"
+            ],
+            "properties": {
+              "step": {
+                "enum": [
+                  "feed",
+                  "supply_back",
+                  "drill_motor",
+                  "drill_down",
+                  "drilling",
+                  "drill_up",
+                  "out_forward",
+                  "out_back",
+                  "belt",
+                  "eject",
+                  "bin_metal",
+                  "end_nonmetal"
+                ],
+                "description": "feed=공급 전진, drilling=가공 중, out_forward=송출 전진, belt=컨베이어 이동, bin_metal=금속 박스 도착, end_nonmetal=비금속 끝 도착"
+              },
+              "evidence": {
+                "type": "string",
+                "description": "단계를 판단한 근거 센서/출력 (예: X2)"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "type": { "enum": ["alarm.raised", "alarm.cleared"] } } },
-      "then": { "properties": { "payload": {
-        "type": "object", "required": ["code", "severity"],
+      "if": {
         "properties": {
-          "code": { "type": "string", "description": "예: GW_DISCONNECT, STEP_TIMEOUT (현재 PLC 경보 없음, 예약)" },
-          "severity": { "enum": ["info", "warning", "critical"] },
-          "message": { "type": "string" } },
-        "additionalProperties": false } } }
+          "type": {
+            "const": "cycle.completed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "cycle_time_s",
+              "drill_time_set_ds"
+            ],
+            "properties": {
+              "cycle_time_s": {
+                "type": "number",
+                "minimum": 0,
+                "description": "사이클 시작(Y20 상승)부터 송출 후진 완료(X4)까지"
+              },
+              "drill_time_set_ds": {
+                "type": "integer",
+                "description": "그 사이클의 D10 설정값 (0.1초 단위)"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "piece.classified"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "kind",
+              "sensor"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "metal",
+                  "nonmetal"
+                ]
+              },
+              "sensor": {
+                "enum": [
+                  "SENS_METAL",
+                  "SENS_NONMETAL"
+                ]
+              },
+              "ai_label": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "AI 분류가 있을 때만 (예약)"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "count.updated"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "metal",
+              "nonmetal",
+              "total"
+            ],
+            "properties": {
+              "metal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "nonmetal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "reason": {
+                "enum": [
+                  "metal_ejected",
+                  "nonmetal_sensed",
+                  "count_reset"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ai.judgement"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "model",
+              "result"
+            ],
+            "properties": {
+              "model": {
+                "type": "string"
+              },
+              "result": {
+                "enum": [
+                  "ok",
+                  "ng"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "interlock_requested": {
+                "type": "boolean",
+                "description": "정지 판단은 PLC가 최종 수행. AI는 입력 신호만 제공 (예약)"
+              },
+              "feature": {
+                "type": "string",
+                "description": "판정에 쓴 특징값 이름 (예: cycle_overhead_s = 가공 시간을 뺀 사이클 시간)"
+              },
+              "value": {
+                "type": "number",
+                "description": "이번 특징값"
+              },
+              "baseline": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "학습한 기준값 (학습 중이면 null)"
+              },
+              "score": {
+                "type": "number",
+                "description": "z 점수 (기준에서 벗어난 정도)"
+              },
+              "ewma_score": {
+                "type": "number",
+                "description": "EWMA(추세) z 점수"
+              },
+              "phase": {
+                "enum": [
+                  "learning",
+                  "monitoring"
+                ],
+                "description": "learning = 기준값 학습 중, monitoring = 감시 중"
+              },
+              "sigma": {
+                "type": "number",
+                "description": "학습한 산포 (MAD 기반). 이상 범위 = 기준값 ± z 임계값 x 산포"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "alarm.raised",
+              "alarm.cleared"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "예: GW_DISCONNECT, STEP_TIMEOUT (현재 PLC 경보 없음, 예약)"
+              },
+              "severity": {
+                "enum": [
+                  "info",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "sim.fault"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "enum": [
+                  "none",
+                  "cyl_slow",
+                  "cyl_degrade",
+                  "sensor_flaky"
+                ],
+                "description": "none=해제, cyl_slow=실린더 속도 저하, cyl_degrade=점진 열화, sensor_flaky=센서 응답 지연"
+              },
+              "origin": {
+                "enum": [
+                  "hmi",
+                  "web",
+                  "mes"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
     }
   ]
 }

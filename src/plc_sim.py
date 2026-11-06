@@ -10,6 +10,7 @@
 import collections
 import csv
 import io
+import random
 import sys
 from pathlib import Path
 
@@ -41,7 +42,17 @@ def load_program(path):
     return out
 
 
+FAULTS = {
+    "none": "정상",
+    "cyl_slow": "실린더 속도 저하 (이동 시간 3배)",
+    "cyl_degrade": "실린더 점진 열화 (사이클마다 느려짐)",
+    "sensor_flaky": "센서 응답 지연 (간헐)",
+}
+
+
 class PlcSim:
+    fault_mode = "none"  # 시뮬레이터에 주입하는 결함 (ModbusPlc도 이 값을 그대로 쓴다)
+
     def __init__(self, csv_dir):
         d = Path(csv_dir)
         self.progs = {n: load_program(d / f"{n}.csv") for n in PROGRAMS}
@@ -114,23 +125,51 @@ class PlcSim:
                             self.dev[o2[0]] = 0
                             self.timers.pop(o2[0], None)
 
+    # ---- 결함 주입 ----
+    def _fs(self):
+        fs = self.__dict__.get("_fault_state")
+        if fs is None:
+            fs = {"deg": 0.0, "y20": 0, "delay": {}, "rng": random.Random(7)}
+            self.__dict__["_fault_state"] = fs
+        return fs
+
+    def set_fault(self, mode):
+        if mode not in FAULTS:
+            raise ValueError(f"알 수 없는 결함: {mode}")
+        self.fault_mode = mode
+        self.__dict__.pop("_fault_state", None)  # 열화 정도와 난수를 처음 상태로
+
+    def _fault_factor(self, fs):
+        if self.fault_mode == "cyl_slow":
+            return 3.0
+        if self.fault_mode == "cyl_degrade":
+            return 1.0 + fs["deg"]
+        return 1.0
+
     # ---- 장비(센서) 모델 ----
     def _plant(self):
         dev, mv = self.dev, self.moving
+        fs = self._fs()
+        if dev["Y20"] and not fs["y20"] and self.fault_mode == "cyl_degrade":
+            fs["deg"] = min(fs["deg"] + 0.12, 3.0)  # 사이클이 시작될 때마다 이동 시간이 조금씩 늘어난다
+        fs["y20"] = int(bool(dev["Y20"]))
+        arrive = max(6, int(round(6 * self._fault_factor(fs))))  # 한 번 이동하는 데 걸리는 스캔 수 (정상 6 = 0.3초)
         for y, (to, frm) in CYLINDERS.items():
             if dev[y]:
                 mv[y] = mv.get(y, 0) + 1
-                if mv[y] >= 6: dev[to] = 1; dev[frm] = 0
+                if mv[y] == 1 and self.fault_mode == "sensor_flaky":  # 30% 확률로 도착 센서가 0.7~1.5초 늦게 켜진다
+                    fs["delay"][y] = fs["rng"].randint(14, 30) if fs["rng"].random() < 0.3 else 0
+                if mv[y] >= arrive + fs["delay"].get(y, 0): dev[to] = 1; dev[frm] = 0
                 elif mv[y] >= 2: dev[frm] = 0
             else:
                 mv[y] = 0
         if dev["Y22"]:  # 드릴 하강
             mv["dd"] = mv.get("dd", 0) + 1
-            if mv["dd"] >= 6: dev["X2"] = 1; dev["X3"] = 0
+            if mv["dd"] >= arrive: dev["X2"] = 1; dev["X3"] = 0
             elif mv["dd"] >= 2: dev["X3"] = 0
         elif dev["X2"]:  # 상승 중
             mv["du"] = mv.get("du", 0) + 1
-            if mv["du"] >= 6: dev["X2"] = 0; dev["X3"] = 1
+            if mv["du"] >= arrive: dev["X2"] = 0; dev["X3"] = 1
         else:
             mv["du"] = 0
         # 송출 전진이 끝나는 순간 작업물 종류를 정하고, 그 종류에 맞는 센서(X9 금속 / X0A 비금속)를 켠다

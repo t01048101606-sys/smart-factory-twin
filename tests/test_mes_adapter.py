@@ -143,4 +143,25 @@ errs = s.validate_shipment(s.ShipmentRegistration("SHP-X", None, date(2026, 11, 
 print("\n비금속만 투입: 검사", [i["result"] for i in ins], "| 출하 검증:", errs[0] if errs else "통과(문제)")
 assert errs and "불합격" in errs[0]
 
+# ===================================================================== 3) 어댑터가 켜진 채로 다른 쪽에서 --reset-demo 를 실행한 경우
+mes3 = new_mes()
+logs3 = []
+ad3 = MesAdapter(mes3, batch=3, today=lambda: date(2026, 11, 6), log=logs3.append)
+ad3.init_db(); ad3.seed_master()
+ev3 = simulate("alternate", 1400, {20: "M101", 1300: "M102"})
+half = len(ev3) // 2
+for e in ev3[:half]:
+    ad3.handle(e)
+other = MesAdapter(mes3, batch=3, today=lambda: date(2026, 11, 6), log=lambda m: None)  # 별도 프로세스에서 초기화한 것에 해당
+other.reset_demo(ev3[half - 1]["seq"])
+for e in ev3[half:]:
+    ad3.handle(e)                                  # 여기서 예외가 나면 어댑터가 죽는다
+db3 = mes3 / "sql" / "auto_parts.db"
+done3 = rows(db3, "SELECT COUNT(*) n FROM work_order WHERE status='COMPLETED'")[0]["n"]
+min_seq = rows(db3, "SELECT MIN(seq) m FROM machine_event")[0]["m"]
+assert done3 >= 1, "초기화 뒤에도 새 작업지시가 만들어져야 합니다"
+assert min_seq > ev3[half - 1]["seq"] - 1, "초기화 이전 이벤트가 다시 들어왔습니다"
+assert any("사라져" in l or "불일치" in l for l in logs3), logs3[-3:]
+print(f"\n켜진 어댑터 초기화 복구: 예외 없이 이어서 처리, 초기화 이후 작업지시 {done3}건 완료")
+
 print("\n테스트 통과")

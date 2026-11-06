@@ -16,6 +16,8 @@ from flask import Flask, jsonify, request, send_from_directory
 from plc_sim import PlcSim
 from workpiece import Tracker
 from events import EventEmitter
+from anomaly import CycleAnomalyDetector
+from plc_sim import FAULTS
 
 BASE = Path(__file__).resolve().parent
 ARG = sys.argv[1] if len(sys.argv) > 1 else str(BASE.parent / "plc" / "1102")
@@ -27,7 +29,7 @@ if ARG == "modbus":
 else:
     sim = PlcSim(ARG)
 tracker = Tracker()
-events = EventEmitter(log_path=BASE.parent / "logs" / "events.jsonl")
+events = EventEmitter(log_path=BASE.parent / "logs" / "events.jsonl", detector=CycleAnomalyDetector())
 lock = threading.Lock()
 pending = set()  # 다음 스캔에서 한 번만 켜질 입력
 
@@ -61,6 +63,8 @@ def state():
         out = {k: int(sim.dev[k]) for k in STATE_KEYS}
         out["pieces"] = tracker.snapshot()
         out["mode"] = sim.piece_mode
+        out["fault"] = getattr(sim, "fault_mode", "none")
+        out["ai"] = events.detector.status()
         out["connected"] = getattr(sim, "connected", True)
         out["error"] = getattr(sim, "error", "")
         return jsonify(out)
@@ -84,6 +88,26 @@ def set_mode():
         return jsonify(error="alternate, metal, nonmetal 중 하나"), 400
     with lock:
         sim.piece_mode = mode
+    return jsonify(ok=True)
+
+
+@app.post("/api/fault")
+def set_fault():
+    """시뮬레이터에 결함을 주입하거나 해제한다 (이상 감지가 잡는지 확인하는 용도)."""
+    mode = (request.get_json(silent=True) or {}).get("mode")
+    if mode not in FAULTS:
+        return jsonify(error=f"{', '.join(FAULTS)} 중 하나"), 400
+    with lock:
+        sim.set_fault(mode)
+        events.sim_fault(mode, "web")
+    return jsonify(ok=True)
+
+
+@app.post("/api/ai/relearn")
+def relearn():
+    """이상 감지의 기준값을 버리고 처음부터 다시 학습한다."""
+    with lock:
+        events.detector.reset()
     return jsonify(ok=True)
 
 

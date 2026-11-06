@@ -41,8 +41,9 @@ WATCH = list(IO_TAGS) + ["D0", "D2", "D4", "D10"]
 
 
 class EventEmitter:
-    def __init__(self, line_id="LINE-MACHINING-01", log_path=None, now=time.time, keep=2000):
+    def __init__(self, line_id="LINE-MACHINING-01", log_path=None, now=time.time, keep=2000, detector=None):
         self.line_id = line_id
+        self.detector = detector  # 사이클 이상 감지기 (anomaly.CycleAnomalyDetector), 없으면 판정하지 않는다
         self.now = now
         self.log_path = Path(log_path) if log_path else None
         self.events = deque(maxlen=keep)
@@ -114,6 +115,10 @@ class EventEmitter:
         if cmd == "reset":  # PB4 리셋: 화면의 작업물을 치운 것으로 본다
             self.cycle, self.belt = None, []
 
+    def sim_fault(self, mode, origin="web"):
+        """시뮬레이터에 결함을 주입하거나 해제했다는 기록 (이상 감지가 맞는지 확인하는 기준이 된다)."""
+        self._emit("sim.fault", {"mode": mode, "origin": origin}, self.now(), source=origin)
+
     def note_param_origin(self, origin):
         self._d10_origin = (origin, self.now())
 
@@ -171,6 +176,9 @@ class EventEmitter:
             self._emit("cycle.completed",
                        {"cycle_time_s": round(t - self.cycle["t0"], 2), "drill_time_set_ds": self.cycle["drill_ds"]},
                        t, pid())
+            if self.detector is not None:
+                for typ, payload in self.detector.on_cycle(round(t - self.cycle["t0"], 2), self.cycle["drill_ds"]):
+                    self._emit(typ, payload, t, pid(), source="ai")
             self.cycle = None
 
         # 5) 컨베이어 이동 추정, 금속 배출, 비금속 끝 도착

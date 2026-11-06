@@ -37,6 +37,7 @@ ITEMS = [("RM-BLANK", "가공용 블랭크", "MATERIAL", "EA"),
          ("FG-DRILLPART", "가공 부품", "PRODUCT", "EA")]
 REASON = ("MAT_MIX", "이종 재질 혼입(비금속)")
 FINAL_STEPS = {"bin_metal", "end_nonmetal"}
+BACKUP_ON_OVERWRITE = {"pages/13_현장모니터링.py"}  # 이미 MES에 있는 파일을 대체하는 추가 파일
 
 
 class MesAdapter:
@@ -99,8 +100,13 @@ class MesAdapter:
         base = TWIN_ROOT / "mes" / "addons"
         for f in sorted(base.rglob("*")):
             if f.is_file() and "__pycache__" not in f.parts:
-                dst = self.root / f.relative_to(base)
+                rel = f.relative_to(base)
+                dst = self.root / rel
                 dst.parent.mkdir(parents=True, exist_ok=True)
+                bak = dst.with_name(dst.name + ".orig")
+                if rel.as_posix() in BACKUP_ON_OVERWRITE and dst.exists() and not bak.exists():
+                    shutil.copy2(dst, bak)  # MES 쪽 원래 파일은 처음 한 번만 백업해 둔다
+                    self.log(f"[MES] 원본 백업: {bak.relative_to(self.root)}")
                 shutil.copy2(f, dst)
                 self.log(f"[MES] 설치: {dst.relative_to(self.root)}")
 
@@ -175,10 +181,33 @@ class MesAdapter:
         if ev["seq"] <= self.state["last_seq"]:
             return
         try:
+            self._drop_stale_batches()
             self._handle(ev)
         except ValueError as e:  # MES가 검증에서 거절한 경우: 기록만 남기고 계속
             self.log(f"[MES 거절] seq {ev['seq']} {ev['type']}: {str(e).splitlines()[0]}")
+        except sqlite3.IntegrityError as e:  # 기억하던 작업지시가 DB에서 사라진 경우 등: 상태를 비우고 계속
+            self.log(f"[MES DB 불일치] seq {ev['seq']} {ev['type']}: {e} -> 진행 중이던 묶음을 버리고 이어갑니다")
+            self.state["batches"] = []
+        except sqlite3.Error as e:  # DB가 잠겨 있는 등: 기록만 남기고 계속
+            self.log(f"[MES DB 오류] seq {ev['seq']} {ev['type']}: {e}")
         self.state["last_seq"] = ev["seq"]
+
+    def _drop_stale_batches(self):
+        """MES 화면이나 --reset-demo 로 작업지시가 지워졌으면, 그 작업지시에 묶인 진행 상태를 버린다."""
+        batches = self.state["batches"]
+        if not batches:
+            return
+        c = self._conn()
+        try:
+            ids = [b["wo_id"] for b in batches]
+            alive = {r[0] for r in c.execute(
+                "SELECT work_order_id FROM work_order WHERE work_order_id IN (%s)" % ",".join("?" * len(ids)), ids)}
+        finally:
+            c.close()
+        kept = [b for b in batches if b["wo_id"] in alive]
+        if len(kept) < len(batches):
+            self.log(f"[MES] 작업지시 {len(batches) - len(kept)}건이 DB에서 사라져 진행 상태를 버립니다 (초기화된 것으로 보임)")
+            self.state["batches"] = kept
 
     def _batch_of(self, pid):
         for b in self.state["batches"]:
@@ -411,6 +440,7 @@ def main():
             return
         ad.reset_demo(last)
         print(f"[MES] 시연 데이터를 지웠습니다. 이벤트 {last}번 이후부터 새로 처리합니다.")
+        print("      이 명령은 여기서 끝납니다. 어댑터를 새로 켜 주세요:  python src\\mes_adapter.py --batch 3")
         return
     print(f"[MES] 준비 완료: {ad.db}")
     if a.init_only:

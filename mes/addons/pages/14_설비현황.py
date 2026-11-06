@@ -62,8 +62,16 @@ events = oee.load_events(since)
 result = oee.compute_oee(events, ideal_override)
 
 if result is None:
-    st.info("아직 설비 이벤트가 없습니다. 트윈 서버와 어댑터(`mes_adapter.py`)를 켜고, 트윈 화면에서 연속동작을 눌러 주세요.")
+    st.info("선택한 기간에 설비 이벤트가 없습니다. 트윈 서버와 어댑터(`mes_adapter.py`)가 켜져 있는지 확인하고, "
+            "트윈 화면에서 연속동작을 눌러 주세요. 기간을 '전체'로 바꿔 보는 것도 방법입니다.")
 else:
+    age = (pd.Timestamp.now(tz="UTC") - result["t1"]).total_seconds()
+    last_kst = result["t1"].tz_convert("Asia/Seoul").strftime("%H:%M:%S")
+    st.caption(f"마지막 설비 이벤트: {last_kst} ({age:.0f}초 전)")
+    if age > 60:
+        alert_badge("마지막 이벤트가 1분 넘게 전입니다. 어댑터(`mes_adapter.py`)가 꺼졌거나 트윈이 멈춰 있을 수 있습니다.", "warning")
+    if result["cycles"] == 0 and result["total"] == 0:
+        alert_badge("선택한 기간에 완료된 사이클이 없어서 OEE를 계산할 수 없습니다 (0%로 표시됩니다).", "warning")
     pct = lambda x: f"{x * 100:.1f}%"
     st.subheader("OEE (설비종합효율)")
     kpi_row(

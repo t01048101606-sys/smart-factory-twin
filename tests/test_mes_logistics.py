@@ -171,7 +171,7 @@ print(f"MES 출하 관리 페이지 실행 확인: 출하 가능한 LOT {len(opt
 # 8) MES 공장 현황 대시보드(13_공장현황.py): 화면의 숫자를 MES 데이터에서 따로 계산한 값과 비교한다
 ad.log = lambda m: None
 ad.install_addons()
-for f in ("pages/13_공장현황.py", "pages/17_물류출하.py", "pages/16_협동로봇셀.py", "src/factory_dash.py", "src/lineoee.py"):
+for f in ("sections/overview.py", "sections/logistics.py", "sections/cobot.py", "src/factory_dash.py", "src/lineoee.py"):
     assert (mes / f).exists(), f
 
 
@@ -200,7 +200,7 @@ ui.show_dataframe = lambda df, msg="": (seen8.__setitem__("tables", seen8["table
 import streamlit as _st
 _st.plotly_chart = lambda *a, **k: seen8.__setitem__("plots", seen8["plots"] + 1)
 fake_cols.Col.clicks = {"▶ 라인 시작", "가공 라인 연속동작"}
-runpy.run_path(str(mes / "pages" / "13_공장현황.py"), run_name="__main__")
+runpy.run_path(str(mes / "sections" / "overview.py"), run_name="__main__")
 reqs13 = [(p, b) for m, p, b in twin_log if m == "POST"]
 assert reqs13 == [("/api/line/control", {"action": "start"}), ("/api/press", {"dev": "M101"})], reqs13      # 공장현황: 프레스 라인 시작 + 가공 라인 연속동작
 print("공장현황 페이지 버튼: 프레스 라인 시작과 가공 라인 연속동작이 트윈 서버로 전달됨")
@@ -280,7 +280,7 @@ print(f"대시보드 숫자 검증: 양품 {good_direct} / 불량 {scrap_direct}
 # 9) 물류 · 출하 페이지(17_물류출하.py): 재고, 출하, 입고 이력. 화면 숫자를 MES 데이터와 이벤트에서 따로 센 값과 비교한다
 seen8.update(kpi=None, plots=0, tables=0)
 fake_cols.Col.clicks = {"▶ 라인 시작", "입고 요청 (트럭 부르기)"}
-runpy.run_path(str(mes / "pages" / "17_물류출하.py"), run_name="__main__")
+runpy.run_path(str(mes / "sections" / "logistics.py"), run_name="__main__")
 reqs17 = [(p, b) for m, p, b in twin_log if m == "POST"]
 assert reqs17 == [("/api/line/control", {"action": "start"}), ("/api/logistics/request_inbound", {})], reqs17      # 물류출하: 라인 시작 + 입고 요청
 print("물류출하 페이지 버튼: 라인 시작과 입고 요청이 트윈 서버로 전달됨")

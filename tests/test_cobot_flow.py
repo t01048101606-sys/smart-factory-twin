@@ -68,7 +68,12 @@ print(f"로봇: 비전 검사 {len(insp)}건, 파렛트 {len(closed)}개 마감 
 # 3) 물류: 로봇이 마감한 파렛트가 그대로 보관, 출하된다. 불량은 출하되지 않는다
 stored = [x for e in by["pallet.stored"] for x in e["payload"]["pieces"]]
 shipped = [x for e in by["shipment.dispatched"] for p in e["payload"]["pallets"] for x in p["pieces"]]
-assert stored == good_ids and sorted(shipped) == sorted(good_ids), (len(stored), len(shipped), len(good_ids))
+# 출하 트럭은 파렛트 4개가 차야 출발하므로, 4의 배수 파렛트만 나가고 나머지는 도크에서 다음 트럭을 기다린다
+n_trucks = len(by["shipment.dispatched"])
+assert stored == good_ids and set(shipped) <= set(good_ids) and len(shipped) == len(set(shipped)), (len(stored), len(shipped), len(good_ids))
+assert all(len(e["payload"]["pallets"]) == 4 for e in by["shipment.dispatched"]) and n_trucks >= 1
+waiting = [p for p in logi.pallets]
+assert len(waiting) == len(closed) - 4 * n_trucks and len(waiting) < 4 and sum(len(p["pieces"]) for p in waiting) + len(shipped) == len(good_ids)
 assert not set(shipped) & set(scrap_ids)
 print(f"물류: 파렛트 {len(by['pallet.stored'])}개 보관, 출하 {len(by['shipment.dispatched'])}건 {len(shipped)}개 (전부 양품)")
 
@@ -85,7 +90,7 @@ db = mes / "sql" / "auto_parts.db"
 rows = lambda sql, p=(): [dict(r) for r in (lambda c: (setattr(c, "row_factory", sqlite3.Row), c.execute(sql, p).fetchall())[1])(sqlite3.connect(db))]
 ship_qty = rows("SELECT COALESCE(SUM(qty),0) q FROM shipment_item")[0]["q"]
 completed = rows("SELECT COUNT(*) n FROM unit_serial WHERE status='COMPLETED'")[0]["n"]
-assert completed == len(good_ids) and ship_qty == len(good_ids), (completed, ship_qty, len(good_ids))
+assert completed == len(good_ids) and ship_qty == len(shipped), (completed, ship_qty, len(shipped), len(good_ids))
 assert not ad.state.get("pending_shipments"), ad.state.get("pending_shipments")
 cnt = {r["line_id"]: r["n"] for r in rows("SELECT line_id, COUNT(*) n FROM machine_event GROUP BY line_id")}
 assert cnt[COBOT_ID] == len(insp) + len(placed) + len(closed), cnt
@@ -150,7 +155,7 @@ for name in [m for m in list(sys.modules) if m == "src" or m.startswith("src.")]
 import src.ui as ui   # noqa: E402
 ui.kpi_row = lambda items, columns=3: seen.__setitem__("kpi", {a: b for a, b, _ in items})
 ui.show_dataframe = lambda df, msg="": seen.__setitem__("tables", seen["tables"] + 1)
-runpy.run_path(str(mes / "pages" / "16_협동로봇셀.py"), run_name="__main__")
+runpy.run_path(str(mes / "sections" / "cobot.py"), run_name="__main__")
 kc = seen["kpi"]
 n_partial = sum(e["payload"]["partial"] for e in closed)
 print("협동로봇 페이지 KPI:", kc)

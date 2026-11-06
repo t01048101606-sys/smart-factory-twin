@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from logistics_sim import LogisticsSim, MATERIALS, CONSUME, PALLET_QTY, LAYOUT, T  # noqa: E402
+from logistics_sim import LogisticsSim, MATERIALS, CONSUME, PALLET_QTY, LAYOUT, T, IN_CARGO  # noqa: E402
 
 
 def feed(sim, n, start=0):
@@ -34,6 +34,19 @@ print(f"입고: 재고 하락 -> 트럭 도착 -> 하역 -> 이벤트 3건 {[r['
 sim.request_inbound(); sim.advance(1); assert sim.inbound["state"] == "arriving"     # 수동 입고 요청
 print("수동 입고 요청 확인")
 
+# 입고 트럭은 가득 싣고 도착해서 하역하는 만큼 비워지고, 빈 채로 떠난다
+sim = LogisticsSim(); sim.request_inbound(); sim.advance(0.1)
+assert sim.state()["inbound"]["load"] == 1.0 and sum(sim.state()["inbound"]["cargo"]) == 12
+sim.advance(T["in_arrive"] + 1.0); assert sim.state()["inbound"]["load"] == 1.0
+loads = []
+for _ in range(int((T["unload"]) / 0.25)):
+    sim.advance(0.25); loads.append(sim.state()["inbound"]["load"])
+assert loads == sorted(loads, reverse=True) and loads[-1] == 0.0 and min(loads) < 0.5, loads
+cg = sim.state()["inbound"]["cargo"]
+assert cg == sorted(cg, reverse=True)                                  # 뒷문 쪽 칸부터 비워진다 (앞 칸이 먼저 0이 되지 않는다)
+sim.advance(T["in_leave"] - 1); assert sim.state()["inbound"]["load"] == 0.0 and sum(sim.state()["inbound"]["cargo"]) == 0
+print("입고 트럭: 가득 싣고 도착 -> 하역하며 비워짐 -> 빈 차로 출발")
+
 # 2) 양품 5개 -> 파렛트 -> 창고 -> AGV -> 도크 -> 트럭 -> 출하. 불량은 파렛트에 들어가지 않는다
 sim = LogisticsSim(); ev = []
 sim.hook = lambda k, d: ev.append((k, d))
@@ -45,16 +58,23 @@ assert sim.pallets[0]["stage"] == "rack"
 stages = []
 for _ in range(int(120 / 0.5)):
     sim.advance(0.5); stages.append((sim.agv["state"], sim.out["state"]))
-disp = [d for k, d in ev if k == "dispatched"]
-assert disp == [] or True
+assert [d for k, d in ev if k == "dispatched"] == []                    # 파렛트 1개로는 트럭이 출발하지 않는다
 sim.flush(); sim.advance(120)                                          # 남은 양품 1개는 라인이 멈출 때 파렛트가 된다
+o = sim.state()["outbound"]
+assert [d for k, d in ev if k == "dispatched"] == [], "트럭이 가득 차지 않았는데 출발했다"
+assert o["state"] == "docked" and o["loaded"] == 2 and o["capacity"] == 4 and o["full"] == 0, o
+print("파렛트 2개만 실린 트럭은 도크에서 계속 기다린다 (적재 2/4)")
+for i in range(10):                                                    # 양품 10개 -> 파렛트 2개 더 -> 4개가 차면 출발
+    sim.add_exit(f"C-{i:04d}", "good")
+sim.advance(120)
 disp = [d for k, d in ev if k == "dispatched"]
 shipped = [pc for d in disp for pl in d["pallets"] for pc in pl["pieces"]]
 print(f"출하 이벤트 {len(disp)}건, 출하한 작업물 {len(shipped)}개")
-assert sorted(shipped) == ["B-0000", "B-0001", "B-0003", "B-0004", "B-0005", "B-0006"], shipped       # 양품만, 중복 없이
-assert sim.counts["shipped_pcs"] == 6 and sim.counts["shipped_pallets"] == 2 and not sim.pallets
-assert {s[0] for s in stages} >= {"loading", "moving", "unloading", "returning"} and {s[1] for s in stages} >= {"arriving", "docked", "leaving"}
-print("파렛트 -> AGV(적재, 이동, 하역, 복귀) -> 트럭(도착, 상차, 출발) 흐름 확인, 불량은 출하하지 않음")
+assert len(disp) == 1 and len(disp[0]["pallets"]) == 4, disp
+assert sorted(shipped)[:6] == ["B-0000", "B-0001", "B-0003", "B-0004", "B-0005", "B-0006"] and len(shipped) == 16, shipped       # 양품만, 중복 없이
+assert sim.counts["shipped_pcs"] == 16 and sim.counts["shipped_pallets"] == 4 and not sim.pallets
+assert {s[0] for s in stages} >= {"loading", "moving", "unloading", "returning"} and {s[1] for s in stages} >= {"arriving", "docked"}
+print("파렛트 -> AGV(적재, 이동, 하역, 복귀) -> 트럭(도착, 상차, 가득 차면 출발) 흐름 확인, 불량은 출하하지 않음")
 
 # 3) 한꺼번에 많이: 창고 6칸, 도크 3칸, 트럭 4칸이 차도 파렛트가 모두 결국 출하된다 (순서 유지)
 sim = LogisticsSim(); ev = []
@@ -64,9 +84,10 @@ assert len([p for p in sim.pallets if p["stage"] == "wait"]) == 3
 sim.advance(600)
 disp = [d for k, d in ev if k == "dispatched"]
 order = [pl["id"] for d in disp for pl in d["pallets"]]
-assert order == sorted(order) and len(order) == 9 and not sim.pallets, order
+assert order == sorted(order) and len(order) == 8 and len(sim.pallets) == 1, order       # 4개씩 가득 찬 트럭 2대가 출발하고, 1개는 다음 트럭에서 기다린다
+assert all(len(d["pallets"]) == 4 for d in disp)
 assert max(len(d["pallets"]) for d in disp) <= len(LAYOUT["cargo"])
-print(f"파렛트 9개 -> 출하 {len(disp)}회 (트럭 한 번에 최대 {max(len(d['pallets']) for d in disp)}개), 순서 유지")
+print(f"파렛트 9개 -> 8개 출하 {len(disp)}회 (트럭 한 번에 최대 {max(len(d['pallets']) for d in disp)}개), 순서 유지")
 
 # 4) 위치: 모든 파렛트 위치가 유한하고, 배속과 상태 값이 맞다
 sim = LogisticsSim(); sim.set_speed(4)
@@ -120,5 +141,20 @@ assert [m for m in _sc["parts"]["model"] if m["size"] == [1.1, 0.05, 1.1]]      
 assert _O["inbound_shutter"]["size"] == [0.12, 3.0, 2.6]
 _s3 = _all["telescopic_s3"]["anim"][0]
 assert _s3["to"] - 1.2 > LAYOUT["inbound_x"][1] - 3.4 and _s3["to"] + 1.2 < LAYOUT["inbound_x"][1] + 3.4        # 끝 구간이 트럭 적재함 안에 들어간다
+
+# 입고 트럭 짐칸: 12칸이 적재함 안에 들어가고, 서로 겹치지 않고, 신축 컨베이어가 지나가는 가운데 통로를 막지 않는다
+_tr = next(o for o in _sc["objects"] if o.get("id") == "inbound")
+_cg = [c for c in _tr["children"] if c["id"].startswith("inbound_cargo")]
+assert len(_cg) == 12 == IN_CARGO and all(c["anim"][0]["path"] == f"inbound.cargo.{i}" for i, c in enumerate(_cg))
+for c in _cg:
+    assert abs(c["pos"][0]) + c["size"][0] / 2 <= 3.4 - 0.04 and abs(c["pos"][2]) + c["size"][2] / 2 <= 1.11 - 0.04 + 1e-9, c["id"]    # 벽 안쪽
+    assert abs(c["pos"][1] - c["size"][1] / 2) < 1e-9                                                                                  # 바닥에 놓임
+    assert abs(c["pos"][2]) - c["size"][2] / 2 >= _all["telescopic_s3"]["size"][2] / 2 + 0.02, c["id"]                                                  # 컨베이어(폭 0.7) 통로를 비운다
+for a in _cg:
+    for b in _cg:
+        if a is not b:
+            assert abs(a["pos"][0] - b["pos"][0]) >= a["size"][0] - 1e-9 or abs(a["pos"][2] - b["pos"][2]) >= a["size"][2] - 1e-9
+assert _cg[0]["pos"][0] > 0 > _cg[-1]["pos"][0]                       # 0번 칸이 뒷문 쪽(+x, 트럭 뒤끝이 도크 쪽)
+print("입고 트럭 짐칸 12개: 적재함 안, 바닥에 놓임, 서로 겹치지 않음, 신축 컨베이어 통로 확보")
 print("3D 장면 기하: 도크 높이 1.08, 트럭 규격(탑차 6.8 x 2.3 x 2.3, 카고 5.5 x 2.28), 적재함 바닥 = 도크 바닥, 트럭 뒤끝 = 범퍼, 레벨러 립 걸침, 파렛트 T-11, 신축 컨베이어가 트럭 안에 들어감")
 print("\n테스트 통과")

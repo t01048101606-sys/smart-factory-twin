@@ -1281,7 +1281,8 @@
       2.25,
       0
      ],
-     "color": "#e7ecf2"
+     "color": "#e7ecf2",
+     "opacity": 0.3
     },
     {
      "id": "inbound_wall_l",
@@ -1296,7 +1297,8 @@
       1.15,
       -1.11
      ],
-     "color": "#e7ecf2"
+     "color": "#e7ecf2",
+     "opacity": 0.3
     },
     {
      "id": "inbound_wall_r",
@@ -1311,7 +1313,8 @@
       1.15,
       1.11
      ],
-     "color": "#e7ecf2"
+     "color": "#e7ecf2",
+     "opacity": 0.3
     },
     {
      "id": "inbound_wall_front",
@@ -1327,6 +1330,258 @@
       0
      ],
      "color": "#e7ecf2"
+    },
+    {
+     "id": "inbound_cargo0",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      2.85,
+      0.45,
+      -0.72
+     ],
+     "color": "#c9a76a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.0"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo1",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      2.85,
+      0.45,
+      0.72
+     ],
+     "color": "#b8935a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.1"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo2",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      1.8,
+      0.45,
+      -0.72
+     ],
+     "color": "#b8935a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.2"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo3",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      1.8,
+      0.45,
+      0.72
+     ],
+     "color": "#c9a76a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.3"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo4",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      0.75,
+      0.45,
+      -0.72
+     ],
+     "color": "#c9a76a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.4"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo5",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      0.75,
+      0.45,
+      0.72
+     ],
+     "color": "#b8935a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.5"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo6",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      -0.30000000000000027,
+      0.45,
+      -0.72
+     ],
+     "color": "#b8935a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.6"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo7",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      -0.30000000000000027,
+      0.45,
+      0.72
+     ],
+     "color": "#c9a76a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.7"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo8",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      -1.35,
+      0.45,
+      -0.72
+     ],
+     "color": "#c9a76a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.8"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo9",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      -1.35,
+      0.45,
+      0.72
+     ],
+     "color": "#b8935a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.9"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo10",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      -2.4,
+      0.45,
+      -0.72
+     ],
+     "color": "#b8935a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.10"
+      }
+     ]
+    },
+    {
+     "id": "inbound_cargo11",
+     "shape": "box",
+     "size": [
+      0.9,
+      0.9,
+      0.65
+     ],
+     "pos": [
+      -2.4,
+      0.45,
+      0.72
+     ],
+     "color": "#c9a76a",
+     "anim": [
+      {
+       "prop": "visible",
+       "path": "inbound.cargo.11"
+      }
+     ]
     },
     {
      "id": "inbound_door-1.15",

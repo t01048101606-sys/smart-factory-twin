@@ -13,7 +13,7 @@ setup_page("가공 라인")
 require_role("ADMIN", "OPERATOR", "INSPECTOR")
 mode = terms.mode_selector(st)   # 사이드바: 현장 용어 / 장비 원명칭
 T = lambda k: terms.t(k, mode)
-st.title("가공 라인 (PLC)")
+st.header("가공 라인 (PLC)")
 st.caption("PLC 트윈이 보내는 설비 이벤트(machine_event)로 가동 상태와 OEE를 계산하고, 사이클 시간으로 설비 이상을 감지합니다. "
            "AI는 판정과 경보만 내고, 설비를 멈출지는 PLC가 판단합니다.")
 

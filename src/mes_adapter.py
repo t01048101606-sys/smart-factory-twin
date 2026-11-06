@@ -48,7 +48,8 @@ FINAL_STEPS = {"bin_metal", "end_nonmetal"}
 BACKUP_ON_OVERWRITE = set()    # 이미 MES에 있는 파일을 대체하는 추가 파일 (지금은 없음)
 # 새 페이지로 합쳐져서 없어진 페이지. 설치할 때 MES 폴더에서 지운다 (이전 버전에서 설치한 것, MES 원본의 현장모니터링).
 # MES 원본의 13_현장모니터링.py 는 지우기 전에 .orig 로 백업한다 (원본은 센서 테이블 구조가 달라 어차피 열리지 않았다).
-OBSOLETE_PAGES = ("pages/13_현장모니터링.py", "pages/14_설비현황.py", "pages/15_공정3D.py", "pages/16_프레스라인.py", "pages/17_공장현황.py")
+OBSOLETE_PAGES = ("pages/13_현장모니터링.py", "pages/14_설비현황.py", "pages/15_공정3D.py", "pages/16_프레스라인.py", "pages/17_공장현황.py",
+                  "pages/13_공장현황.py", "pages/14_가공라인.py", "pages/15_프레스라인.py", "pages/16_협동로봇셀.py", "pages/17_물류출하.py")   # 스마트 팩토리 현황 아래 sections/ 로 들어간 것
 BACKUP_BEFORE_REMOVE = {"pages/13_현장모니터링.py"}
 
 

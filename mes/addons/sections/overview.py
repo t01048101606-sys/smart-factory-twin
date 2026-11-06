@@ -12,7 +12,7 @@ from src.ui import alert_badge, kpi_row, require_role, setup_page, show_datafram
 
 setup_page("공장 현황")
 require_role("ADMIN", "OPERATOR", "INSPECTOR")
-st.title("스마트 팩토리 현황")
+st.header("종합 현황")
 st.caption("가공 라인, 프레스 · 용접 · 도장 라인, 물류 · 출하 구역을 한 화면에서 봅니다. 숫자는 MES 기록(LOT, 시리얼, 검사, 출하)과 설비 이벤트에서 계산합니다.")
 
 c1, c2 = st.columns([3, 1])

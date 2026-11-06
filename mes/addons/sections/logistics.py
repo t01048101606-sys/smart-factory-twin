@@ -12,7 +12,7 @@ from src.ui import alert_badge, kpi_row, require_role, setup_page, show_datafram
 
 setup_page("물류 · 출하")
 require_role("ADMIN", "OPERATOR", "INSPECTOR")
-st.title("물류 · 출하 구역")
+st.header("물류 · 출하 구역")
 st.caption("자재 입고, 자재 창고, 완제품 파렛트 보관, AGV 운반, 출하 트럭까지 물류의 흐름을 봅니다. 입고는 MES 원자재 입고로, 출하는 MES 출하 관리로 등록됩니다.")
 
 c1, c2 = st.columns([3, 1])

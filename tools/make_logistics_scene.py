@@ -134,9 +134,14 @@ def truck(tag, kind, s, z, x_from, x_to, moving_path, door_path, docked_path):
             w["anim"][0]["path"] = moving_path
             ch.append(w)
     if kind == "box":                                         # 5톤 탑차: 적재함 6.8 x 2.3 x 2.3 (뒷문 쪽이 열려 있고 양쪽 문이 열린다)
-        ch += [B(f"{tag}_floor", [6.8, 0.12, 2.3], [0, -0.06, 0], "#cfd5dc"), B(f"{tag}_ceiling", [6.8, 0.1, 2.3], [0, 2.25, 0], WHITE),
-               B(f"{tag}_wall_l", [6.8, 2.3, 0.08], [0, 1.15, -1.11], WHITE), B(f"{tag}_wall_r", [6.8, 2.3, 0.08], [0, 1.15, 1.11], WHITE),
+        ch += [B(f"{tag}_floor", [6.8, 0.12, 2.3], [0, -0.06, 0], "#cfd5dc"), B(f"{tag}_ceiling", [6.8, 0.1, 2.3], [0, 2.25, 0], WHITE, opacity=0.3),
+               B(f"{tag}_wall_l", [6.8, 2.3, 0.08], [0, 1.15, -1.11], WHITE, opacity=0.3), B(f"{tag}_wall_r", [6.8, 2.3, 0.08], [0, 1.15, 1.11], WHITE, opacity=0.3),
                B(f"{tag}_wall_front", [0.08, 2.3, 2.3], [X(3.36), 1.15, 0], WHITE)]
+        # 짐: 6열 x 2줄 (0.9m 상자, 가운데 0.8m 통로로 신축 컨베이어가 들어온다). 뒷문(트럭 로컬 x=-3.4 쪽) 칸부터 비워진다 (inbound.cargo.i = 1 이면 보인다)
+        for i in range(12):
+            col, row = i // 2, i % 2
+            ch.append(B(f"{tag}_cargo{i}", [0.9, 0.9, 0.65], [X(-2.85 + col * 1.05), 0.45, -0.72 + row * 1.44], "#c9a76a" if (col + row) % 2 == 0 else "#b8935a",
+                        anim=[{"prop": "visible", "path": f"inbound.cargo.{i}"}]))
         for zz, sign in ((-1.15, -s), (1.15, s)):             # 뒷문: 바깥쪽(뒤)으로 약 100도 열린다
             ch.append(G(f"{tag}_door{zz:+.2f}", [X(-3.4), 1.15, zz], [B(f"{tag}_door_panel{zz:+.2f}", [0.06, 2.2, 1.12], [0, 0, -zz / abs(zz) * 0.56], "#dfe5ec")],
                         anim=[{"prop": "rotate", "axis": "y", "path": door_path, "scale": sign * 1.75}]))

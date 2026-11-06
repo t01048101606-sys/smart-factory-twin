@@ -11,7 +11,7 @@ from src.ui import alert_badge, kpi_row, require_role, setup_page, show_datafram
 
 setup_page("협동로봇 셀")
 require_role("ADMIN", "OPERATOR", "INSPECTOR")
-st.title("협동로봇 팔레타이징 셀")
+st.header("협동로봇 팔레타이징 셀")
 st.caption("프레스 · 용접 · 도장 라인 끝에서 협동로봇이 워크를 비전으로 검사하고, 양품은 파렛트에 5개씩 쌓고, 불량은 NG 수납함에 넣습니다. "
            "파렛트가 차면 물류 · 출하 구역으로 넘어갑니다.")
 

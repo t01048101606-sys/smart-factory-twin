@@ -27,13 +27,15 @@ ad.init_db(); ad.seed_master()
 for e in T.ev:
     ad.handle(e)
 ad.install_addons()
-page = mes / "pages" / "14_가공라인.py"
+page = mes / "sections" / "machining.py"
 assert page.exists() and (mes / "src" / "oee.py").exists()
 OLD = ("13_현장모니터링", "14_설비현황", "15_공정3D", "16_프레스라인", "17_공장현황")
-NEW = ("13_공장현황", "14_가공라인", "15_프레스라인", "16_협동로봇셀", "17_물류출하")
-assert not any((mes / "pages" / f"{n}.py").exists() for n in OLD), "합쳐져서 없어진 옛 페이지가 지워져야 합니다"
-assert all((mes / "pages" / f"{n}.py").exists() for n in NEW)
-print("페이지 정리: 옛 페이지 5개 삭제, 새 페이지 5개 설치:", ", ".join(NEW))
+NEW = ("sections/overview", "sections/machining", "sections/press", "sections/cobot", "sections/logistics")
+GONE = ("13_공장현황", "14_가공라인", "15_프레스라인", "16_협동로봇셀", "17_물류출하")
+assert not any((mes / "pages" / f"{n}.py").exists() for n in OLD + GONE), "합쳐져서 없어진 옛 페이지가 지워져야 합니다"
+assert all((mes / f"{n}.py").exists() for n in NEW) and (mes / "pages" / "13_스마트팩토리현황.py").exists()
+assert sorted(p.name for p in (mes / "pages").glob("1[3-9]_*.py")) == ["13_스마트팩토리현황.py"], "13번 이후 사이드바 항목은 스마트 팩토리 현황 하나뿐이어야 합니다"
+print("페이지 정리: 옛 페이지 삭제, 스마트 팩토리 현황 1개 + 하위 화면 5개 설치:", ", ".join(NEW))
 
 # ---- 흉내 내는 streamlit / plotly
 calls = {"kpi": {}, "iframes": [], "dataframes": 0, "reruns": 0, "radio": 0, "hide": False}

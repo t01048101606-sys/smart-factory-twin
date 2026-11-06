@@ -69,7 +69,7 @@ streamlit run app.py
 python src\mes_adapter.py --install-addons      # pages/14_가공라인.py 등 라인별 페이지, src/oee.py 를 MES 폴더에 복사
 ```
 
-MES 화면(Streamlit)을 새로고침하면 왼쪽 메뉴에 **공장현황, 가공라인, 프레스라인, 협동로봇셀, 물류출하** 페이지가 생깁니다 (구성은 `mes_pages.md`).
+MES 화면(Streamlit)을 새로고침하면 왼쪽 메뉴에 **스마트 팩토리 현황** 페이지가 생기고, 그 안의 선택 막대로 종합 · 가공 라인 · 프레스 라인 · 협동로봇 셀 · 물류 출하를 전환합니다 (구성은 `mes_pages.md`).
 
 - 위쪽: 트윈 화면(iframe). 트윈 서버(`server.py`)가 켜져 있어야 보입니다. 보기 전용(조작 패널 숨김) 선택 가능.
 - OEE = 가용률 x 성능률 x 품질률

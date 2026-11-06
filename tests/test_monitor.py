@@ -92,7 +92,7 @@ page13, bak13 = mes / "pages" / "13_현장모니터링.py", mes / "pages" / "13_
 if bak13.exists():
     shutil.move(str(bak13), str(page13))
 for extra in ("pages/13_공장현황.py", "pages/14_설비현황.py", "pages/14_가공라인.py", "pages/15_공정3D.py", "pages/15_프레스라인.py", "pages/16_프레스라인.py",
-              "pages/16_협동로봇셀.py", "pages/17_공장현황.py", "pages/17_물류출하.py", "src/oee.py", "src/monitor.py"):
+              "pages/16_협동로봇셀.py", "pages/17_공장현황.py", "pages/17_물류출하.py", "pages/13_스마트팩토리현황.py", "sections/machining.py", "src/oee.py", "src/monitor.py"):
     (mes / extra).unlink(missing_ok=True)
 ad = MesAdapter(mes, batch=4, today=lambda: date(2026, 11, 6), log=lambda m: None)
 ad.init_db(); ad.seed_master()
@@ -106,7 +106,7 @@ ad.install_addons()
 bak = mes / "pages" / "13_현장모니터링.py.orig"
 assert bak.exists() and bak.read_text(encoding="utf-8") == orig_page, "원래 현장모니터링 페이지가 백업되어야 합니다"
 assert not (mes / "pages" / "13_현장모니터링.py").exists() and (mes / "src" / "monitor.py").exists()      # 원본은 백업 후 지워지고, 가공 라인 페이지가 대신한다
-assert (mes / "pages" / "14_가공라인.py").exists()
+assert (mes / "pages" / "13_스마트팩토리현황.py").exists() and (mes / "sections" / "machining.py").exists()
 ad.install_addons()                                   # 두 번째 설치에서도 원본 백업을 덮어쓰지 않는다
 assert bak.read_text(encoding="utf-8") == orig_page
 assert sum("원본 백업" in l for l in logs) == 1
@@ -145,7 +145,7 @@ if str(mes) in sys.path:
 sys.path.insert(0, str(mes))
 import src.ui as ui  # noqa: E402
 ui.kpi_row = lambda items, columns=3: calls["kpi"].update({a: b for a, b, _ in items})      # 가공 라인 페이지는 KPI 를 OEE 탭과 AI 탭에서 각각 낸다
-runpy.run_path(str(mes / "pages" / "14_가공라인.py"), run_name="__main__")
+runpy.run_path(str(mes / "sections" / "machining.py"), run_name="__main__")
 
 print("KPI:", calls["kpi"], "| 그래프", calls["plots"], "개, 표", calls["dataframes"], "개, iframe", calls["iframe"])
 assert calls["kpi"]["AI 상태"] == "정상" and calls["kpi"]["활성 경보"] == "0 건"   # 마지막에 정상으로 돌아와 있다

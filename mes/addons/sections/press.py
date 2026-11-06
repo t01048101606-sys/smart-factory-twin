@@ -13,7 +13,7 @@ LINE_ID = "LINE-PRESS-WELD-PAINT-01"
 
 setup_page("프레스 · 용접 · 도장 라인")
 require_role("ADMIN", "OPERATOR", "INSPECTOR")
-st.title("프레스 · 용접 · 도장 라인 현황")
+st.header("프레스 · 용접 · 도장 라인 현황")
 st.caption("라인 시뮬레이터의 설비 이벤트로 OEE와 공정별 가동 상태를 계산하고, 작업지시, LOT, 검사는 MES 기록과 이어서 봅니다.")
 
 col_a, col_b = st.columns([3, 1])

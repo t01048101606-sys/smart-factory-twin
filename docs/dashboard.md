@@ -1,6 +1,6 @@
 # MES 공장 현황 대시보드
 
-MES의 **공장현황** 페이지(공장 전체를 한 번에 보는 맨 앞 페이지, 전체 구성은 `mes_pages.md`)(`mes/addons/pages/13_공장현황.py`)입니다. 가공 라인, 프레스 · 용접 · 도장 라인, 물류 · 출하 구역을 한 페이지에서 봅니다.
+MES의 **스마트 팩토리 현황 > 종합** 화면(전체 구성은 `mes_pages.md`)(`mes/addons/sections/overview.py`)입니다. 가공 라인, 프레스 · 용접 · 도장 라인, 물류 · 출하 구역을 한 페이지에서 봅니다.
 계산은 `mes/addons/src/factory_dash.py`에 있고, 화면과 분리해서 숫자를 시험으로 검증합니다 (`tests/test_mes_logistics.py` 8번 구간).
 설치: `python src\mes_adapter.py --install-addons`
 

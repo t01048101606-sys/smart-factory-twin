@@ -3,7 +3,8 @@
 입고: 자재(냉연강판, 볼트, 도료) 재고가 발주점 아래로 내려가면 입고 트럭이 와서 하역한다 (lot.received).
       재고는 프레스 라인의 공정 완료 이벤트로 줄어든다 (MES BOM 과 같은 단위당 수량).
 출하: 프레스 라인의 양품 5개가 모이면 파렛트가 되어 완제품 창고에 쌓이고, AGV가 출하 도크로 옮기고,
-      트럭이 싣고 출발한다 (shipment.dispatched). 불량(scrap)은 불량 상자에 남고 출하되지 않는다.
+      트럭이 싣고 출발한다 (shipment.dispatched). 출하 트럭은 적재함이 가득 차야(파렛트 4개) 출발한다.
+      입고 트럭은 짐을 가득 싣고 도착해서 하역하는 만큼 비워지고, 빈 채로 떠난다. 불량(scrap)은 불량 상자에 남고 출하되지 않는다.
 
 위치 상수(LAYOUT)는 3D 장면(tools/make_logistics_scene.py)과 같다. state()는 3D 화면이 그대로 읽는다.
 """
@@ -27,8 +28,9 @@ MATERIALS = {
 }
 CONSUME = {"press": ("steel", 0.5), "weld": ("bolt", 4.0), "paint": ("paint", 0.05)}   # 공정 한 번 완료할 때 소비 (MES BOM 과 같음)
 PALLET_QTY = 5
+IN_CARGO = 12                         # 입고 트럭 적재함의 짐 칸 수 (6열 x 2줄, 3D 장면과 같다)
 T = {"in_arrive": 8.0, "unload": 6.0, "in_leave": 6.0, "agv_load": 2.0, "agv_move": 6.0, "agv_unload": 2.0, "agv_return": 6.0,
-     "out_arrive": 8.0, "to_truck": 3.0, "out_wait": 20.0, "out_leave": 8.0}
+     "out_arrive": 8.0, "to_truck": 3.0, "out_leave": 8.0}
 lerp = lambda a, b, t: a + (b - a) * t
 
 
@@ -199,9 +201,7 @@ class LogisticsSim:
                 nxt["stage"], nxt["prog"], nxt["tslot"], nxt["dslot"] = "to_truck", 0.0, slot, nxt["slot"]   # 도크 칸은 그대로 기억한다
                 return
             loaded = len([p for p in self.pallets if p["stage"] == "truck"])
-            o["wait"] += dt
-            busy = bool(docked) or self.agv["state"] in ("loading", "moving", "unloading") or any(p["stage"] == "rack" for p in self.pallets)
-            if loaded and (loaded >= len(LAYOUT["cargo"]) or (not busy and o["wait"] >= T["out_wait"])):
+            if loaded >= len(LAYOUT["cargo"]):            # 가득 차야 출발한다. 모자라면 다음 파렛트가 올 때까지 도크에서 기다린다
                 ps = [p for p in self.pallets if p["stage"] == "truck"]
                 self.counts["shipped_pallets"] += len(ps)
                 self.counts["shipped_pcs"] += sum(len(p["pieces"]) for p in ps)
@@ -267,13 +267,25 @@ class LogisticsSim:
             ph = ((it - 1.5) * 0.2 + i / 4.0) % 1.0
             flowing = ist == "unloading" and boom > 0.999
             cartons.append({"p": round(ph, 3) if flowing else 0.0, "on": bool(flowing and 0.03 < ph < 0.97)})
+        # 입고 트럭 적재량: 도착할 때 가득(1.0), 신축 컨베이어가 펴진 뒤 박스가 흐르는 동안 줄어서 하역이 끝나면 0. 뒷문 쪽 적재 칸부터 비워진다
+        if ist in ("arriving",):
+            load = 1.0
+        elif ist == "unloading":
+            load = max(0.0, min(1.0, 1.0 - (it - 1.5) / (T["unload"] - 3.0)))
+        else:
+            load = 0.0
+        n_in = math.ceil(load * IN_CARGO - 1e-9)
+        cap = len(LAYOUT["cargo"])
+        loaded_out = len([p for p in self.pallets if p["stage"] == "truck"]) if ost in ("docked", "leaving") else 0
         carrying = any(p["stage"] in ("agv_load", "agv", "agv_unload") for p in self.pallets)
         return {
             "time": round(self.time, 1), "speed": self.speed, "stock": stock,
             "inbound": {"state": ist, "truck": round(min(1.0, max(0.0, ipos)), 3), "moving": 1 if ist in ("arriving", "leaving") else 0,
-                        "docked": 1 if ist == "unloading" else 0, "door": 1 if ist == "unloading" else 0, "boom": round(boom, 3), "cartons": cartons},
+                        "docked": 1 if ist == "unloading" else 0, "door": 1 if ist == "unloading" else 0, "boom": round(boom, 3), "cartons": cartons,
+                        "load": round(load, 3), "cargo": [1 if i < n_in else 0 for i in range(IN_CARGO)]},
             "agv": {"state": ast, "pos": round(apos, 3), "moving": 1 if ast in ("moving", "returning") else 0, "lift": 1 if carrying else 0},
-            "outbound": {"state": ost, "truck": round(tpos, 3), "moving": 1 if ost in ("arriving", "leaving") else 0, "docked": 1 if ost == "docked" else 0},
+            "outbound": {"state": ost, "truck": round(tpos, 3), "moving": 1 if ost in ("arriving", "leaving") else 0, "docked": 1 if ost == "docked" else 0,
+                         "loaded": loaded_out, "capacity": cap, "full": 1 if loaded_out >= cap else 0},
             "parts": parts, "counts": {**self.counts, "rack": rack, "open": len(self.open_pieces)},
             "kpi": {"low_stock": [k for k, v in stock.items() if v["level"] == "low"]},
         }

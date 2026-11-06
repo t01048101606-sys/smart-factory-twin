@@ -19,6 +19,7 @@ from workpiece import Tracker
 from events import EventEmitter
 from anomaly import CycleAnomalyDetector
 from plc_sim import FAULTS
+from line_sim import LineSim, FAULTS as LINE_FAULTS
 
 BASE = Path(__file__).resolve().parent
 ARG = sys.argv[1] if len(sys.argv) > 1 else str(BASE.parent / "plc" / "1102")
@@ -61,17 +62,83 @@ def index():
 THREE_VERSION = "0.170.0"
 
 
-@app.get("/3d")
-def twin_3d():
-    """3D 트윈 화면. static/vendor 에 three.js 가 내려받아져 있으면 그것을 쓰고(오프라인 가능), 없으면 CDN에서 불러온다."""
+def _page_3d(name):
+    """3D 화면 HTML. static/vendor 에 three.js 가 내려받아져 있으면 그것을 쓰고(오프라인 가능), 없으면 CDN에서 불러온다."""
     vendor = Path(app.static_folder) / "vendor"
     if (vendor / "three.module.js").exists() and (vendor / "addons" / "controls" / "OrbitControls.js").exists():
         imports = {"three": "/static/vendor/three.module.js", "three/addons/": "/static/vendor/addons/"}
     else:
         cdn = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}"
         imports = {"three": f"{cdn}/build/three.module.js", "three/addons/": f"{cdn}/examples/jsm/"}
-    html = (Path(app.static_folder) / "twin3d.html").read_text(encoding="utf-8")
+    html = (Path(app.static_folder) / name).read_text(encoding="utf-8")
     return html.replace("__IMPORTMAP__", json.dumps({"imports": imports}))
+
+
+@app.get("/3d")
+def twin_3d():
+    return _page_3d("twin3d.html")
+
+
+# ---- 프레스 -> 용접 -> 도장 라인 (PLC 없이 파이썬 시뮬레이터, 장면은 JSON 으로 정의)
+line = LineSim()
+line_lock = threading.Lock()
+SCENE_FILE = BASE / "scenes" / "press_weld_paint.json"
+
+
+def line_loop():
+    last = time.time()
+    while True:
+        time.sleep(0.05)
+        now = time.time()
+        with line_lock:
+            line.advance(now - last)
+        last = now
+
+
+@app.get("/3d/line")
+def line_3d():
+    return _page_3d("linescene.html")
+
+
+@app.get("/api/line/scene")
+def line_scene():
+    return jsonify(json.loads(SCENE_FILE.read_text(encoding="utf-8")))
+
+
+@app.get("/api/line/state")
+def line_state():
+    with line_lock:
+        return jsonify(line.state())
+
+
+@app.post("/api/line/control")
+def line_control():
+    action = (request.get_json(silent=True) or {}).get("action")
+    if action not in ("start", "stop", "reset"):
+        return jsonify(error="start, stop, reset 중 하나"), 400
+    with line_lock:
+        getattr(line, action)()
+    return jsonify(ok=True)
+
+
+@app.post("/api/line/fault")
+def line_fault():
+    mode = (request.get_json(silent=True) or {}).get("mode")
+    if mode not in LINE_FAULTS:
+        return jsonify(error=f"{', '.join(LINE_FAULTS)} 중 하나"), 400
+    with line_lock:
+        line.set_fault(mode)
+    return jsonify(ok=True)
+
+
+@app.post("/api/line/speed")
+def line_speed():
+    value = (request.get_json(silent=True) or {}).get("value")
+    if not isinstance(value, (int, float)) or not 0.5 <= value <= 8:
+        return jsonify(error="0.5~8 사이의 숫자"), 400
+    with line_lock:
+        line.set_speed(value)
+    return jsonify(ok=True)
 
 
 @app.get("/api/state")
@@ -152,4 +219,5 @@ def get_events():
 
 if __name__ == "__main__":
     threading.Thread(target=scan_loop, daemon=True).start()
+    threading.Thread(target=line_loop, daemon=True).start()
     app.run(host="127.0.0.1", port=5001, debug=False)

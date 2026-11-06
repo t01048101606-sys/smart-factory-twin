@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3D 공정 뷰어</title>
+<style>
+  :root { --bg:#111418; --panel:rgba(27,32,39,.88); --line:#2c3440; --txt:#e6e9ee; --mut:#8a94a3; --blue:#2f9bff; --red:#ef4b4b; --grn:#33c27f; --yel:#f2c230; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--txt); font-family:system-ui,"Malgun Gothic",sans-serif; overflow:hidden; }
+  canvas { display:block; }
+  .box { position:absolute; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px; }
+  #hud { top:10px; left:10px; min-width:230px; }
+  #hud h1 { font-size:15px; margin:0 0 6px; }
+  #hud a { color:var(--blue); font-size:12px; text-decoration:none; margin-left:6px; }
+  .cnt { display:flex; justify-content:space-between; padding:2px 0; gap:14px; }
+  .cnt b { font-variant-numeric:tabular-nums; }
+  .sep { border-top:1px solid var(--line); margin:6px 0; }
+  .st { display:flex; justify-content:space-between; padding:1px 0; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; background:#7a8696; }
+  #ctrl { left:10px; bottom:10px; right:10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  button, select { background:#232b35; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 11px; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--blue); }
+  label { color:var(--mut); font-size:12px; }
+  #msg { top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; max-width:420px; font-size:14px; line-height:1.5; }
+  body.embed #hud h1 { display:none; }
+  body.view #ctrl { display:none; }
+</style>
+<script type="importmap">__IMPORTMAP__</script>
+</head>
+<body>
+<div id="msg" class="box">3D 화면을 불러오는 중입니다...</div>
+<div id="hud" class="box">
+  <h1><span id="title">3D 공정 뷰어</span><a href="/3d">가공 라인 보기</a></h1>
+  <div class="cnt"><span>투입</span><b id="c_in">0</b></div>
+  <div class="cnt"><span>양품</span><b id="c_good">0</b></div>
+  <div class="cnt"><span>불량</span><b id="c_scrap">0</b></div>
+  <div class="cnt"><span>처리량</span><b id="k_tput">-</b></div>
+  <div class="cnt"><span>병목 공정</span><b id="k_bott">-</b></div>
+  <div class="sep"></div>
+  <div class="st"><span><i class="dot" id="d_press"></i>프레스</span><span id="u_press">-</span></div>
+  <div class="st"><span><i class="dot" id="d_weld"></i>용접</span><span id="u_weld">-</span></div>
+  <div class="st"><span><i class="dot" id="d_paint"></i>도장</span><span id="u_paint">-</span></div>
+  <div class="cnt" style="color:var(--mut);font-size:11px"><span>표시: 상태 (일하는 시간 / 막힘)</span></div>
+</div>
+<div id="ctrl" class="box">
+  <button data-act="start">시작</button>
+  <button data-act="stop">정지</button>
+  <button data-act="reset">리셋</button>
+  <label>배속 <select id="speed"><option value="1">x1</option><option value="2">x2</option><option value="4">x4</option><option value="8">x8</option></select></label>
+  <label>결함 주입 <select id="fault"><option value="none">정상</option><option value="weld_slow">용접 속도 저하</option><option value="press_down">프레스 정지</option><option value="paint_down">도장 정지</option></select></label>
+  <span style="margin-left:auto"></span>
+  <label>시점</label>
+  <button data-view="diag">대각선</button><button data-view="front">정면</button><button data-view="top">위에서</button><button data-view="side">옆에서</button>
+  <label><input type="checkbox" id="labels" checked> 이름표</label>
+</div>
+<script>
+  function show3dError() {
+    const m = document.getElementById('msg');
+    m.style.display = 'block';
+    m.innerHTML = '3D 라이브러리(three.js)를 불러오지 못했습니다.<br>인터넷 연결을 확인하거나, 인터넷이 되는 곳에서 <code>python tools\\fetch_three.py</code>를 한 번 실행하세요.';
+  }
+  window.addEventListener('error', () => { if (!window.__twin3dReady) show3dError(); });
+  setTimeout(() => { if (!window.__twin3dReady) show3dError(); }, 10000);
+</script>
+<script type="module" src="/static/linescene.js" onerror="show3dError()"></script>
+</body>
+</html>

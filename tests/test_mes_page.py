@@ -77,4 +77,12 @@ q = float(kpi["품질률"].rstrip("%"))
 assert 40 <= q <= 60, f"번갈아 투입이므로 품질률은 50% 안팎이어야 합니다: {q}"
 a, p, o = (float(kpi[k].rstrip("%")) for k in ("가용률", "성능률", "OEE"))
 assert abs(a * p * q / 10000 - o) < 0.2, (a, p, q, o)
+# ---- 공정 3D 페이지(15번): 공정 선택에 따라 iframe 주소가 바뀐다
+for pick, want in ((0, "http://localhost:5001/3d?embed=1"), (1, "http://localhost:5001/3d/line?embed=1")):
+    st.selectbox = lambda label, options, _p=pick, **k: options[_p]
+    calls["iframe"] = None
+    runpy.run_path(str(mes / "pages" / "15_공정3D.py"), run_name="__main__")
+    assert calls["iframe"][0] == want, (calls["iframe"], want)
+print("공정 3D 페이지: 가공 라인 / 프레스·용접·도장 라인 주소 확인")
+
 print("\n페이지 실행 테스트 통과")

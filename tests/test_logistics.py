@@ -84,4 +84,41 @@ print("위치/상태 값 범위 확인 (4배속)")
 
 # 5) 소비 상수는 MES BOM 과 같다
 assert CONSUME == {"press": ("steel", 0.5), "weld": ("bolt", 4.0), "paint": ("paint", 0.05)}
+
+# ---- 3D 장면의 기하: 실제 현장 규격과 시뮬레이터 위치 상수가 서로 맞는다 (docs/logistics_3d_reference.md)
+import json as _json
+from pathlib import Path as _P
+_sc = _json.loads((_P(__file__).resolve().parent.parent / "src" / "scenes" / "logistics.json").read_text(encoding="utf-8"))
+_O = {o["id"]: o for o in _sc["objects"] if o.get("id")}
+_walk = lambda objs: [c for o in objs for c in [o] + _walk(o.get("children", []))]
+_all = {o["id"]: o for o in _walk(_sc["objects"]) if o.get("id")}
+DOCK_H = 1.08                                          # 도크 높이 = 5톤 트럭 상면지상고 (현대 마이티 1,050~1,080mm)
+assert abs(_O["podium"]["size"][1] - DOCK_H) < 1e-9 and abs(_O["yard"]["pos"][1] + DOCK_H + 0.15) < 1e-9      # 건물 바닥은 마당보다 1.08m 높다
+# 트럭 규격: 입고 5톤 탑차 적재함 6.8 x 2.3 x 2.3, 출하 5톤 카고 적재함 5.5 x 2.28, 사이드 보드 0.4
+assert _all["inbound_floor"]["size"][:1] == [6.8] and _all["inbound_ceiling"]["pos"][1] + _all["inbound_ceiling"]["size"][1] / 2 == 2.3
+assert _all["inbound_wall_l"]["size"][:2] == [6.8, 2.3] and abs(2 * _all["inbound_wall_l"]["pos"][2]) + 0.08 - 2.3 < 0.01 + 0.0
+assert _all["outbound_bed"]["size"][0] == 5.5 and _all["outbound_bed"]["size"][2] == 2.28 and _all["outbound_board_l"]["size"][1] == 0.4
+# 적재함 바닥(y=0) = 도크 바닥(y=0): 파렛트가 높이 변화 없이 들어가고, 파렛트 아래면이 바닥에 닿는다
+assert _all["inbound_floor"]["pos"][1] + _all["inbound_floor"]["size"][1] / 2 == 0.0 and _all["outbound_bed"]["pos"][1] + _all["outbound_bed"]["size"][1] / 2 == 0.0
+for nm, grp in (("rack", LAYOUT["rack"]), ("dock", LAYOUT["dock"]), ("cargo", LAYOUT["cargo"])):
+    assert all(abs(p[1] - 0.3) < 1e-9 for p in grp), nm                        # 파렛트 중심 0.3 = 아래면 0 (파렛트 모델은 중심에서 -0.3 까지)
+_pm = min(m["pos"][1] - m["size"][1] / 2 for m in _sc["parts"]["model"])
+assert abs(_pm + 0.3) < 1e-9, _pm
+# 트럭 뒤끝이 도크 범퍼 바깥면에 닿는다 (입고: 적재함 6.8 의 절반 3.4, 출하: 5.5 의 절반 2.75)
+_bin = [o for k, o in _O.items() if k.startswith("inbound_bumper")][0]; _bout = [o for k, o in _O.items() if k.startswith("outbound_bumper")][0]
+assert abs((_bin["pos"][0] - _bin["size"][0] / 2) - (LAYOUT["inbound_x"][1] + 3.4)) < 1e-6
+assert abs((_bout["pos"][0] + _bout["size"][0] / 2) - (LAYOUT["out_x"][1] - 2.75)) < 1e-6
+# 도크 레벨러 립: 벽 바깥면에 힌지, 트럭 적재함 위에 0.1~0.4m 걸친다 (조사: 립 길이 16인치, 접촉 최소 4~6인치)
+_lin, _lout = _O["inbound_lip"], _O["outbound_lip"]
+assert 0.1 <= (LAYOUT["inbound_x"][1] + 3.4) - (_lin["pos"][0] - 0.45) <= 0.4 and 0.1 <= (_lout["pos"][0] + 0.45) - (LAYOUT["out_x"][1] - 2.75) <= 0.4
+# 출하 도크 칸은 레벨러 판 위, 트럭 안 파렛트 2개는 적재함 폭 2.28 안, 파렛트는 T-11 1.1 x 1.1
+_lv = _O["outbound_leveler"]
+assert all(_lv["pos"][0] - _lv["size"][0] / 2 + 0.55 <= d[0] <= _lv["pos"][0] + _lv["size"][0] / 2 - 0.55 for d in LAYOUT["dock"])
+assert all(abs(c[2]) + 0.55 <= 2.28 / 2 + 1e-9 for c in LAYOUT["cargo"]) and len({round(c[2], 2) for c in LAYOUT["cargo"]}) == 2
+assert [m for m in _sc["parts"]["model"] if m["size"] == [1.1, 0.05, 1.1]]            # 데크 1.1 x 1.1
+# 문 2.6 x 3.0 (8ft x 9~10ft 에 가깝다), 신축 컨베이어는 트럭 안쪽(뒤끝 안)까지 뻗는다
+assert _O["inbound_shutter"]["size"] == [0.12, 3.0, 2.6]
+_s3 = _all["telescopic_s3"]["anim"][0]
+assert _s3["to"] - 1.2 > LAYOUT["inbound_x"][1] - 3.4 and _s3["to"] + 1.2 < LAYOUT["inbound_x"][1] + 3.4        # 끝 구간이 트럭 적재함 안에 들어간다
+print("3D 장면 기하: 도크 높이 1.08, 트럭 규격(탑차 6.8 x 2.3 x 2.3, 카고 5.5 x 2.28), 적재함 바닥 = 도크 바닥, 트럭 뒤끝 = 범퍼, 레벨러 립 걸침, 파렛트 T-11, 신축 컨베이어가 트럭 안에 들어감")
 print("\n테스트 통과")

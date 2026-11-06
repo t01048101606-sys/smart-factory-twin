@@ -151,13 +151,13 @@ for e in ev:
 assert rows("SELECT COUNT(*) n FROM machine_event")[0]["n"] == n0
 print("재처리해도 중복 없음")
 
-# 6) MES 페이지(16_프레스라인.py)를 실제 DB 데이터로 끝까지 실행
+# 6) MES 페이지(15_프레스라인.py)를 실제 DB 데이터로 끝까지 실행
 import runpy
 import types
 from unittest.mock import MagicMock
 ad.log = lambda m: None
 ad.install_addons()
-for f in ("pages/16_프레스라인.py", "src/lineoee.py", "src/oee.py"):
+for f in ("pages/15_프레스라인.py", "src/lineoee.py", "src/oee.py"):
     assert (mes / f).exists(), f
 calls = {"kpi": None, "plots": 0, "dataframes": 0, "iframe": None}
 
@@ -174,6 +174,8 @@ class FakeSt(types.ModuleType):
     def dataframe(self, df, **k): calls["dataframes"] += 1
     def plotly_chart(self, fig, **k): calls["plots"] += 1
     def rerun(self): pass
+    def tabs(self, labels): return [MagicMock() for _ in labels]
+    def radio(self, label, options, **k): return options[0]
     def __getattr__(self, name): return MagicMock()
 
 
@@ -189,9 +191,10 @@ if str(mes) in sys.path:
     sys.path.remove(str(mes))
 sys.path.insert(0, str(mes))
 import src.ui as ui  # noqa: E402
-ui.kpi_row = lambda items, columns=3: calls.__setitem__("kpi", {a: b for a, b, _ in items})
+calls["kpi"] = {}
+ui.kpi_row = lambda items, columns=3: calls["kpi"].update({a: b for a, b, _ in items})
 import runpy as _r
-_r.run_path(str(mes / "pages" / "16_프레스라인.py"), run_name="__main__")
+_r.run_path(str(mes / "pages" / "15_프레스라인.py"), run_name="__main__")
 k = calls["kpi"]
 print("페이지 KPI:", k)
 assert k and all(x in k for x in ("OEE", "가용률", "성능률", "품질률", "처리량", "양품 / 불량"))
@@ -199,8 +202,9 @@ assert calls["plots"] == 1 and calls["dataframes"] >= 4 and calls["iframe"] == "
 pc = lambda x: float(x.rstrip("%"))
 assert abs(pc(k["가용률"]) * pc(k["성능률"]) * pc(k["품질률"]) / 10000 - pc(k["OEE"])) < 0.2
 # 가공 라인 페이지가 프레스 라인 이벤트에 영향받지 않는다 (라인 구분)
-_r.run_path(str(mes / "pages" / "14_설비현황.py"), run_name="__main__")
+calls["kpi"] = {}
+_r.run_path(str(mes / "pages" / "14_가공라인.py"), run_name="__main__")
 k2 = calls["kpi"]
 assert "판별한 워크" in k2, k2          # 기본은 현장 용어
-print("가공 라인 설비현황 페이지도 정상 (라인별로 이벤트를 구분해서 읽음):", {x: k2[x] for x in ("OEE", "판별한 워크")})
+print("가공 라인 페이지도 정상 (라인별로 이벤트를 구분해서 읽음):", {x: k2[x] for x in ("OEE", "판별한 워크")})
 print("\n테스트 통과")

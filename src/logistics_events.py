@@ -6,6 +6,7 @@
 """
 import threading
 
+from cobot_events import LINE_ID as COBOT_LINE_ID
 from line_events import LINE_ID as PRESS_LINE_ID
 
 LINE_ID = "LINE-LOGISTICS-01"
@@ -13,8 +14,9 @@ CUSTOMER = "현대파츠"
 
 
 class LogisticsEventBridge:
-    def __init__(self, emitter, sim, lock=None):
-        self.em, self.sim = emitter, sim
+    def __init__(self, emitter, sim, lock=None, from_cobot=False):
+        # from_cobot=True: 파렛트를 협동로봇 셀이 쌓아서 마감한 것(cobot.pallet_closed)으로 만든다. False: 프레스 라인 끝의 양품 5개를 바로 파렛트로 (셀이 없을 때)
+        self.em, self.sim, self.from_cobot = emitter, sim, from_cobot
         self.lock = lock or threading.RLock()
         self.pal = {}            # 시뮬레이터 파렛트 번호 -> 파렛트 번호표 (PL-20261106-0001)
         self.offset = 0.0
@@ -26,15 +28,20 @@ class LogisticsEventBridge:
 
     # 프레스 라인의 이벤트 -> 물류
     def on_event(self, e):
+        typ, p = e["type"], e["payload"]
+        if self.from_cobot and e.get("line_id") == COBOT_LINE_ID:
+            if typ == "cobot.pallet_closed":
+                with self.lock:
+                    self.sim.add_pallet(p["pieces"])
+            return
         if e.get("line_id") != PRESS_LINE_ID:
             return
-        typ, p = e["type"], e["payload"]
         with self.lock:
             if typ == "station.completed":
                 self.sim.consume(p["station"])
-            elif typ == "piece.exited":
+            elif not self.from_cobot and typ == "piece.exited":
                 self.sim.add_exit(e["piece_id"], p["result"])
-            elif typ == "machine.state" and p.get("state") == "stopped":
+            elif not self.from_cobot and typ == "machine.state" and p.get("state") == "stopped":
                 self.sim.flush()
 
     # 물류 -> 공통 이벤트 (시뮬레이터가 hook 으로 부른다)

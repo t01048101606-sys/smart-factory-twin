@@ -23,6 +23,8 @@ from line_sim import LineSim, FAULTS as LINE_FAULTS
 from line_events import LineEventBridge
 from machining_view import MachiningView
 from logistics_sim import LogisticsSim
+from cobot_sim import CobotSim
+from cobot_events import CobotEventBridge
 from logistics_events import LogisticsEventBridge
 
 BASE = Path(__file__).resolve().parent
@@ -105,7 +107,39 @@ def line_loop():
 # ---- 물류 · 출하 구역: 프레스 라인의 이벤트로 재고가 줄고 파렛트가 만들어진다 (logistics_events.py)
 logi = LogisticsSim()
 logi_lock = threading.RLock()
-logi_bridge = LogisticsEventBridge(events, logi, logi_lock)
+logi_bridge = LogisticsEventBridge(events, logi, logi_lock, from_cobot=True)   # 파렛트는 협동로봇이 쌓은 것
+
+# ---- 협동로봇 팔레타이징 셀: 프레스 라인 끝 -> 비전 검사 -> 양품은 파렛트, 불량은 NG 수납함 (cobot_events.py)
+cobot = CobotSim()
+cobot_lock = threading.RLock()
+cobot_bridge = CobotEventBridge(events, cobot, cobot_lock)
+
+
+def cobot_loop():
+    last = time.time()
+    while True:
+        time.sleep(0.05)
+        now = time.time()
+        with cobot_lock:
+            cobot.speed = line.speed         # 프레스 라인과 같은 배속
+            cobot.advance(now - last)
+        last = now
+
+
+@app.get("/api/cobot/state")
+def cobot_state():
+    with cobot_lock:
+        return jsonify(cobot.state())
+
+
+@app.post("/api/cobot/control")
+def cobot_control():
+    action = (request.get_json(silent=True) or {}).get("action")
+    if action != "flush":
+        return jsonify(error="flush(모자란 파렛트 마감)만 가능합니다"), 400
+    with cobot_lock:
+        cobot.request_flush()
+    return jsonify(ok=True)
 
 
 def logistics_loop():
@@ -138,7 +172,7 @@ def line_3d():
 
 
 # ---- 스마트 팩토리 통합 화면: 라인별 장면(JSON)을 위치만 달리해서 한 장면에 배치한다
-SCENES = {"machining": "machining.json", "press_weld_paint": "press_weld_paint.json", "logistics": "logistics.json"}
+SCENES = {"machining": "machining.json", "press_weld_paint": "press_weld_paint.json", "logistics": "logistics.json", "cobot": "cobot.json"}
 
 
 @app.get("/3d/factory")
@@ -166,7 +200,9 @@ def factory_state():
         p = line.state()
     with logi_lock:
         lg = logi.state()
-    return jsonify({"machining": m, "press": p, "logistics": lg})
+    with cobot_lock:
+        cb = cobot.state()
+    return jsonify({"machining": m, "press": p, "logistics": lg, "cobot": cb})
 
 
 @app.get("/api/line/scene")
@@ -302,4 +338,5 @@ if __name__ == "__main__":
     threading.Thread(target=scan_loop, daemon=True).start()
     threading.Thread(target=line_loop, daemon=True).start()
     threading.Thread(target=logistics_loop, daemon=True).start()
+    threading.Thread(target=cobot_loop, daemon=True).start()
     app.run(host="127.0.0.1", port=5001, debug=False)

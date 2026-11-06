@@ -27,7 +27,7 @@ except ImportError:                        # 트윈 저장소에서 바로 시�
 
     oee, lineoee = _load("oee"), _load("lineoee")
 
-MACHINING, PRESS, LOGISTICS = "LINE-MACHINING-01", "LINE-PRESS-WELD-PAINT-01", "LINE-LOGISTICS-01"
+MACHINING, PRESS, LOGISTICS, COBOT = "LINE-MACHINING-01", "LINE-PRESS-WELD-PAINT-01", "LINE-LOGISTICS-01", "LINE-COBOT-01"
 LOGISTICS_PRODUCT = "FG-BRKA"      # 물류 · 출하 구역이 출하하는 제품 (브라켓 A)
 STALE_S = 90                         # 이 시간 넘게 이벤트가 없으면 라인이 멈췄거나 연결이 끊긴 것으로 본다
 
@@ -130,7 +130,7 @@ def _last_state(ev: pd.DataFrame):
     return None if m.empty else m.iloc[-1]["payload"].get("state")
 
 
-def line_overview(ev_m: pd.DataFrame, ev_p: pd.DataFrame, ev_l: pd.DataFrame, now: pd.Timestamp | None = None):
+def line_overview(ev_m: pd.DataFrame, ev_p: pd.DataFrame, ev_l: pd.DataFrame, now: pd.Timestamp | None = None, ev_c: pd.DataFrame | None = None):
     """라인별 상태, OEE, 처리량. 반환: (표 DataFrame, 라인별 계산 결과 dict)"""
     now = now or pd.Timestamp.now(tz="UTC")
     pct = lambda x: f"{x * 100:.1f}%"
@@ -161,6 +161,17 @@ def line_overview(ev_m: pd.DataFrame, ev_p: pd.DataFrame, ev_l: pd.DataFrame, no
     rows.append({"라인": "물류 · 출하 구역", "상태": "연결 없음" if ev_l.empty else ("가동" if age(ev_l) <= 300 else f"대기 ({age(ev_l) / 60:.0f}분 전 활동)"),
                  "OEE": "-", "가용률": "-", "성능률": "-", "품질률": "-",
                  "처리": f"입고 {rec}회 · 파렛트 {pal}개 · 출하 {shp}회", "비고": "OEE 대신 입고와 출하 건수로 봅니다"})
+    if ev_c is not None:        # 협동로봇 팔레타이징 셀 (이벤트가 없으면 연결 없음)
+        insp = ev_c[ev_c["event_type"] == "vision.inspected"] if not ev_c.empty else ev_c
+        ng = int(insp["payload"].apply(lambda p: p.get("result") == "scrap").sum()) if len(insp) else 0
+        pal = int((ev_c["event_type"] == "cobot.pallet_closed").sum()) if not ev_c.empty else 0
+        cyc = ev_c[ev_c["event_type"] == "cobot.placed"]["payload"].apply(lambda p: p["cycle_s"]) if not ev_c.empty else []
+        avg = float(sum(cyc) / len(cyc)) if len(cyc) else 0.0
+        res["cobot"] = {"inspected": len(insp), "ng": ng, "pallets": pal, "avg_cycle_s": avg}
+        rows.append({"라인": "협동로봇 팔레타이징 셀", "상태": "연결 없음" if ev_c.empty else ("가동" if age(ev_c) <= 300 else f"대기 ({age(ev_c) / 60:.0f}분 전 활동)"),
+                     "OEE": "-", "가용률": "-", "성능률": "-", "품질률": "-",
+                     "처리": f"비전 검사 {len(insp)}개 · 불량 검출 {ng}개 · 파렛트 {pal}개" + (f" · 사이클 {avg:.1f}초" if avg else ""),
+                     "비고": "OEE 대신 검사, 적재 건수로 봅니다"})
     return pd.DataFrame(rows), res
 
 
@@ -203,3 +214,44 @@ def history(ev_all: pd.DataFrame, n: int = 15) -> pd.DataFrame:
         what = {"alarm.raised": "AI 이상 감지 경보 발생", "alarm.cleared": "AI 이상 감지 경보 해제"}.get(t) or f"결함 주입: {oee.FAULT_KO.get(p.get('mode'), p.get('mode'))}"
         rows.append((_kst(r["ts"]), "AI" if t.startswith("alarm") else "결함", what))
     return pd.DataFrame(rows, columns=cols)
+
+
+def receipts(fetch, limit: int = 12) -> pd.DataFrame:
+    """최근 자재 입고 (MES 입고 LOT). 물류 구역의 입고 이벤트가 만든 것과 자동 입고(시연용)가 함께 나온다."""
+    return fetch(
+        """
+        SELECT l.lot_no AS LOT, i.item_name AS 자재, l.qty AS 수량, i.unit AS 단위, COALESCE(p.partner_name, '-') AS 공급업체, l.received_date AS 입고일
+        FROM lot AS l JOIN item AS i ON i.item_id = l.item_id LEFT JOIN partner AS p ON p.partner_id = l.partner_id
+        WHERE l.lot_type = 'RECEIPT' ORDER BY l.lot_id DESC LIMIT ?
+        """,
+        (limit,),
+    )
+
+
+def cobot_summary(ev_c: pd.DataFrame | None) -> dict | None:
+    """협동로봇 셀 이벤트 요약: 검사, 불량 검출, 적재, 파렛트, 사이클, 신뢰도, 최근 검사 표, 파렛트 마감 표, 사이클 추이.
+    사이클 = 집기 시작부터 놓기까지 걸린 시간 (cobot.placed 의 cycle_s)."""
+    if ev_c is None or ev_c.empty:
+        return None
+    kst = lambda ts: ts.tz_convert("Asia/Seoul").strftime("%H:%M:%S")
+    insp = ev_c[ev_c["event_type"] == "vision.inspected"]
+    placed = ev_c[ev_c["event_type"] == "cobot.placed"]
+    closed = ev_c[ev_c["event_type"] == "cobot.pallet_closed"]
+    ins = pd.DataFrame({"piece": insp["piece_id"], "ts": insp["ts"], "result": insp["payload"].apply(lambda p: p["result"]),
+                        "conf": insp["payload"].apply(lambda p: p["confidence"])}).reset_index(drop=True)
+    pl = pd.DataFrame({"piece": placed["piece_id"], "ts": placed["ts"], "target": placed["payload"].apply(lambda p: p["target"]),
+                       "slot": placed["payload"].apply(lambda p: p["slot"]), "cycle_s": placed["payload"].apply(lambda p: p["cycle_s"])}).reset_index(drop=True)
+    merged = ins.merge(pl[["piece", "target", "slot", "cycle_s"]], on="piece", how="left")
+    recent = pd.DataFrame({
+        "시각": merged["ts"].apply(kst), "작업물": merged["piece"], "판정": merged["result"].map({"good": "양품", "scrap": "불량"}),
+        "신뢰도": (merged["conf"] * 100).round(1).astype(str) + "%",
+        "놓은 곳": merged.apply(lambda r: "대기 중" if pd.isna(r["target"]) else (f"파렛트 {int(r['slot']) + 1}번 칸" if r["target"] == "pallet" else "NG 수납함"), axis=1),
+        "사이클(초)": merged["cycle_s"]}).tail(20).iloc[::-1]
+    pallets = pd.DataFrame({
+        "시각": closed["ts"].apply(kst), "수량": closed["payload"].apply(lambda p: len(p["pieces"])),
+        "마감": closed["payload"].apply(lambda p: "라인 정지로 모자란 채 마감" if p["partial"] else "5개 가득 참")}).tail(10).iloc[::-1]
+    n_ng = int((ins["result"] == "scrap").sum())
+    return {"inspected": len(ins), "ng": n_ng, "good": len(ins) - n_ng, "pallets": len(closed), "partial": int(closed["payload"].apply(lambda p: p["partial"]).sum()),
+            "avg_cycle_s": float(pl["cycle_s"].mean()) if len(pl) else 0.0, "min_cycle_s": float(pl["cycle_s"].min()) if len(pl) else 0.0,
+            "max_cycle_s": float(pl["cycle_s"].max()) if len(pl) else 0.0, "avg_conf": float(ins["conf"].mean()) if len(ins) else 0.0,
+            "recent": recent, "pallet_table": pallets, "cycles": pl[["ts", "cycle_s"]]}

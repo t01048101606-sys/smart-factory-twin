@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src import factory_dash as fd
-from src import oee
+from src import oee, twin_api
 from src.db import fetch_dataframe
 from src.ui import alert_badge, kpi_row, require_role, setup_page, show_dataframe
 
@@ -24,14 +24,18 @@ with c2:
 minutes = {"최근 10분": 10, "최근 30분": 30, "최근 1시간": 60}.get(period)
 since = pd.Timestamp.now(tz="UTC") - timedelta(minutes=minutes) if minutes else None
 
-with st.expander("3D 공장 화면", expanded=True):
-    t1, t2 = st.columns([4, 1])
-    with t1:
-        twin_url = st.text_input("트윈 서버 주소", value="http://localhost:5001",
+twin_url = st.text_input("트윈 서버 주소", value="http://localhost:5001",
                                  help="MES를 다른 컴퓨터에서 열었다면 localhost 대신 트윈 서버가 있는 컴퓨터의 주소를 넣으세요.")
+twin_api.control_bar(st, twin_url, extra=[("가공 라인 연속동작", "/api/press", {"dev": "M101"}), ("가공 라인 연속정지", "/api/press", {"dev": "M102"})], key="fac",
+                     note='공장 전체를 움직이려면 "라인 시작"(프레스 라인)과 "가공 라인 연속동작"을 누르세요. 협동로봇 셀과 물류 구역은 프레스 라인이 움직이면 따라서 움직입니다.')
+
+with st.expander("3D 공장 화면", expanded=True):
+    t2, t3 = st.columns([3, 1])
+    with t3:
+        height = st.number_input("높이", min_value=300, max_value=1300, value=640, step=20)
     with t2:
-        height = st.number_input("높이", min_value=300, max_value=1300, value=560, step=20)
-    src = f"{twin_url.rstrip('/')}/3d/factory?embed=scene"      # 3D 장면만 (카드와 버튼은 숨김)
+        show_cards = st.checkbox("조작 카드 포함", value=False, help="라인 시작, 정지, 입고 요청 같은 조작 버튼이 있는 카드를 3D 화면 위에 함께 표시합니다.")
+    src = f"{twin_url.rstrip('/')}/3d/factory?embed={'1' if show_cards else 'scene'}"      # scene: 3D 장면만 (카드와 버튼은 숨김)
     try:
         import streamlit.components.v1 as components
         components.iframe(src, height=int(height), scrolling=False)
@@ -43,6 +47,7 @@ with st.expander("3D 공장 화면", expanded=True):
 ev_m = oee.load_events(since, line_id=fd.MACHINING)
 ev_p = oee.load_events(since, line_id=fd.PRESS)
 ev_l = oee.load_events(since, line_id=fd.LOGISTICS)
+ev_c = oee.load_events(since, line_id=fd.COBOT)
 ev_all = oee.load_events(since)
 try:
     serial, wo = fd.production(fetch_dataframe)
@@ -52,7 +57,7 @@ try:
 except Exception:
     st.error("MES 테이블을 읽지 못했습니다. `python src\\mes_adapter.py --init-only`를 먼저 실행하세요.")
     st.stop()
-overview, res = fd.line_overview(ev_m, ev_p, ev_l)
+overview, res = fd.line_overview(ev_m, ev_p, ev_l, ev_c=ev_c)
 
 good, scrap = int(serial["good"].sum()), int(serial["scrap"].sum())
 total = good + scrap
@@ -102,38 +107,10 @@ else:
     show_dataframe(wo_t, "")
     st.caption("위 표는 제품별 작업지시 상태별 건수입니다.")
 
-# ---------------------------------------------------------------- 재고
-st.subheader("자재 재고")
-inv_t = inv.rename(columns={"item_code": "자재코드", "item_name": "자재", "unit": "단위", "received": "입고", "consumed": "소비", "balance": "재고",
-                            "per_unit": "단위당 소비", "makeable": "만들 수 있는 완제품(개)"}).copy()
-inv_t["상태"] = ["자동 입고(시연)" if a else ("부족" if low else "충분") for a, low in zip(inv["auto"], inv["low"])]
-inv_t = inv_t.drop(columns=["low", "auto"])
-for col in ("입고", "소비", "재고", "만들 수 있는 완제품(개)"):
-    inv_t[col] = inv_t[col].astype(float).round(2)
-if len(inv):
-    fig = go.Figure(go.Bar(x=inv["item_name"], y=inv["makeable"], marker_color=["#7a8696" if a else ("#ef4b4b" if low else "#2f9bff") for a, low in zip(inv["auto"], inv["low"])]))
-    fig.update_layout(yaxis_title="남은 재고로 만들 수 있는 완제품(개)", margin=dict(l=10, r=10, t=10, b=10), height=260)
-    st.plotly_chart(fig, use_container_width=True)
-show_dataframe(inv_t, "등록된 자재가 없습니다.")
-st.caption("부족 기준은 완제품 20개 분량(5개 작업지시 4건)입니다. 물류 구역은 재고가 발주점 아래로 내려가면 입고 트럭을 부릅니다. "
-           "가공용 블랭크는 어댑터가 모자라면 자동으로 입고하는 시연용 자재라 부족으로 보지 않습니다.")
-
-# ---------------------------------------------------------------- 출하
-st.subheader("출하")
-s1, s2 = st.columns(2)
-with s1:
-    st.markdown("**최근 출하**")
-    show_dataframe(ship["recent"], "아직 출하 기록이 없습니다. 프레스 라인의 양품 5개가 파렛트가 되면 출하됩니다.")
-with s2:
-    st.markdown("**출하 대기 LOT** (출하 가능 수량 > 0)")
-    w = ship["waiting"][["lot_no", "item_name", "result", "shippable"]].rename(columns={"lot_no": "LOT", "item_name": "제품", "result": "검사", "shippable": "출하 가능"})
-    show_dataframe(w, "출하 대기 중인 LOT가 없습니다.")
-if len(ship["blocked"]):
-    st.markdown("**출하가 막힌 LOT** (검사 불합격 FAIL: MES가 출하 등록을 거절합니다)")
-    b = ship["blocked"][["lot_no", "item_name", "lot_qty", "scrap"]].rename(columns={"lot_no": "LOT", "item_name": "제품", "lot_qty": "LOT 수량", "scrap": "불량"})
-    show_dataframe(b, "")
-if ship["other_lots"]:
-    st.caption(f"가공 부품(FG-DRILLPART) 완제품 LOT {ship['other_lots']}개는 물류 · 출하 구역과 연결되어 있지 않아 위 표에 넣지 않았습니다.")
+# ---------------------------------------------------------------- 재고와 출하는 물류 · 출하 페이지, 협동로봇은 협동로봇 셀 페이지
+st.subheader("자재 재고 · 출하 · 협동로봇")
+st.caption("자재 재고, 입고 이력, 출하 이력은 **물류 · 출하** 페이지에서, 비전 검사와 파렛트 적재는 **협동로봇 셀** 페이지에서 자세히 볼 수 있습니다. "
+           "위의 한눈에 보기와 주의가 필요한 일에는 그 요약이 들어 있습니다.")
 
 # ---------------------------------------------------------------- 품질
 st.subheader("품질 (완제품 LOT 검사)")

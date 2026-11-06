@@ -89,32 +89,47 @@ function buildLine(ln, def) {
   const ctx = { ln, def, off, binds: [], belts: [], parts: [], partMats: {}, state: null };
   def.objects.forEach(o => addBounds(o, off));
   const shapeMat = o => new THREE.MeshStandardMaterial({ color: o.color || '#888888', roughness: 0.55, metalness: 0.25, transparent: o.opacity != null, opacity: o.opacity ?? 1 });
-  for (const o of def.objects) {
-    if (o.shape === 'label') {
+  // 오브젝트를 만든다. 그룹(shape: 'group')은 자식을 가지는 관절/부착 단위이고, 그룹 안쪽 좌표는 그룹 기준 상대 좌표다 (라인 offset 은 맨 바깥 것에만 더한다).
+  const make = (o, parent, nested) => {
+    const PP = nested ? (p => p) : P, offN = nested ? [0, 0, 0] : off;
+    const posBind = (obj, a) => {
+      const b = { obj, ...a };
+      if (['x', 'y', 'z'].includes(a.prop)) { b.from = a.from + offN[AX[a.prop]]; b.to = a.to + offN[AX[a.prop]]; }   // 위치는 라인 offset 을 더한다
+      if (a.prop === 'fill') b.base_y = a.base_y + offN[1];
+      return b;
+    };
+    if (o.shape === 'group') {
+      const g = new THREE.Group();
+      g.userData = { id: o.id || null };            // 시험과 디버깅에서 이름으로 찾는다
+      g.position.set(...PP(o.pos || [0, 0, 0])); if (o.rot) g.rotation.set(...o.rot);
+      parent.add(g);
+      (o.anim || []).forEach(a => ctx.binds.push(posBind(g, a)));
+      (o.children || []).forEach(c => make(c, g, true));
+    } else if (o.shape === 'label') {
       const c = document.createElement('canvas'); c.width = 320; c.height = 80;
       const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
       const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true }));
       s.renderOrder = 10; s.userData = { key: o.key, text: o.text, canvas: c };
-      s.position.set(...P(o.pos)); const w = o.w || 2.4; s.scale.set(w, w / 4, 1);
-      scene.add(s); labelSprites.push(s); drawLabel(s);
+      s.position.set(...PP(o.pos)); const w = o.w || 2.4; s.scale.set(w, w / 4, 1);
+      parent.add(s); labelSprites.push(s); drawLabel(s);
     } else if (o.shape === 'belt') {
       const c = document.createElement('canvas'); c.width = 64; c.height = 16;
       const g = c.getContext('2d');
       g.fillStyle = '#2f5a52'; g.fillRect(0, 0, 64, 16); g.fillStyle = '#5ad6bd'; g.fillRect(0, 6, 28, 4);
       const tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(o.size[0], 1); tex.colorSpace = THREE.SRGBColorSpace;
       const m = new THREE.Mesh(new THREE.PlaneGeometry(o.size[0], o.size[1]), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 }));
-      m.rotation.x = -Math.PI / 2; m.position.set(...P(o.pos)); m.receiveShadow = true; scene.add(m);
+      m.rotation.x = -Math.PI / 2; m.position.set(...PP(o.pos)); m.receiveShadow = true; parent.add(m);
       ctx.belts.push({ tex, path: o.path });
     } else if (o.shape === 'light') {
       const l = new THREE.PointLight(o.color || 0xffffff, o.intensity || 0, o.distance || 30);
-      l.position.set(...P(o.pos)); scene.add(l);
+      l.position.set(...PP(o.pos)); parent.add(l);
       (o.anim || []).forEach(a => ctx.binds.push({ obj: l, ...a }));
     } else if (o.shape === 'rod') {
       const m = new THREE.Mesh(new THREE.CylinderGeometry(o.r, o.r, 1, 20), new THREE.MeshStandardMaterial({ color: o.color || '#2f9bff', roughness: 0.3, metalness: 0.6 }));
       if (o.axis === 'x') m.rotation.z = Math.PI / 2;
       if (o.axis === 'z') m.rotation.x = Math.PI / 2;
-      m.castShadow = true; scene.add(m);
-      const rod = { axis: o.axis, dir: o.dir || 1, start: P(o.start) };
+      m.castShadow = true; parent.add(m);
+      const rod = { axis: o.axis, dir: o.dir || 1, start: PP(o.start) };
       setRod(m, rod, o.len ?? 1);
       (o.anim || []).forEach(a => ctx.binds.push({ obj: m, rod, ...a }));
     } else {
@@ -122,21 +137,17 @@ function buildLine(ln, def) {
       if (o.shape === 'box') geo = new THREE.BoxGeometry(...o.size);
       else if (o.shape === 'cylinder') geo = new THREE.CylinderGeometry(o.rt ?? o.r, o.rb ?? o.r, o.h, 28);
       else if (o.shape === 'sphere') geo = new THREE.SphereGeometry(o.r, 24, 16);
-      else continue;
+      else return;
       const m = new THREE.Mesh(geo, shapeMat(o));
-      m.position.set(...P(o.pos)); if (o.rot) m.rotation.set(...o.rot);
-      m.castShadow = o.opacity == null; m.receiveShadow = true; scene.add(m);
-      (o.anim || []).forEach(a => {
-        const b = { obj: m, ...a };
-        if (['x', 'y', 'z'].includes(a.prop)) { b.from = a.from + off[AX[a.prop]]; b.to = a.to + off[AX[a.prop]]; }   // 위치는 라인 offset 을 더한다
-        if (a.prop === 'fill') b.base_y = a.base_y + off[1];
-        ctx.binds.push(b);
-      });
+      m.position.set(...PP(o.pos)); if (o.rot) m.rotation.set(...o.rot);
+      m.castShadow = o.opacity == null; m.receiveShadow = true; parent.add(m);
+      (o.anim || []).forEach(a => ctx.binds.push(posBind(m, a)));
     }
-  }
+  };
+  def.objects.forEach(o => make(o, scene, false));
   if (def.parts) {
     const ps = def.parts;
-    ctx.partGeo = ps.shape === 'cylinder' ? new THREE.CylinderGeometry(ps.r, ps.r, ps.h, 28) : new THREE.BoxGeometry(...ps.size);
+    if (!ps.model) ctx.partGeo = ps.shape === 'cylinder' ? new THREE.CylinderGeometry(ps.r, ps.r, ps.h, 28) : new THREE.BoxGeometry(...ps.size);
     for (const [k, c] of Object.entries(ps.colors)) {
       const spec = typeof c === 'string' ? { color: c } : c;
       ctx.partMats[k] = new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.4, ...spec });
@@ -152,13 +163,13 @@ function setRod(m, rod, len) {          // 막대 길이를 정한다: 시작점
 }
 
 // ---------------------------------------------------------------- 상태 반영
-const clock = { now: 0 };
+const clock = { now: 0, dt: 0 };
 function applyBind(b, v, k) {
   const m = b.obj;
   switch (b.prop) {
     case 'x': case 'y': case 'z': {
       const target = b.from + (b.to - b.from) * clamp01(Number(v) || 0);
-      b.cur = ease(b.cur ?? target, target, k); m.position[b.prop] = b.cur; break;
+      b.cur = b.snap ? target : ease(b.cur ?? target, target, k); m.position[b.prop] = b.cur; break;   // snap: 반복해서 흐르는 물체는 처음으로 돌아갈 때 미끄러지지 않게
     }
     case 'len': {
       const target = b.from + (b.to - b.from) * clamp01(Number(v) || 0);
@@ -168,6 +179,11 @@ function applyBind(b, v, k) {
       const f = Math.max(0.03, clamp01(Number(v) || 0));
       b.cur = ease(b.cur ?? f, f, k); m.scale.y = b.cur; m.position.y = b.base_y + b.size_y * b.cur / 2; break;
     }
+    case 'rotate': {   // 관절 회전: 값 x scale + bias (라디안). 로봇팔, 문, 바퀴 방향 등
+      const target = (b.bias || 0) + (Number(v) || 0) * (b.scale ?? 1);
+      b.cur = ease(b.cur ?? target, target, k); m.rotation[b.axis] = b.cur; break;
+    }
+    case 'spin': if (v) m.rotation[b.axis] += (b.speed || 1) * clock.dt; break;   // 값이 참인 동안 계속 회전 (바퀴, 모터, 드릴)
     case 'visible': m.visible = !!v; break;
     case 'emissive': m.material.emissive.set(v ? b.on : b.off); m.material.emissiveIntensity = v ? (b.ei ?? 1.2) : 0; break;
     case 'lamp': {
@@ -180,6 +196,19 @@ function applyBind(b, v, k) {
     case 'intensity': m.intensity = v ? (b.blink && Math.sin(clock.now / 150) <= 0 ? b.on * 0.1 : b.on) : b.off; break;
     default: break;
   }
+}
+
+function makeModelPart(ctx) {      // parts.model: [{size, pos, color | rule: true, min_qty}] 조각들을 묶은 그룹
+  const ps = ctx.def.parts, g = new THREE.Group();
+  g.userData = { part: true, kids: [] };
+  for (const c of ps.model) {
+    const mat = c.rule ? ctx.partMats[ps.default || 'normal'] : new THREE.MeshStandardMaterial({ color: c.color || '#888888', roughness: 0.6, metalness: 0.2 });
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(...c.size), mat);
+    mesh.position.set(...c.pos); mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh);
+    g.userData.kids.push({ mesh, min_qty: c.min_qty || 0, rule: !!c.rule });
+  }
+  scene.add(g);
+  return g;
 }
 
 function partMaterial(ctx, p) {
@@ -199,6 +228,7 @@ function frame(dt) {
     const ps = ctx.def.parts; if (!ps) continue;
     const list = s.pieces || s.parts || [];
     while (ctx.parts.length < list.length) {
+      if (ps.model) { ctx.parts.push(makeModelPart(ctx)); continue; }
       const m = new THREE.Mesh(ctx.partGeo, ctx.partMats[ps.default || 'normal']); m.castShadow = true; m.receiveShadow = true;
       scene.add(m); ctx.parts.push(m);
     }
@@ -212,7 +242,10 @@ function frame(dt) {
         const target = p.pos ? p.pos[AX[a]] : ease(seg[0][AX[a]], seg[1][AX[a]], t);
         m.position[a] = ease(m.position[a], target + ctx.off[AX[a]], kk);
       }
-      m.userData.placed = true; m.material = partMaterial(ctx, p);
+      m.userData.placed = true;
+      if (m.userData.part) {            // 조각으로 조립한 부품: 수량에 따라 조각이 보이고, 규칙 색은 rule 조각에만
+        m.userData.kids.forEach(k => { k.mesh.visible = (p.qty ?? 99) >= k.min_qty; if (k.rule) k.mesh.material = partMaterial(ctx, p); });
+      } else m.material = partMaterial(ctx, p);
     });
   }
 }
@@ -269,7 +302,7 @@ window.addEventListener('resize', resize);
 
 let last = performance.now();
 function loop(now) {
-  const dt = Math.min(0.1, (now - last) / 1000); last = now; clock.now = now;
+  const dt = Math.min(0.1, (now - last) / 1000); last = now; clock.now = now; clock.dt = dt;
   frame(dt);
   controls.update();
   renderer.render(scene, camera);
@@ -311,6 +344,8 @@ function loop(now) {
   Terms.apply(document);
   $('termsMode').onchange = () => { Terms.setMode($('termsMode').value); Terms.apply(document); labelSprites.forEach(drawLabel); renderLabels(); };
   resize(); fitOverview();
+  const focus = new URLSearchParams(location.search).get('focus');          // 예: ?focus=cobot (MES 라인별 페이지에 끼울 때)
+  if (focus && views[focus]) setView(focus);
   poll(); setInterval(poll, 100);
   window.__twin3dReady = true;
   $('msg').style.display = 'none';

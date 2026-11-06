@@ -91,7 +91,8 @@ shutil.copytree(MES_SRC, mes, ignore=shutil.ignore_patterns(".git", "__pycache__
 page13, bak13 = mes / "pages" / "13_현장모니터링.py", mes / "pages" / "13_현장모니터링.py.orig"
 if bak13.exists():
     shutil.move(str(bak13), str(page13))
-for extra in ("pages/14_설비현황.py", "src/oee.py", "src/monitor.py"):
+for extra in ("pages/13_공장현황.py", "pages/14_설비현황.py", "pages/14_가공라인.py", "pages/15_공정3D.py", "pages/15_프레스라인.py", "pages/16_프레스라인.py",
+              "pages/16_협동로봇셀.py", "pages/17_공장현황.py", "pages/17_물류출하.py", "src/oee.py", "src/monitor.py"):
     (mes / extra).unlink(missing_ok=True)
 ad = MesAdapter(mes, batch=4, today=lambda: date(2026, 11, 6), log=lambda m: None)
 ad.init_db(); ad.seed_master()
@@ -104,14 +105,14 @@ ad.log = logs.append
 ad.install_addons()
 bak = mes / "pages" / "13_현장모니터링.py.orig"
 assert bak.exists() and bak.read_text(encoding="utf-8") == orig_page, "원래 현장모니터링 페이지가 백업되어야 합니다"
-new_page = (mes / "pages" / "13_현장모니터링.py").read_text(encoding="utf-8")
-assert new_page != orig_page and (mes / "src" / "monitor.py").exists()
+assert not (mes / "pages" / "13_현장모니터링.py").exists() and (mes / "src" / "monitor.py").exists()      # 원본은 백업 후 지워지고, 가공 라인 페이지가 대신한다
+assert (mes / "pages" / "14_가공라인.py").exists()
 ad.install_addons()                                   # 두 번째 설치에서도 원본 백업을 덮어쓰지 않는다
 assert bak.read_text(encoding="utf-8") == orig_page
 assert sum("원본 백업" in l for l in logs) == 1
-print("설치 확인: 기존 13_현장모니터링.py 는 .orig 로 백업, 재설치해도 원본 유지")
+print("설치 확인: 기존 13_현장모니터링.py 는 .orig 로 백업한 뒤 지우고, 재설치해도 원본 백업 유지")
 
-calls = {"kpi": None, "dataframes": 0, "plots": 0, "iframe": None}
+calls = {"kpi": {}, "dataframes": 0, "plots": 0, "iframe": None, "iframes": []}
 
 
 class FakeSt(types.ModuleType):
@@ -126,12 +127,14 @@ class FakeSt(types.ModuleType):
     def dataframe(self, df, **k): calls["dataframes"] += 1
     def plotly_chart(self, fig, **k): calls["plots"] += 1
     def rerun(self): pass
+    def tabs(self, labels): return [MagicMock() for _ in labels]
+    def radio(self, label, options, **k): return options[0]
     def __getattr__(self, name): return MagicMock()
 
 
 st = FakeSt()
 comp = types.ModuleType("streamlit.components.v1")
-comp.iframe = lambda src, **k: calls.__setitem__("iframe", src)
+comp.iframe = lambda src, **k: (calls.__setitem__("iframe", src), calls["iframes"].append(src))
 st.components = types.SimpleNamespace(v1=comp)
 sys.modules.update({"streamlit": st, "streamlit.components": st.components, "streamlit.components.v1": comp,
                     "plotly": MagicMock(), "plotly.graph_objects": MagicMock()})
@@ -141,11 +144,11 @@ if str(mes) in sys.path:
     sys.path.remove(str(mes))
 sys.path.insert(0, str(mes))
 import src.ui as ui  # noqa: E402
-ui.kpi_row = lambda items, columns=3: calls.__setitem__("kpi", {a: b for a, b, _ in items})
-runpy.run_path(str(mes / "pages" / "13_현장모니터링.py"), run_name="__main__")
+ui.kpi_row = lambda items, columns=3: calls["kpi"].update({a: b for a, b, _ in items})      # 가공 라인 페이지는 KPI 를 OEE 탭과 AI 탭에서 각각 낸다
+runpy.run_path(str(mes / "pages" / "14_가공라인.py"), run_name="__main__")
 
 print("KPI:", calls["kpi"], "| 그래프", calls["plots"], "개, 표", calls["dataframes"], "개, iframe", calls["iframe"])
 assert calls["kpi"]["AI 상태"] == "정상" and calls["kpi"]["활성 경보"] == "0 건"   # 마지막에 정상으로 돌아와 있다
-assert calls["plots"] == 2 and calls["dataframes"] >= 3
-assert calls["iframe"] == "http://localhost:5001/?embed=1"
+assert calls["plots"] >= 2 and calls["dataframes"] >= 3        # AI 탭의 그래프 2개 + OEE 탭의 그래프
+assert calls["iframes"] == ["http://localhost:5001/?embed=1", "http://localhost:5001/3d?embed=view"]      # 2D 와 3D 동시에
 print("\n테스트 통과")

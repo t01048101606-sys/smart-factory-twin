@@ -13,10 +13,6 @@
    0
   ]
  },
- "fit": {
-  "width": 54.0,
-  "height": 22.0
- },
  "views": {
   "diag": {
    "position": [
@@ -41,135 +37,2299 @@
     0,
     0
    ]
+  },
+  "inbound": {
+   "position": [
+    -8,
+    8,
+    16
+   ],
+   "target": [
+    -5,
+    0.5,
+    5
+   ]
+  },
+  "outbound": {
+   "position": [
+    28,
+    8,
+    14
+   ],
+   "target": [
+    20,
+    0.5,
+    0
+   ]
   }
  },
  "objects": [
   {
-   "id": "floor",
+   "id": "yard",
    "shape": "box",
    "size": [
-    56,
-    0.4,
-    24
+    70,
+    0.3,
+    21
    ],
    "pos": [
-    10,
-    -0.2,
+    8.0,
+    -1.23,
+    -0.5
+   ],
+   "color": "#20262e"
+  },
+  {
+   "id": "podium",
+   "shape": "box",
+   "size": [
+    20.599999999999998,
+    1.08,
+    17.0
+   ],
+   "pos": [
+    8.1,
+    -0.54,
+    -0.5
+   ],
+   "color": "#2d343e"
+  },
+  {
+   "id": "floor_tile",
+   "shape": "box",
+   "size": [
+    20.599999999999998,
+    0.02,
+    17.0
+   ],
+   "pos": [
+    8.1,
+    0.01,
+    -0.5
+   ],
+   "color": "#38414d"
+  },
+  {
+   "id": "road_in",
+   "shape": "box",
+   "size": [
+    24,
+    0.03,
+    4.4
+   ],
+   "pos": [
+    -14.2,
+    -1.064,
+    5.0
+   ],
+   "color": "#1b2028"
+  },
+  {
+   "id": "road_out",
+   "shape": "box",
+   "size": [
+    22,
+    0.03,
+    4.4
+   ],
+   "pos": [
+    29.8,
+    -1.064,
     0
    ],
-   "color": "#2a323d"
+   "color": "#1b2028"
   },
   {
-   "id": "in_road",
+   "id": "road_in_mark0",
    "shape": "box",
    "size": [
-    20,
-    0.06,
-    3.6
-   ],
-   "pos": [
-    -8,
-    0.03,
-    5
-   ],
-   "color": "#2d323b"
-  },
-  {
-   "id": "in_dock",
-   "shape": "box",
-   "size": [
-    4.0,
-    0.3,
-    3.8
-   ],
-   "pos": [
-    -3.0,
-    0.15,
-    5
-   ],
-   "color": "#39424f"
-  },
-  {
-   "id": "in_truck_cargo",
-   "shape": "box",
-   "size": [
-    6.0,
     2.0,
-    2.8
+    0.01,
+    0.1
+   ],
+   "pos": [
+    -20.0,
+    -1.0450000000000002,
+    5.0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "road_in_mark1",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.01,
+    0.1
    ],
    "pos": [
     -15.0,
-    1.4,
-    5
+    -1.0450000000000002,
+    5.0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "road_in_mark2",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.01,
+    0.1
+   ],
+   "pos": [
+    -10.0,
+    -1.0450000000000002,
+    5.0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "road_out_mark0",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.01,
+    0.1
+   ],
+   "pos": [
+    24.0,
+    -1.0450000000000002,
+    0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "road_out_mark1",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.01,
+    0.1
+   ],
+   "pos": [
+    29.0,
+    -1.0450000000000002,
+    0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "road_out_mark2",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.01,
+    0.1
+   ],
+   "pos": [
+    34.0,
+    -1.0450000000000002,
+    0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "inbound_wall_a",
+   "shape": "box",
+   "size": [
+    0.3,
+    3.5,
+    12.7
+   ],
+   "pos": [
+    -2.2,
+    1.75,
+    -2.65
+   ],
+   "color": "#46505e"
+  },
+  {
+   "id": "inbound_wall_b",
+   "shape": "box",
+   "size": [
+    0.3,
+    3.5,
+    1.7000000000000002
+   ],
+   "pos": [
+    -2.2,
+    1.75,
+    7.15
+   ],
+   "color": "#46505e"
+  },
+  {
+   "id": "inbound_header",
+   "shape": "box",
+   "size": [
+    0.3,
+    0.5,
+    2.6
+   ],
+   "pos": [
+    -2.2,
+    3.25,
+    5.0
+   ],
+   "color": "#46505e"
+  },
+  {
+   "id": "inbound_frame-1.42",
+   "shape": "box",
+   "size": [
+    0.4,
+    3.0,
+    0.24
+   ],
+   "pos": [
+    -2.2,
+    1.5,
+    3.58
+   ],
+   "color": "#2b3340"
+  },
+  {
+   "id": "inbound_frame+1.42",
+   "shape": "box",
+   "size": [
+    0.4,
+    3.0,
+    0.24
+   ],
+   "pos": [
+    -2.2,
+    1.5,
+    6.42
+   ],
+   "color": "#2b3340"
+  },
+  {
+   "id": "inbound_shelter_top",
+   "shape": "box",
+   "size": [
+    0.55,
+    0.35,
+    3.5
+   ],
+   "pos": [
+    -2.62,
+    3.15,
+    5.0
+   ],
+   "color": "#27364d"
+  },
+  {
+   "id": "inbound_shelter_side-1.62",
+   "shape": "box",
+   "size": [
+    0.55,
+    3.0,
+    0.3
+   ],
+   "pos": [
+    -2.62,
+    1.5,
+    3.38
+   ],
+   "color": "#27364d"
+  },
+  {
+   "id": "inbound_shelter_side+1.62",
+   "shape": "box",
+   "size": [
+    0.55,
+    3.0,
+    0.3
+   ],
+   "pos": [
+    -2.62,
+    1.5,
+    6.62
+   ],
+   "color": "#27364d"
+  },
+  {
+   "id": "inbound_bumper-1.1",
+   "shape": "box",
+   "size": [
+    0.22,
+    0.4,
+    0.32
+   ],
+   "pos": [
+    -2.46,
+    -0.28,
+    3.9
+   ],
+   "color": "#0e0f11"
+  },
+  {
+   "id": "inbound_bumper+1.1",
+   "shape": "box",
+   "size": [
+    0.22,
+    0.4,
+    0.32
+   ],
+   "pos": [
+    -2.46,
+    -0.28,
+    6.1
+   ],
+   "color": "#0e0f11"
+  },
+  {
+   "id": "inbound_light_red",
+   "shape": "sphere",
+   "r": 0.12,
+   "pos": [
+    -2.0,
+    3.7,
+    4.5
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "inbound.docked",
+     "map": {
+      "1": "#222222",
+      "0": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "inbound_light_green",
+   "shape": "sphere",
+   "r": 0.12,
+   "pos": [
+    -2.0,
+    3.7,
+    5.5
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "inbound.docked",
+     "map": {
+      "1": "#33c27f",
+      "0": "#222222"
+     }
+    }
+   ]
+  },
+  {
+   "id": "outbound_wall_a",
+   "shape": "box",
+   "size": [
+    0.3,
+    3.5,
+    7.7
+   ],
+   "pos": [
+    18.4,
+    1.75,
+    -5.15
+   ],
+   "color": "#46505e"
+  },
+  {
+   "id": "outbound_wall_b",
+   "shape": "box",
+   "size": [
+    0.3,
+    3.5,
+    6.7
+   ],
+   "pos": [
+    18.4,
+    1.75,
+    4.65
+   ],
+   "color": "#46505e"
+  },
+  {
+   "id": "outbound_header",
+   "shape": "box",
+   "size": [
+    0.3,
+    0.5,
+    2.6
+   ],
+   "pos": [
+    18.4,
+    3.25,
+    0.0
+   ],
+   "color": "#46505e"
+  },
+  {
+   "id": "outbound_frame-1.42",
+   "shape": "box",
+   "size": [
+    0.4,
+    3.0,
+    0.24
+   ],
+   "pos": [
+    18.4,
+    1.5,
+    -1.42
+   ],
+   "color": "#2b3340"
+  },
+  {
+   "id": "outbound_frame+1.42",
+   "shape": "box",
+   "size": [
+    0.4,
+    3.0,
+    0.24
+   ],
+   "pos": [
+    18.4,
+    1.5,
+    1.42
+   ],
+   "color": "#2b3340"
+  },
+  {
+   "id": "outbound_shelter_top",
+   "shape": "box",
+   "size": [
+    0.55,
+    0.35,
+    3.5
+   ],
+   "pos": [
+    18.82,
+    3.15,
+    0.0
+   ],
+   "color": "#27364d"
+  },
+  {
+   "id": "outbound_shelter_side-1.62",
+   "shape": "box",
+   "size": [
+    0.55,
+    3.0,
+    0.3
+   ],
+   "pos": [
+    18.82,
+    1.5,
+    -1.62
+   ],
+   "color": "#27364d"
+  },
+  {
+   "id": "outbound_shelter_side+1.62",
+   "shape": "box",
+   "size": [
+    0.55,
+    3.0,
+    0.3
+   ],
+   "pos": [
+    18.82,
+    1.5,
+    1.62
+   ],
+   "color": "#27364d"
+  },
+  {
+   "id": "outbound_bumper-1.1",
+   "shape": "box",
+   "size": [
+    0.22,
+    0.4,
+    0.32
+   ],
+   "pos": [
+    18.66,
+    -0.28,
+    -1.1
+   ],
+   "color": "#0e0f11"
+  },
+  {
+   "id": "outbound_bumper+1.1",
+   "shape": "box",
+   "size": [
+    0.22,
+    0.4,
+    0.32
+   ],
+   "pos": [
+    18.66,
+    -0.28,
+    1.1
+   ],
+   "color": "#0e0f11"
+  },
+  {
+   "id": "outbound_light_red",
+   "shape": "sphere",
+   "r": 0.12,
+   "pos": [
+    18.2,
+    3.7,
+    -0.5
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "outbound.docked",
+     "map": {
+      "1": "#222222",
+      "0": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "outbound_light_green",
+   "shape": "sphere",
+   "r": 0.12,
+   "pos": [
+    18.2,
+    3.7,
+    0.5
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "outbound.docked",
+     "map": {
+      "1": "#33c27f",
+      "0": "#222222"
+     }
+    }
+   ]
+  },
+  {
+   "id": "inbound_shutter",
+   "shape": "box",
+   "size": [
+    0.12,
+    3.0,
+    2.6
+   ],
+   "pos": [
+    -2.2,
+    1.5,
+    5.0
    ],
    "color": "#8a94a3",
    "anim": [
     {
-     "prop": "x",
-     "path": "inbound.truck",
-     "from": -15.0,
-     "to": -5.5
+     "prop": "y",
+     "path": "inbound.door",
+     "from": 1.5,
+     "to": 4.7
     }
    ]
   },
   {
-   "id": "in_truck_cab",
+   "id": "outbound_shutter",
    "shape": "box",
    "size": [
-    2.0,
-    1.6,
+    0.12,
+    3.0,
     2.6
    ],
    "pos": [
-    -11.0,
-    1.0,
-    5
+    18.4,
+    1.5,
+    0.0
    ],
-   "color": "#2f6fb0",
+   "color": "#8a94a3",
+   "anim": [
+    {
+     "prop": "y",
+     "path": "outbound.docked",
+     "from": 1.5,
+     "to": 4.7
+    }
+   ]
+  },
+  {
+   "id": "inbound_leveler",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.12,
+    2.2
+   ],
+   "pos": [
+    -1.35,
+    -0.06,
+    5.0
+   ],
+   "color": "#8f98a5"
+  },
+  {
+   "id": "inbound_leveler_stripe",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.014,
+    0.12
+   ],
+   "pos": [
+    -1.35,
+    0.007,
+    4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "inbound_leveler_stripe2",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.014,
+    0.12
+   ],
+   "pos": [
+    -1.35,
+    0.007,
+    6.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "inbound_lip",
+   "shape": "group",
+   "pos": [
+    -2.35,
+    0.0,
+    5.0
+   ],
+   "children": [
+    {
+     "id": "inbound_lip_plate",
+     "shape": "box",
+     "size": [
+      0.45,
+      0.08,
+      2.2
+     ],
+     "pos": [
+      -0.225,
+      0,
+      0
+     ],
+     "color": "#7d8794"
+    }
+   ],
+   "anim": [
+    {
+     "prop": "rotate",
+     "axis": "z",
+     "path": "inbound.docked",
+     "bias": 1.5707963267948966,
+     "scale": -1.5707963267948966
+    }
+   ]
+  },
+  {
+   "id": "outbound_leveler",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.12,
+    2.2
+   ],
+   "pos": [
+    17.549999999999997,
+    -0.06,
+    0.0
+   ],
+   "color": "#8f98a5"
+  },
+  {
+   "id": "outbound_leveler_stripe",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.014,
+    0.12
+   ],
+   "pos": [
+    17.549999999999997,
+    0.007,
+    -1.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "outbound_leveler_stripe2",
+   "shape": "box",
+   "size": [
+    2.0,
+    0.014,
+    0.12
+   ],
+   "pos": [
+    17.549999999999997,
+    0.007,
+    1.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "outbound_lip",
+   "shape": "group",
+   "pos": [
+    18.549999999999997,
+    0.0,
+    0.0
+   ],
+   "children": [
+    {
+     "id": "outbound_lip_plate",
+     "shape": "box",
+     "size": [
+      0.45,
+      0.08,
+      2.2
+     ],
+     "pos": [
+      0.225,
+      0,
+      0
+     ],
+     "color": "#7d8794"
+    }
+   ],
+   "anim": [
+    {
+     "prop": "rotate",
+     "axis": "z",
+     "path": "outbound.docked",
+     "bias": -1.5707963267948966,
+     "scale": 1.5707963267948966
+    }
+   ]
+  },
+  {
+   "id": "inbound",
+   "shape": "group",
+   "pos": [
+    -17.0,
+    0.0,
+    5.0
+   ],
+   "children": [
+    {
+     "id": "inbound_rail-0.55",
+     "shape": "box",
+     "size": [
+      8.4,
+      0.2,
+      0.15
+     ],
+     "pos": [
+      -0.7,
+      -0.3,
+      -0.55
+     ],
+     "color": "#2a2f36"
+    },
+    {
+     "id": "inbound_rail0.55",
+     "shape": "box",
+     "size": [
+      8.4,
+      0.2,
+      0.15
+     ],
+     "pos": [
+      -0.7,
+      -0.3,
+      0.55
+     ],
+     "color": "#2a2f36"
+    },
+    {
+     "id": "inbound_cab",
+     "shape": "box",
+     "size": [
+      1.9,
+      2.1,
+      2.2
+     ],
+     "pos": [
+      -4.5,
+      0.55,
+      0
+     ],
+     "color": "#f1f4f7"
+    },
+    {
+     "id": "inbound_cab_stripe",
+     "shape": "box",
+     "size": [
+      1.92,
+      0.16,
+      2.22
+     ],
+     "pos": [
+      -4.5,
+      0.18,
+      0
+     ],
+     "color": "#1f5fa8"
+    },
+    {
+     "id": "inbound_windshield",
+     "shape": "box",
+     "size": [
+      0.05,
+      0.95,
+      1.9
+     ],
+     "pos": [
+      -5.46,
+      1.0,
+      0
+     ],
+     "color": "#1c2a3a"
+    },
+    {
+     "id": "inbound_window_l",
+     "shape": "box",
+     "size": [
+      1.1,
+      0.75,
+      0.05
+     ],
+     "pos": [
+      -4.6,
+      1.0,
+      -1.11
+     ],
+     "color": "#1c2a3a"
+    },
+    {
+     "id": "inbound_window_r",
+     "shape": "box",
+     "size": [
+      1.1,
+      0.75,
+      0.05
+     ],
+     "pos": [
+      -4.6,
+      1.0,
+      1.11
+     ],
+     "color": "#1c2a3a"
+    },
+    {
+     "id": "inbound_grille",
+     "shape": "box",
+     "size": [
+      0.05,
+      0.4,
+      1.0
+     ],
+     "pos": [
+      -5.46,
+      -0.2,
+      0
+     ],
+     "color": "#202428"
+    },
+    {
+     "id": "inbound_bumper",
+     "shape": "box",
+     "size": [
+      0.3,
+      0.28,
+      2.2
+     ],
+     "pos": [
+      -5.55,
+      -0.62,
+      0
+     ],
+     "color": "#3a414b"
+    },
+    {
+     "id": "inbound_mirror_l",
+     "shape": "box",
+     "size": [
+      0.14,
+      0.34,
+      0.1
+     ],
+     "pos": [
+      -5.25,
+      0.9,
+      -1.28
+     ],
+     "color": "#1c1f24"
+    },
+    {
+     "id": "inbound_mirror_r",
+     "shape": "box",
+     "size": [
+      0.14,
+      0.34,
+      0.1
+     ],
+     "pos": [
+      -5.25,
+      0.9,
+      1.28
+     ],
+     "color": "#1c1f24"
+    },
+    {
+     "id": "inbound_headlight-0.7",
+     "shape": "box",
+     "size": [
+      0.06,
+      0.24,
+      0.38
+     ],
+     "pos": [
+      -5.48,
+      -0.2,
+      -0.7
+     ],
+     "color": "#444444",
+     "anim": [
+      {
+       "prop": "emissive",
+       "path": "inbound.moving",
+       "on": "#fff2c0",
+       "off": "#202020",
+       "ei": 1.2
+      }
+     ]
+    },
+    {
+     "id": "inbound_headlight0.7",
+     "shape": "box",
+     "size": [
+      0.06,
+      0.24,
+      0.38
+     ],
+     "pos": [
+      -5.48,
+      -0.2,
+      0.7
+     ],
+     "color": "#444444",
+     "anim": [
+      {
+       "prop": "emissive",
+       "path": "inbound.moving",
+       "on": "#fff2c0",
+       "off": "#202020",
+       "ei": 1.2
+      }
+     ]
+    },
+    {
+     "id": "inbound_wheel_f-1",
+     "shape": "group",
+     "pos": [
+      -4.3,
+      -0.6600000000000001,
+      -1.0
+     ],
+     "children": [
+      {
+       "id": "inbound_wheel_f-1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.28,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "inbound_wheel_f-1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.31000000000000005,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "inbound.moving",
+       "speed": -4.0
+      }
+     ]
+    },
+    {
+     "id": "inbound_wheel_f+1",
+     "shape": "group",
+     "pos": [
+      -4.3,
+      -0.6600000000000001,
+      1.0
+     ],
+     "children": [
+      {
+       "id": "inbound_wheel_f+1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.28,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "inbound_wheel_f+1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.31000000000000005,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "inbound.moving",
+       "speed": -4.0
+      }
+     ]
+    },
+    {
+     "id": "inbound_wheel_r-1",
+     "shape": "group",
+     "pos": [
+      1.2,
+      -0.6600000000000001,
+      -1.0
+     ],
+     "children": [
+      {
+       "id": "inbound_wheel_r-1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.34,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "inbound_wheel_r-1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.37,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "inbound.moving",
+       "speed": -4.0
+      }
+     ]
+    },
+    {
+     "id": "inbound_wheel_r+1",
+     "shape": "group",
+     "pos": [
+      1.2,
+      -0.6600000000000001,
+      1.0
+     ],
+     "children": [
+      {
+       "id": "inbound_wheel_r+1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.34,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "inbound_wheel_r+1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.37,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "inbound.moving",
+       "speed": -4.0
+      }
+     ]
+    },
+    {
+     "id": "inbound_floor",
+     "shape": "box",
+     "size": [
+      6.8,
+      0.12,
+      2.3
+     ],
+     "pos": [
+      0,
+      -0.06,
+      0
+     ],
+     "color": "#cfd5dc"
+    },
+    {
+     "id": "inbound_ceiling",
+     "shape": "box",
+     "size": [
+      6.8,
+      0.1,
+      2.3
+     ],
+     "pos": [
+      0,
+      2.25,
+      0
+     ],
+     "color": "#e7ecf2"
+    },
+    {
+     "id": "inbound_wall_l",
+     "shape": "box",
+     "size": [
+      6.8,
+      2.3,
+      0.08
+     ],
+     "pos": [
+      0,
+      1.15,
+      -1.11
+     ],
+     "color": "#e7ecf2"
+    },
+    {
+     "id": "inbound_wall_r",
+     "shape": "box",
+     "size": [
+      6.8,
+      2.3,
+      0.08
+     ],
+     "pos": [
+      0,
+      1.15,
+      1.11
+     ],
+     "color": "#e7ecf2"
+    },
+    {
+     "id": "inbound_wall_front",
+     "shape": "box",
+     "size": [
+      0.08,
+      2.3,
+      2.3
+     ],
+     "pos": [
+      -3.36,
+      1.15,
+      0
+     ],
+     "color": "#e7ecf2"
+    },
+    {
+     "id": "inbound_door-1.15",
+     "shape": "group",
+     "pos": [
+      3.4,
+      1.15,
+      -1.15
+     ],
+     "children": [
+      {
+       "id": "inbound_door_panel-1.15",
+       "shape": "box",
+       "size": [
+        0.06,
+        2.2,
+        1.12
+       ],
+       "pos": [
+        0,
+        0,
+        0.56
+       ],
+       "color": "#dfe5ec"
+      }
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "y",
+       "path": "inbound.door",
+       "scale": 1.75
+      }
+     ]
+    },
+    {
+     "id": "inbound_door+1.15",
+     "shape": "group",
+     "pos": [
+      3.4,
+      1.15,
+      1.15
+     ],
+     "children": [
+      {
+       "id": "inbound_door_panel+1.15",
+       "shape": "box",
+       "size": [
+        0.06,
+        2.2,
+        1.12
+       ],
+       "pos": [
+        0,
+        0,
+        -0.56
+       ],
+       "color": "#dfe5ec"
+      }
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "y",
+       "path": "inbound.door",
+       "scale": -1.75
+      }
+     ]
+    }
+   ],
    "anim": [
     {
      "prop": "x",
      "path": "inbound.truck",
-     "from": -11.0,
-     "to": -1.5
+     "from": -17.0,
+     "to": -5.97
     }
    ]
   },
   {
-   "id": "raw_bin_steel",
-   "shape": "box",
-   "size": [
-    2.0,
-    1.2,
-    1.4
-   ],
+   "id": "outbound",
+   "shape": "group",
    "pos": [
-    -8.5,
-    0.6,
-    1.0
+    34.0,
+    0.0,
+    0.0
    ],
-   "color": "#3a4452",
-   "opacity": 0.55
+   "children": [
+    {
+     "id": "outbound_rail-0.55",
+     "shape": "box",
+     "size": [
+      8.4,
+      0.2,
+      0.15
+     ],
+     "pos": [
+      0.7,
+      -0.3,
+      -0.55
+     ],
+     "color": "#2a2f36"
+    },
+    {
+     "id": "outbound_rail0.55",
+     "shape": "box",
+     "size": [
+      8.4,
+      0.2,
+      0.15
+     ],
+     "pos": [
+      0.7,
+      -0.3,
+      0.55
+     ],
+     "color": "#2a2f36"
+    },
+    {
+     "id": "outbound_cab",
+     "shape": "box",
+     "size": [
+      1.9,
+      2.1,
+      2.2
+     ],
+     "pos": [
+      4.5,
+      0.55,
+      0
+     ],
+     "color": "#f1f4f7"
+    },
+    {
+     "id": "outbound_cab_stripe",
+     "shape": "box",
+     "size": [
+      1.92,
+      0.16,
+      2.22
+     ],
+     "pos": [
+      4.5,
+      0.18,
+      0
+     ],
+     "color": "#1f5fa8"
+    },
+    {
+     "id": "outbound_windshield",
+     "shape": "box",
+     "size": [
+      0.05,
+      0.95,
+      1.9
+     ],
+     "pos": [
+      5.46,
+      1.0,
+      0
+     ],
+     "color": "#1c2a3a"
+    },
+    {
+     "id": "outbound_window_l",
+     "shape": "box",
+     "size": [
+      1.1,
+      0.75,
+      0.05
+     ],
+     "pos": [
+      4.6,
+      1.0,
+      -1.11
+     ],
+     "color": "#1c2a3a"
+    },
+    {
+     "id": "outbound_window_r",
+     "shape": "box",
+     "size": [
+      1.1,
+      0.75,
+      0.05
+     ],
+     "pos": [
+      4.6,
+      1.0,
+      1.11
+     ],
+     "color": "#1c2a3a"
+    },
+    {
+     "id": "outbound_grille",
+     "shape": "box",
+     "size": [
+      0.05,
+      0.4,
+      1.0
+     ],
+     "pos": [
+      5.46,
+      -0.2,
+      0
+     ],
+     "color": "#202428"
+    },
+    {
+     "id": "outbound_bumper",
+     "shape": "box",
+     "size": [
+      0.3,
+      0.28,
+      2.2
+     ],
+     "pos": [
+      5.55,
+      -0.62,
+      0
+     ],
+     "color": "#3a414b"
+    },
+    {
+     "id": "outbound_mirror_l",
+     "shape": "box",
+     "size": [
+      0.14,
+      0.34,
+      0.1
+     ],
+     "pos": [
+      5.25,
+      0.9,
+      -1.28
+     ],
+     "color": "#1c1f24"
+    },
+    {
+     "id": "outbound_mirror_r",
+     "shape": "box",
+     "size": [
+      0.14,
+      0.34,
+      0.1
+     ],
+     "pos": [
+      5.25,
+      0.9,
+      1.28
+     ],
+     "color": "#1c1f24"
+    },
+    {
+     "id": "outbound_headlight-0.7",
+     "shape": "box",
+     "size": [
+      0.06,
+      0.24,
+      0.38
+     ],
+     "pos": [
+      5.48,
+      -0.2,
+      -0.7
+     ],
+     "color": "#444444",
+     "anim": [
+      {
+       "prop": "emissive",
+       "path": "outbound.moving",
+       "on": "#fff2c0",
+       "off": "#202020",
+       "ei": 1.2
+      }
+     ]
+    },
+    {
+     "id": "outbound_headlight0.7",
+     "shape": "box",
+     "size": [
+      0.06,
+      0.24,
+      0.38
+     ],
+     "pos": [
+      5.48,
+      -0.2,
+      0.7
+     ],
+     "color": "#444444",
+     "anim": [
+      {
+       "prop": "emissive",
+       "path": "outbound.moving",
+       "on": "#fff2c0",
+       "off": "#202020",
+       "ei": 1.2
+      }
+     ]
+    },
+    {
+     "id": "outbound_wheel_f-1",
+     "shape": "group",
+     "pos": [
+      4.3,
+      -0.6600000000000001,
+      -1.0
+     ],
+     "children": [
+      {
+       "id": "outbound_wheel_f-1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.28,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "outbound_wheel_f-1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.31000000000000005,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "outbound.moving",
+       "speed": 4.0
+      }
+     ]
+    },
+    {
+     "id": "outbound_wheel_f+1",
+     "shape": "group",
+     "pos": [
+      4.3,
+      -0.6600000000000001,
+      1.0
+     ],
+     "children": [
+      {
+       "id": "outbound_wheel_f+1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.28,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "outbound_wheel_f+1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.31000000000000005,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "outbound.moving",
+       "speed": 4.0
+      }
+     ]
+    },
+    {
+     "id": "outbound_wheel_r-1",
+     "shape": "group",
+     "pos": [
+      -1.2,
+      -0.6600000000000001,
+      -1.0
+     ],
+     "children": [
+      {
+       "id": "outbound_wheel_r-1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.34,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "outbound_wheel_r-1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.37,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "outbound.moving",
+       "speed": 4.0
+      }
+     ]
+    },
+    {
+     "id": "outbound_wheel_r+1",
+     "shape": "group",
+     "pos": [
+      -1.2,
+      -0.6600000000000001,
+      1.0
+     ],
+     "children": [
+      {
+       "id": "outbound_wheel_r+1_tire",
+       "shape": "cylinder",
+       "r": 0.42,
+       "h": 0.34,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#15181c",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      },
+      {
+       "id": "outbound_wheel_r+1_hub",
+       "shape": "cylinder",
+       "r": 0.22,
+       "h": 0.37,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "color": "#9aa4b1",
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ]
+      }
+     ],
+     "anim": [
+      {
+       "prop": "spin",
+       "axis": "z",
+       "path": "outbound.moving",
+       "speed": 4.0
+      }
+     ]
+    },
+    {
+     "id": "outbound_bed",
+     "shape": "box",
+     "size": [
+      5.5,
+      0.15,
+      2.28
+     ],
+     "pos": [
+      0,
+      -0.075,
+      0
+     ],
+     "color": "#6b7280"
+    },
+    {
+     "id": "outbound_board_l",
+     "shape": "box",
+     "size": [
+      5.5,
+      0.4,
+      0.06
+     ],
+     "pos": [
+      0,
+      0.2,
+      -1.11
+     ],
+     "color": "#8a94a3"
+    },
+    {
+     "id": "outbound_board_r",
+     "shape": "box",
+     "size": [
+      5.5,
+      0.4,
+      0.06
+     ],
+     "pos": [
+      0,
+      0.2,
+      1.11
+     ],
+     "color": "#8a94a3"
+    },
+    {
+     "id": "outbound_board_front",
+     "shape": "box",
+     "size": [
+      0.06,
+      0.4,
+      2.28
+     ],
+     "pos": [
+      2.72,
+      0.2,
+      0
+     ],
+     "color": "#8a94a3"
+    },
+    {
+     "id": "outbound_tailgate",
+     "shape": "group",
+     "pos": [
+      -2.75,
+      0.0,
+      0.0
+     ],
+     "children": [
+      {
+       "id": "outbound_tailgate_panel",
+       "shape": "box",
+       "size": [
+        0.06,
+        0.4,
+        2.28
+       ],
+       "pos": [
+        0,
+        0.2,
+        0
+       ],
+       "color": "#8a94a3"
+      }
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "z",
+       "path": "outbound.docked",
+       "scale": 1.5707963267948966
+      }
+     ]
+    }
+   ],
+   "anim": [
+    {
+     "prop": "x",
+     "path": "outbound.truck",
+     "from": 34.0,
+     "to": 21.52
+    }
+   ]
   },
   {
-   "id": "raw_fill_steel",
+   "id": "telescopic_s1",
    "shape": "box",
    "size": [
-    1.5,
-    1.0,
-    0.3
+    2.6,
+    0.5,
+    1.0
    ],
    "pos": [
-    -8.5,
+    -1.05,
+    0.5,
+    5.0
+   ],
+   "color": "#4b5563"
+  },
+  {
+   "id": "telescopic_s2",
+   "shape": "box",
+   "size": [
+    2.4,
+    0.42,
+    0.84
+   ],
+   "pos": [
+    -1.05,
+    0.52,
+    5.0
+   ],
+   "color": "#5b6573",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.boom",
+     "from": -1.05,
+     "to": -3.55
+    }
+   ]
+  },
+  {
+   "id": "telescopic_s3",
+   "shape": "box",
+   "size": [
+    2.4,
+    0.34,
+    0.7
+   ],
+   "pos": [
+    -1.05,
+    0.5,
+    5.0
+   ],
+   "color": "#6b7583",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.boom",
+     "from": -1.05,
+     "to": -5.95
+    }
+   ]
+  },
+  {
+   "id": "receiving_body",
+   "shape": "box",
+   "size": [
+    2.6,
+    0.5,
+    1.0
+   ],
+   "pos": [
+    1.5499999999999998,
+    0.5,
+    5.0
+   ],
+   "color": "#2a4a44"
+  },
+  {
+   "id": "receiving_belt",
+   "shape": "belt",
+   "size": [
+    2.5,
+    0.9
+   ],
+   "pos": [
+    1.5499999999999998,
+    0.76,
+    5.0
+   ],
+   "path": "inbound.docked"
+  },
+  {
+   "id": "carton0",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.3,
+    0.4
+   ],
+   "pos": [
+    -7.0,
+    0.92,
+    5.0
+   ],
+   "color": "#c9a76a",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.cartons.0.p",
+     "from": -7.0,
+     "to": 2.8,
+     "snap": true
+    },
+    {
+     "prop": "visible",
+     "path": "inbound.cartons.0.on"
+    }
+   ]
+  },
+  {
+   "id": "carton1",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.3,
+    0.4
+   ],
+   "pos": [
+    -7.0,
+    0.92,
+    5.0
+   ],
+   "color": "#c9a76a",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.cartons.1.p",
+     "from": -7.0,
+     "to": 2.8,
+     "snap": true
+    },
+    {
+     "prop": "visible",
+     "path": "inbound.cartons.1.on"
+    }
+   ]
+  },
+  {
+   "id": "carton2",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.3,
+    0.4
+   ],
+   "pos": [
+    -7.0,
+    0.92,
+    5.0
+   ],
+   "color": "#c9a76a",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.cartons.2.p",
+     "from": -7.0,
+     "to": 2.8,
+     "snap": true
+    },
+    {
+     "prop": "visible",
+     "path": "inbound.cartons.2.on"
+    }
+   ]
+  },
+  {
+   "id": "carton3",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.3,
+    0.4
+   ],
+   "pos": [
+    -7.0,
+    0.92,
+    5.0
+   ],
+   "color": "#c9a76a",
+   "anim": [
+    {
+     "prop": "x",
+     "path": "inbound.cartons.3.p",
+     "from": -7.0,
+     "to": 2.8,
+     "snap": true
+    },
+    {
+     "prop": "visible",
+     "path": "inbound.cartons.3.on"
+    }
+   ]
+  },
+  {
+   "id": "rack_post0+4.4",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    3.45,
+    1.35,
+    4.4
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post0+5.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    3.45,
+    1.35,
+    5.6
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post1+4.4",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    5.75,
+    1.35,
+    4.4
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post1+5.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    5.75,
+    1.35,
+    5.6
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post2+4.4",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    8.05,
+    1.35,
+    4.4
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post2+5.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    8.05,
+    1.35,
+    5.6
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post3+4.4",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    10.35,
+    1.35,
+    4.4
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_post3+5.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.7,
+    0.1
+   ],
+   "pos": [
+    10.35,
+    1.35,
+    5.6
+   ],
+   "color": "#e07a2f"
+  },
+  {
+   "id": "rack_beam_steel+4.45",
+   "shape": "box",
+   "size": [
+    2.3,
+    0.12,
+    0.08
+   ],
+   "pos": [
+    4.6,
+    1.5,
+    4.45
+   ],
+   "color": "#2f6fd6"
+  },
+  {
+   "id": "rack_beam_steel+5.55",
+   "shape": "box",
+   "size": [
+    2.3,
+    0.12,
+    0.08
+   ],
+   "pos": [
+    4.6,
+    1.5,
+    5.55
+   ],
+   "color": "#2f6fd6"
+  },
+  {
+   "id": "raw_pallet_steel",
+   "shape": "box",
+   "size": [
+    1.1,
     0.15,
-    1.85
+    1.1
+   ],
+   "pos": [
+    4.6,
+    0.075,
+    5.0
+   ],
+   "color": "#4a5666"
+  },
+  {
+   "id": "raw_load_steel",
+   "shape": "box",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "pos": [
+    4.6,
+    0.65,
+    5.0
    ],
    "color": "#9aa7b5",
    "anim": [
     {
      "prop": "fill",
      "path": "stock.steel.pct",
-     "base_y": 0.1,
+     "base_y": 0.15,
      "size_y": 1.0
     }
    ]
@@ -177,11 +2337,11 @@
   {
    "id": "raw_lamp_steel",
    "shape": "sphere",
-   "r": 0.2,
+   "r": 0.15,
    "pos": [
-    -8.5,
-    1.55,
-    1.0
+    4.6,
+    2.45,
+    4.4
    ],
    "color": "#222222",
    "anim": [
@@ -196,40 +2356,69 @@
    ]
   },
   {
-   "id": "raw_bin_bolt",
+   "id": "rack_beam_bolt+4.45",
    "shape": "box",
    "size": [
-    2.0,
-    1.2,
-    1.4
+    2.3,
+    0.12,
+    0.08
    ],
    "pos": [
-    -6.0,
-    0.6,
-    1.0
+    7.0,
+    1.5,
+    4.45
    ],
-   "color": "#3a4452",
-   "opacity": 0.55
+   "color": "#2f6fd6"
   },
   {
-   "id": "raw_fill_bolt",
+   "id": "rack_beam_bolt+5.55",
    "shape": "box",
    "size": [
-    1.5,
-    1.0,
-    0.3
+    2.3,
+    0.12,
+    0.08
    ],
    "pos": [
-    -6.0,
-    0.15,
-    1.85
+    7.0,
+    1.5,
+    5.55
    ],
-   "color": "#d8a060",
+   "color": "#2f6fd6"
+  },
+  {
+   "id": "raw_pallet_bolt",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.15,
+    1.1
+   ],
+   "pos": [
+    7.0,
+    0.075,
+    5.0
+   ],
+   "color": "#4a5666"
+  },
+  {
+   "id": "raw_load_bolt",
+   "shape": "box",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "pos": [
+    7.0,
+    0.65,
+    5.0
+   ],
+   "color": "#c9a76a",
    "anim": [
     {
      "prop": "fill",
      "path": "stock.bolt.pct",
-     "base_y": 0.1,
+     "base_y": 0.15,
      "size_y": 1.0
     }
    ]
@@ -237,11 +2426,11 @@
   {
    "id": "raw_lamp_bolt",
    "shape": "sphere",
-   "r": 0.2,
+   "r": 0.15,
    "pos": [
-    -6.0,
-    1.55,
-    1.0
+    7.0,
+    2.45,
+    4.4
    ],
    "color": "#222222",
    "anim": [
@@ -256,40 +2445,69 @@
    ]
   },
   {
-   "id": "raw_bin_paint",
+   "id": "rack_beam_paint+4.45",
    "shape": "box",
    "size": [
-    2.0,
-    1.2,
-    1.4
+    2.3,
+    0.12,
+    0.08
    ],
    "pos": [
-    -3.5,
-    0.6,
-    1.0
+    9.4,
+    1.5,
+    4.45
    ],
-   "color": "#3a4452",
-   "opacity": 0.55
+   "color": "#2f6fd6"
   },
   {
-   "id": "raw_fill_paint",
+   "id": "rack_beam_paint+5.55",
    "shape": "box",
    "size": [
-    1.5,
-    1.0,
-    0.3
+    2.3,
+    0.12,
+    0.08
    ],
    "pos": [
-    -3.5,
-    0.15,
-    1.85
+    9.4,
+    1.5,
+    5.55
    ],
-   "color": "#4aa3ff",
+   "color": "#2f6fd6"
+  },
+  {
+   "id": "raw_pallet_paint",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.15,
+    1.1
+   ],
+   "pos": [
+    9.4,
+    0.075,
+    5.0
+   ],
+   "color": "#4a5666"
+  },
+  {
+   "id": "raw_load_paint",
+   "shape": "box",
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "pos": [
+    9.4,
+    0.65,
+    5.0
+   ],
+   "color": "#2f6fd6",
    "anim": [
     {
      "prop": "fill",
      "path": "stock.paint.pct",
-     "base_y": 0.1,
+     "base_y": 0.15,
      "size_y": 1.0
     }
    ]
@@ -297,11 +2515,11 @@
   {
    "id": "raw_lamp_paint",
    "shape": "sphere",
-   "r": 0.2,
+   "r": 0.15,
    "pos": [
-    -3.5,
-    1.55,
-    1.0
+    9.4,
+    2.45,
+    4.4
    ],
    "color": "#222222",
    "anim": [
@@ -316,356 +2534,409 @@
    ]
   },
   {
-   "id": "fg_mat",
-   "shape": "box",
-   "size": [
-    8.2,
-    0.1,
-    5.6
-   ],
-   "pos": [
-    4.6,
-    0.05,
-    -3.6
-   ],
-   "color": "#26362c"
-  },
-  {
-   "id": "fg_post_-4.0_-2.6",
-   "shape": "box",
-   "size": [
-    0.2,
-    1.8,
-    0.2
-   ],
-   "pos": [
-    0.5999999999999996,
-    0.9,
-    -6.2
-   ],
-   "color": "#6a7686"
-  },
-  {
-   "id": "fg_post_-4.0_2.6",
-   "shape": "box",
-   "size": [
-    0.2,
-    1.8,
-    0.2
-   ],
-   "pos": [
-    0.5999999999999996,
-    0.9,
-    -1.0
-   ],
-   "color": "#6a7686"
-  },
-  {
-   "id": "fg_post_4.0_-2.6",
-   "shape": "box",
-   "size": [
-    0.2,
-    1.8,
-    0.2
-   ],
-   "pos": [
-    8.6,
-    0.9,
-    -6.2
-   ],
-   "color": "#6a7686"
-  },
-  {
-   "id": "fg_post_4.0_2.6",
-   "shape": "box",
-   "size": [
-    0.2,
-    1.8,
-    0.2
-   ],
-   "pos": [
-    8.6,
-    0.9,
-    -1.0
-   ],
-   "color": "#6a7686"
-  },
-  {
    "id": "fg_slot0",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     2.4,
-    0.12,
+    0.007,
     -2.6
    ],
-   "color": "#3d5a47"
+   "color": "#4a4220"
   },
   {
    "id": "fg_slot1",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     4.6,
-    0.12,
+    0.007,
     -2.6
    ],
-   "color": "#3d5a47"
+   "color": "#4a4220"
   },
   {
    "id": "fg_slot2",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     6.800000000000001,
-    0.12,
+    0.007,
     -2.6
    ],
-   "color": "#3d5a47"
+   "color": "#4a4220"
   },
   {
    "id": "fg_slot3",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     2.4,
-    0.12,
+    0.007,
     -4.6
    ],
-   "color": "#3d5a47"
+   "color": "#4a4220"
   },
   {
    "id": "fg_slot4",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     4.6,
-    0.12,
+    0.007,
     -4.6
    ],
-   "color": "#3d5a47"
+   "color": "#4a4220"
   },
   {
    "id": "fg_slot5",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     6.800000000000001,
-    0.12,
+    0.007,
     -4.6
    ],
-   "color": "#3d5a47"
+   "color": "#4a4220"
   },
   {
-   "id": "agv_path",
-   "shape": "box",
-   "size": [
-    12.0,
-    0.04,
-    0.5
-   ],
+   "id": "fg_bollard0",
+   "shape": "cylinder",
+   "r": 0.1,
+   "h": 1.0,
    "pos": [
-    10.1,
-    0.02,
-    0.0
+    0.9,
+    0.5,
+    -1.7
    ],
    "color": "#d8a020"
   },
   {
-   "id": "agv_body",
-   "shape": "box",
-   "size": [
-    1.8,
-    0.45,
-    1.3
-   ],
+   "id": "fg_bollard1",
+   "shape": "cylinder",
+   "r": 0.1,
+   "h": 1.0,
    "pos": [
-    4.6,
-    0.3,
-    0.0
+    8.1,
+    0.5,
+    -1.7
    ],
-   "color": "#d8a020",
-   "anim": [
-    {
-     "prop": "x",
-     "path": "agv.pos",
-     "from": 4.6,
-     "to": 15.6
-    }
-   ]
+   "color": "#d8a020"
   },
   {
-   "id": "agv_light",
-   "shape": "sphere",
-   "r": 0.15,
+   "id": "fg_bollard2",
+   "shape": "cylinder",
+   "r": 0.1,
+   "h": 1.0,
    "pos": [
-    4.6,
-    0.7,
-    0.0
+    0.9,
+    0.5,
+    -5.6
    ],
-   "color": "#222222",
-   "anim": [
-    {
-     "prop": "x",
-     "path": "agv.pos",
-     "from": 4.6,
-     "to": 15.6
-    },
-    {
-     "prop": "lamp",
-     "path": "agv.state",
-     "map": {
-      "idle": "#7a8696",
-      "loading": "#f2c230",
-      "moving": "#33c27f",
-      "unloading": "#f2c230",
-      "returning": "#2f9bff"
-     }
-    }
-   ]
+   "color": "#d8a020"
   },
   {
-   "id": "out_dock",
-   "shape": "box",
-   "size": [
-    2.6,
-    0.3,
-    6.8
-   ],
+   "id": "fg_bollard3",
+   "shape": "cylinder",
+   "r": 0.1,
+   "h": 1.0,
    "pos": [
-    17.4,
-    0.15,
-    0
+    8.1,
+    0.5,
+    -5.6
    ],
-   "color": "#39424f"
+   "color": "#d8a020"
   },
   {
    "id": "dock_slot0",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     17.4,
-    0.32,
+    0.007,
     -2.0
    ],
-   "color": "#5a4a2a"
+   "color": "#2f4a36"
   },
   {
    "id": "dock_slot1",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     17.4,
-    0.32,
+    0.007,
     0.0
    ],
-   "color": "#5a4a2a"
+   "color": "#2f4a36"
   },
   {
    "id": "dock_slot2",
    "shape": "box",
    "size": [
-    1.5,
-    0.04,
-    1.5
+    1.35,
+    0.012,
+    1.35
    ],
    "pos": [
     17.4,
-    0.32,
+    0.007,
     2.0
    ],
-   "color": "#5a4a2a"
+   "color": "#2f4a36"
   },
   {
-   "id": "out_road",
+   "id": "agv_tape",
    "shape": "box",
    "size": [
-    20,
-    0.06,
-    5.4
+    12.0,
+    0.012,
+    0.14
    ],
    "pos": [
-    27,
-    0.03,
-    0
+    10.1,
+    0.007,
+    0.0
    ],
-   "color": "#2d323b"
+   "color": "#d8a020"
   },
   {
-   "id": "out_truck_bed",
-   "shape": "box",
-   "size": [
-    6.4,
-    0.4,
-    3.2
-   ],
+   "id": "agv",
+   "shape": "group",
    "pos": [
-    33.0,
-    0.9,
-    0
+    4.6,
+    0.0,
+    0.0
    ],
-   "color": "#8a94a3",
-   "anim": [
+   "children": [
     {
-     "prop": "x",
-     "path": "outbound.truck",
-     "from": 33.0,
-     "to": 21.0
+     "id": "agv_fork_l",
+     "shape": "box",
+     "size": [
+      1.15,
+      0.07,
+      0.17
+     ],
+     "pos": [
+      0.0,
+      0.07,
+      -0.3
+     ],
+     "color": "#8a94a3",
+     "anim": [
+      {
+       "prop": "y",
+       "path": "agv.lift",
+       "from": 0.07,
+       "to": 0.17
+      }
+     ]
+    },
+    {
+     "id": "agv_fork_r",
+     "shape": "box",
+     "size": [
+      1.15,
+      0.07,
+      0.17
+     ],
+     "pos": [
+      0.0,
+      0.07,
+      0.3
+     ],
+     "color": "#8a94a3",
+     "anim": [
+      {
+       "prop": "y",
+       "path": "agv.lift",
+       "from": 0.07,
+       "to": 0.17
+      }
+     ]
+    },
+    {
+     "id": "agv_body",
+     "shape": "box",
+     "size": [
+      0.8,
+      0.3,
+      0.72
+     ],
+     "pos": [
+      -0.95,
+      0.2,
+      0.0
+     ],
+     "color": "#d8a020"
+    },
+    {
+     "id": "agv_cover",
+     "shape": "box",
+     "size": [
+      0.78,
+      0.04,
+      0.7
+     ],
+     "pos": [
+      -0.95,
+      0.37,
+      0.0
+     ],
+     "color": "#2d3541"
+    },
+    {
+     "id": "agv_lidar",
+     "shape": "cylinder",
+     "r": 0.1,
+     "h": 0.1,
+     "pos": [
+      -0.62,
+      0.44,
+      0.0
+     ],
+     "color": "#111418"
+    },
+    {
+     "id": "agv_mast",
+     "shape": "cylinder",
+     "r": 0.03,
+     "h": 0.5,
+     "pos": [
+      -1.2,
+      0.65,
+      0.0
+     ],
+     "color": "#3a414b"
+    },
+    {
+     "id": "agv_beacon",
+     "shape": "sphere",
+     "r": 0.1,
+     "pos": [
+      -1.2,
+      0.95,
+      0.0
+     ],
+     "color": "#222222",
+     "anim": [
+      {
+       "prop": "lamp",
+       "path": "agv.moving",
+       "blink_path": "agv.moving",
+       "map": {
+        "1": "#ffb020",
+        "0": "#3a3020"
+       }
+      }
+     ]
+    },
+    {
+     "id": "agv_estop",
+     "shape": "cylinder",
+     "r": 0.05,
+     "h": 0.05,
+     "pos": [
+      -1.32,
+      0.4,
+      0.2
+     ],
+     "color": "#ef4b4b"
+    },
+    {
+     "id": "agv_led_l",
+     "shape": "box",
+     "size": [
+      0.78,
+      0.04,
+      0.02
+     ],
+     "pos": [
+      -0.95,
+      0.24,
+      -0.37
+     ],
+     "color": "#7a8696",
+     "anim": [
+      {
+       "prop": "lamp",
+       "path": "agv.state",
+       "map": {
+        "idle": "#7a8696",
+        "loading": "#f2c230",
+        "moving": "#33c27f",
+        "unloading": "#f2c230",
+        "returning": "#2f9bff"
+       }
+      }
+     ]
+    },
+    {
+     "id": "agv_led_r",
+     "shape": "box",
+     "size": [
+      0.78,
+      0.04,
+      0.02
+     ],
+     "pos": [
+      -0.95,
+      0.24,
+      0.37
+     ],
+     "color": "#7a8696",
+     "anim": [
+      {
+       "prop": "lamp",
+       "path": "agv.state",
+       "map": {
+        "idle": "#7a8696",
+        "loading": "#f2c230",
+        "moving": "#33c27f",
+        "unloading": "#f2c230",
+        "returning": "#2f9bff"
+       }
+      }
+     ]
     }
-   ]
-  },
-  {
-   "id": "out_truck_cab",
-   "shape": "box",
-   "size": [
-    2.0,
-    1.6,
-    2.8
    ],
-   "pos": [
-    37.2,
-    1.0,
-    0
-   ],
-   "color": "#2f6fb0",
    "anim": [
     {
      "prop": "x",
-     "path": "outbound.truck",
-     "from": 37.2,
-     "to": 25.2
+     "path": "agv.pos",
+     "from": 4.6,
+     "to": 15.6
     }
    ]
   },
@@ -673,31 +2944,41 @@
    "shape": "label",
    "key": "inbound_dock",
    "pos": [
-    -3.0,
-    3.2,
+    -1.4000000000000001,
+    4.5,
     5.0
    ],
-   "w": 2.6
+   "w": 2.4
+  },
+  {
+   "shape": "label",
+   "key": "telescopic",
+   "pos": [
+    -1.2000000000000002,
+    1.7,
+    6.4
+   ],
+   "w": 2.7
   },
   {
    "shape": "label",
    "key": "raw_rack",
    "pos": [
-    -6.0,
-    2.4,
-    1.0
+    7.0,
+    3.2,
+    5.0
    ],
-   "w": 2.6
+   "w": 2.4
   },
   {
    "shape": "label",
    "key": "fg_rack",
    "pos": [
     4.6,
-    2.6,
+    2.0,
     -3.6
    ],
-   "w": 2.6
+   "w": 2.4
   },
   {
    "shape": "label",
@@ -713,19 +2994,147 @@
    "shape": "label",
    "key": "outbound_dock",
    "pos": [
-    17.4,
-    2.6,
+    17.599999999999998,
+    4.5,
     0.0
    ],
-   "w": 2.6
+   "w": 2.4
+  },
+  {
+   "shape": "label",
+   "key": "dock_leveler",
+   "pos": [
+    17.2,
+    1.1,
+    1.9
+   ],
+   "w": 2.4
   }
  ],
  "parts": {
-  "shape": "box",
-  "size": [
-   1.3,
-   0.6,
-   1.3
+  "model": [
+   {
+    "size": [
+     1.1,
+     0.05,
+     1.1
+    ],
+    "pos": [
+     0,
+     -0.175,
+     0
+    ],
+    "color": "#3a4a5c"
+   },
+   {
+    "size": [
+     1.1,
+     0.1,
+     0.14
+    ],
+    "pos": [
+     0,
+     -0.25,
+     -0.48
+    ],
+    "color": "#33414f"
+   },
+   {
+    "size": [
+     1.1,
+     0.1,
+     0.14
+    ],
+    "pos": [
+     0,
+     -0.25,
+     0.0
+    ],
+    "color": "#33414f"
+   },
+   {
+    "size": [
+     1.1,
+     0.1,
+     0.14
+    ],
+    "pos": [
+     0,
+     -0.25,
+     0.48
+    ],
+    "color": "#33414f"
+   },
+   {
+    "size": [
+     0.52,
+     0.3,
+     0.52
+    ],
+    "pos": [
+     -0.27,
+     0.0,
+     -0.27
+    ],
+    "rule": true,
+    "min_qty": 1
+   },
+   {
+    "size": [
+     0.52,
+     0.3,
+     0.52
+    ],
+    "pos": [
+     0.27,
+     0.0,
+     -0.27
+    ],
+    "rule": true,
+    "min_qty": 2
+   },
+   {
+    "size": [
+     0.52,
+     0.3,
+     0.52
+    ],
+    "pos": [
+     -0.27,
+     0.0,
+     0.27
+    ],
+    "rule": true,
+    "min_qty": 3
+   },
+   {
+    "size": [
+     0.52,
+     0.3,
+     0.52
+    ],
+    "pos": [
+     0.27,
+     0.0,
+     0.27
+    ],
+    "rule": true,
+    "min_qty": 4
+   },
+   {
+    "size": [
+     0.52,
+     0.3,
+     0.52
+    ],
+    "pos": [
+     0,
+     0.3,
+     0
+    ],
+    "rule": true,
+    "min_qty": 5
+   }
   ],
   "colors": {
    "normal": "#c9a76a",

@@ -1,6 +1,6 @@
 # 스마트 팩토리 통합 화면
 
-가공 라인(PLC), 프레스 · 용접 · 도장 라인, **물류 · 출하 구역**(`logistics.md`)을 **한 3D 화면**에 놓고 라인별 상태를 함께 봅니다.
+가공 라인(PLC), 프레스 · 용접 · 도장 라인, **물류 · 출하 구역**(`logistics.md`), **협동로봇 팔레타이징 셀**(`cobot.md`)을 **한 3D 화면**에 놓고 라인별 상태를 함께 봅니다.
 
 - 열기: 트윈 서버를 켜고 http://localhost:5001/3d/factory (각 3D 화면의 "공장 전체" 링크, 주소 옵션 `?embed=1`, `?embed=view`)
 - **전체** 버튼은 두 라인이 모두 보이게 창 크기에 맞춰 카메라를 맞추고, **라인 이름** 버튼은 그 라인으로 확대합니다.
@@ -13,8 +13,9 @@
 src/scenes/machining.json           가공 라인 3D 장면 (tools/make_machining_scene.py 로 만듦)
 src/scenes/press_weld_paint.json    프레스 라인 3D 장면
 src/scenes/logistics.json           물류 · 출하 구역 3D 장면 (tools/make_logistics_scene.py)
+src/scenes/cobot.json               협동로봇 팔레타이징 셀 3D 장면 (tools/make_cobot_scene.py)
 src/scenes/factory.json             라인별 위치(offset), 카메라
-/api/factory/state                  라인별 상태를 한 번에 {machining: ..., press: ..., logistics: ...}
+/api/factory/state                  라인별 상태를 한 번에 {machining: ..., press: ..., logistics: ..., cobot: ...}
 src/static/factory.js               위 파일들을 읽어 한 장면에 그리는 범용 뷰어
 ```
 

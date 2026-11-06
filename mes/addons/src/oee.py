@@ -34,7 +34,9 @@ TYPE_KO = {"command.issued": "조작", "machine.state": "운전 상태", "cycle.
            "cycle.step": "단계", "cycle.completed": "사이클 완료", "piece.classified": "분류",
            "count.updated": "카운트", "param.changed": "설정 변경", "io.changed": "입출력",
            "ai.judgement": "AI 판정", "alarm.raised": "경보", "alarm.cleared": "경보 해제",
-           "station.completed": "공정 완료", "station.state": "공정 상태", "piece.exited": "라인 끝", "sim.fault": "결함 주입"}
+           "station.completed": "공정 완료", "station.state": "공정 상태", "piece.exited": "라인 끝", "sim.fault": "결함 주입",
+           "lot.received": "자재 입고", "pallet.stored": "파렛트 보관", "shipment.dispatched": "출하", "vision.inspected": "비전 검사",
+           "cobot.placed": "로봇 적재", "cobot.pallet_closed": "파렛트 완성"}
 STATION_KO = {"press": "프레스", "weld": "용접", "paint": "도장"}
 FAULT_KO = {"none": "해제", "cyl_slow": "실린더 속도 저하", "cyl_degrade": "실린더 점진 열화", "sensor_flaky": "센서 응답 지연",
             "weld_slow": "용접 속도 저하", "press_down": "프레스 정지", "paint_down": "도장 정지"}
@@ -144,6 +146,18 @@ def describe(row, mode: str = "field") -> str:
         return f"{STATION_KO.get(p['station'], p['station'])}: {p['from']} -> {p['to']}"
     if t == "piece.exited":
         return "양품" if p["result"] == "good" else "불량 (용접 불량)"
+    if t == "lot.received":
+        return f"{p['item_code']} {p['qty']:g}{p['unit']} 입고 ({p['supplier']})"
+    if t == "pallet.stored":
+        return f"파렛트 {p['pallet_id']} 보관 ({p['qty']}개)"
+    if t == "shipment.dispatched":
+        return f"{p['shipment_no']} 출하 ({p['customer']}), 파렛트 {len(p['pallets'])}개 {sum(len(x['pieces']) for x in p['pallets'])}개"
+    if t == "vision.inspected":
+        return f"{'양품' if p['result'] == 'good' else '불량'} (신뢰도 {p['confidence'] * 100:.1f}%)"
+    if t == "cobot.placed":
+        return ("파렛트 %d번 칸" % (p["slot"] + 1) if p["target"] == "pallet" else "NG 수납함") + f" ({p['cycle_s']}초)"
+    if t == "cobot.pallet_closed":
+        return f"파렛트 {len(p['pieces'])}개 마감" + (" (라인 정지, 모자란 채)" if p["partial"] else "")
     if t == "sim.fault":
         return FAULT_KO.get(p["mode"], p["mode"])
     if t == "param.changed":

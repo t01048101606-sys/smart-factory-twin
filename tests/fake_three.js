@@ -1,4 +1,4 @@
-export const registry = { meshes: [], lights: [], sprites: [] };
+export const registry = { meshes: [], lights: [], sprites: [], groups: [] };
 const vec = (x = 0, y = 0, z = 0) => ({ x, y, z, set(a, b, c) { this.x = a; this.y = b; this.z = c; return this; } });
 class Obj { constructor() { this.position = vec(); this.scale = vec(1, 1, 1); this.rotation = vec(); this.visible = true; this.userData = {}; } }
 const color = () => ({ setHex(v) { this.hex = v; }, set(v) { this.value = v; } });
@@ -18,6 +18,7 @@ export class PlaneGeometry { constructor(...a) { this.type = 'Plane'; this.args 
 export class MeshStandardMaterial { constructor(o = {}) { Object.assign(this, o); this.color = color(); if (o.color !== undefined) this.color.value = o.color; this.emissive = color(); if (o.emissive !== undefined) this.emissive.value = o.emissive; if (this.emissiveIntensity === undefined) this.emissiveIntensity = 0; } }
 export class SpriteMaterial { constructor(o = {}) { Object.assign(this, o); } }
 export class CanvasTexture { constructor(c) { this.canvas = c; this.repeat = { set() {} }; this.offset = { x: 0, y: 0 }; } }
+export class Group extends Obj { constructor() { super(); this.children = []; registry.groups.push(this); } add(o) { this.children.push(o); return o; } }
 export class Mesh extends Obj { constructor(g, m) { super(); this.geometry = g; this.material = m; registry.meshes.push(this); } }
 export class Sprite extends Obj { constructor(m) { super(); this.material = m; registry.sprites.push(this); } }
-export function check() { for (const m of [...registry.meshes, ...registry.lights, ...registry.sprites]) asNum(m, m.geometry ? m.geometry.type : 'obj'); }
+export function check() { for (const m of [...registry.meshes, ...registry.lights, ...registry.sprites, ...registry.groups]) asNum(m, m.geometry ? m.geometry.type : 'obj'); }

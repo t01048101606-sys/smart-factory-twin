@@ -10,7 +10,7 @@ LineEventBridge (src/line_events.py)  -> 공통 이벤트 (line_id = LINE-PRESS-
    |
 mes_adapter.py + mes_press_line.py   -> MES DB (작업지시, 공정 실행 3단계, LOT, 시리얼, 검사) + machine_event
    |
-MES 페이지 16_프레스라인.py (OEE, 공정별 시간 구성, 결함 영향) / LOT추적 / 검사관리 / 시리얼관리
+MES 페이지 15_프레스라인.py (OEE, 공정별 시간 구성, 결함 영향) / LOT추적 / 검사관리 / 시리얼관리
 ```
 
 ## 이벤트
@@ -55,7 +55,7 @@ MES 페이지 16_프레스라인.py (OEE, 공정별 시간 구성, 결함 영향
 ## 실행
 
 ```
-python src\mes_adapter.py --install-addons     # 처음 한 번, 그리고 MES 추가 파일이 바뀐 뒤: 16_프레스라인.py, lineoee.py 설치
+python src\mes_adapter.py --install-addons     # 처음 한 번, 그리고 MES 추가 파일이 바뀐 뒤: 15_프레스라인.py, lineoee.py 설치
 python src\server.py plc\1102                  # 트윈 서버 (/3d/line)
 python src\mes_adapter.py --batch 3 --press-batch 5
 ```

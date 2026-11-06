@@ -9,13 +9,16 @@
 """
 import math
 
+# 위치 상수 (3D 장면과 같다). 단위는 미터에 가깝다. 건물 바닥(도크 바닥)이 y=0 이고, 트럭이 서는 마당은 도크 높이(1.08m, 5톤 트럭 적재함 높이)만큼 낮아서
+# 트럭 적재함 바닥이 도크 바닥과 같은 높이가 된다. 그래서 파렛트는 도크에서 트럭으로 높이 변화 없이 수평으로 들어간다 (도크 레벨러가 틈을 잇는다).
+# 파렛트 중심 높이 0.3 = 플라스틱 파렛트(0.15)와 박스 높이의 절반쯤이 바닥에 놓인 상태, AGV 가 들면 0.1 올라간다.
 LAYOUT = {
-    "inbound_x": (-15.0, -5.5),        # 입고 트럭 중심 x: pos 0 -> 1
-    "out_x": (33.0, 21.0),             # 출하 트럭 중심 x: pos 0 -> 1 (도크)
-    "agv_x": (4.6, 15.6), "agv_z": 0.0, "agv_y": 0.95,
-    "rack": [(2.4 + (i % 3) * 2.2, 0.4, -2.6 - (i // 3) * 2.0) for i in range(6)],     # 완제품 창고 칸
-    "dock": [(17.4, 0.4, -2.0 + 2.0 * j) for j in range(3)],                          # 출하 도크 칸
-    "cargo": [(-1.3 + 2.6 * (k % 2), 1.15, -0.9 + 1.8 * (k // 2)) for k in range(4)],  # 트럭 화물칸 (트럭 중심 기준)
+    "inbound_x": (-17.0, -5.97),       # 입고 트럭(적재함 6.8m) 중심 x: pos 0 -> 1. 1 에서 뒤끝이 도크 범퍼 바깥면(x=-2.57)에 닿는다
+    "out_x": (34.0, 21.52),            # 출하 트럭(적재함 5.5m) 중심 x: pos 0 -> 1 (도크). 1 에서 적재함 뒤끝이 도크 범퍼 바깥면(x=18.77)에 닿는다
+    "agv_x": (4.6, 15.6), "agv_z": 0.0, "agv_y": 0.4,
+    "rack": [(2.4 + (i % 3) * 2.2, 0.3, -2.6 - (i // 3) * 2.0) for i in range(6)],     # 완제품 창고 칸 (바닥 적재)
+    "dock": [(17.4, 0.3, -2.0 + 2.0 * j) for j in range(3)],                          # 출하 도크 칸
+    "cargo": [(-1.3 + 2.6 * (k % 2), 0.3, -0.58 + 1.16 * (k // 2)) for k in range(4)],  # 트럭 적재함 칸 (적재함 중심 기준, 폭 2.28m 에 파렛트 2개)
 }
 MATERIALS = {
     "steel": {"item": "RM-STEEL", "name": "냉연강판", "unit": "KG", "stock": 30.0, "rop": 12.0, "order": 60.0, "supplier": "한국제철"},
@@ -68,6 +71,11 @@ class LogisticsSim:
         if len(self.open_pieces) >= PALLET_QTY:
             self._make_pallet(self.open_pieces[:PALLET_QTY])
             self.open_pieces = self.open_pieces[PALLET_QTY:]
+
+    def add_pallet(self, pieces):
+        """협동로봇 셀이 쌓아서 마감한 파렛트 (작업물 번호 목록)."""
+        if pieces:
+            self._make_pallet(list(pieces))
 
     def flush(self):
         """라인이 멈추면 모자란 수량으로 파렛트를 만든다."""
@@ -222,7 +230,7 @@ class LogisticsSim:
         agv_xyz = (ax, LAYOUT["agv_y"], LAYOUT["agv_z"])
         st = p["stage"]
         if st in ("rack", "wait"):
-            return LAYOUT["rack"][p["slot"] if p["slot"] is not None else 0] if st == "rack" else (2.4, 0.4, -7.0)
+            return LAYOUT["rack"][p["slot"] if p["slot"] is not None else 0] if st == "rack" else (2.4, 0.3, -7.0)
         if st == "agv_load":
             a, b = LAYOUT["rack"][p["slot"]] if p["slot"] is not None else LAYOUT["rack"][0], (LAYOUT["agv_x"][0], LAYOUT["agv_y"], LAYOUT["agv_z"])
             return tuple(lerp(a[i], b[i], p["prog"]) for i in range(3))
@@ -251,11 +259,21 @@ class LogisticsSim:
         stock = {k: {"qty": round(self.stock[k], 2), "pct": round(min(1.0, self.stock[k] / (m["stock"] + m["order"])), 3),
                      "level": "low" if self.stock[k] <= m["rop"] else "ok", "unit": m["unit"], "name": m["name"]} for k, m in MATERIALS.items()}
         rack = sum(1 for p in self.pallets if p["stage"] in ("rack", "agv_load"))
+        ist, it, ost, ast = self.inbound["state"], self.inbound["t"], self.out["state"], self.agv["state"]
+        # 입고: 트럭이 도크에 붙으면(unloading) 뒷문이 열리고, 신축 컨베이어가 1.5초에 걸쳐 트럭 안으로 뻗고, 박스가 흐르고, 끝나기 전 1.5초에 접힌다
+        boom = max(0.0, min(1.0, it / 1.5, (T["unload"] - it) / 1.5)) if ist == "unloading" else 0.0
+        cartons = []
+        for i in range(4):
+            ph = ((it - 1.5) * 0.2 + i / 4.0) % 1.0
+            flowing = ist == "unloading" and boom > 0.999
+            cartons.append({"p": round(ph, 3) if flowing else 0.0, "on": bool(flowing and 0.03 < ph < 0.97)})
+        carrying = any(p["stage"] in ("agv_load", "agv", "agv_unload") for p in self.pallets)
         return {
             "time": round(self.time, 1), "speed": self.speed, "stock": stock,
-            "inbound": {"state": self.inbound["state"], "truck": round(min(1.0, max(0.0, ipos)), 3)},
-            "agv": {"state": self.agv["state"], "pos": round(apos, 3)},
-            "outbound": {"state": self.out["state"], "truck": round(tpos, 3)},
+            "inbound": {"state": ist, "truck": round(min(1.0, max(0.0, ipos)), 3), "moving": 1 if ist in ("arriving", "leaving") else 0,
+                        "docked": 1 if ist == "unloading" else 0, "door": 1 if ist == "unloading" else 0, "boom": round(boom, 3), "cartons": cartons},
+            "agv": {"state": ast, "pos": round(apos, 3), "moving": 1 if ast in ("moving", "returning") else 0, "lift": 1 if carrying else 0},
+            "outbound": {"state": ost, "truck": round(tpos, 3), "moving": 1 if ost in ("arriving", "leaving") else 0, "docked": 1 if ost == "docked" else 0},
             "parts": parts, "counts": {**self.counts, "rack": rack, "open": len(self.open_pieces)},
             "kpi": {"low_stock": [k for k, v in stock.items() if v["level"] == "low"]},
         }

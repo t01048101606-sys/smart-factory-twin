@@ -59,6 +59,9 @@
         "station.completed",
         "piece.exited",
         "lot.received",
+        "vision.inspected",
+        "cobot.placed",
+        "cobot.pallet_closed",
         "pallet.stored",
         "shipment.dispatched",
         "ai.judgement",
@@ -854,6 +857,120 @@
                   },
                   "additionalProperties": false
                 }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "vision.inspected"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "result",
+              "confidence"
+            ],
+            "properties": {
+              "result": {
+                "enum": [
+                  "good",
+                  "scrap"
+                ]
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "비전 검사 신뢰도"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "cobot.placed"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "piece_id"
+        ],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "target",
+              "slot",
+              "cycle_s"
+            ],
+            "properties": {
+              "target": {
+                "enum": [
+                  "pallet",
+                  "ng_bin"
+                ]
+              },
+              "slot": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cycle_s": {
+                "type": "number",
+                "minimum": 0,
+                "description": "집기 시작부터 놓기까지 걸린 시간(초)"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "cobot.pallet_closed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": [
+              "pieces",
+              "partial"
+            ],
+            "properties": {
+              "pieces": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "partial": {
+                "type": "boolean",
+                "description": "라인이 멈춰서 수량이 모자란 채로 마감했는가"
               }
             },
             "additionalProperties": false

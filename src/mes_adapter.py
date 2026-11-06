@@ -30,6 +30,7 @@ sys.path.insert(0, str(HERE))   # line_events, mes_press_line (같은 폴더의 
 from line_events import LINE_ID                # noqa: E402
 from mes_press_line import PressLineMes        # noqa: E402
 from logistics_events import LINE_ID as LOGISTICS_LINE_ID   # noqa: E402
+from cobot_events import LINE_ID as COBOT_LINE_ID           # noqa: E402
 from mes_logistics import LogisticsMes         # noqa: E402
 TWIN_ROOT = HERE.parent
 DEFAULT_MES = Path(os.environ.get("MES_ROOT", TWIN_ROOT.parent / "AutoParts-MES-Arduino"))
@@ -44,7 +45,11 @@ ITEMS = [("RM-BLANK", "가공용 블랭크", "MATERIAL", "EA"),
          ("FG-DRILLPART", "가공 부품", "PRODUCT", "EA")]
 REASON = ("MAT_MIX", _f("ng_reason"))
 FINAL_STEPS = {"bin_metal", "end_nonmetal"}
-BACKUP_ON_OVERWRITE = {"pages/13_현장모니터링.py"}  # 이미 MES에 있는 파일을 대체하는 추가 파일
+BACKUP_ON_OVERWRITE = set()    # 이미 MES에 있는 파일을 대체하는 추가 파일 (지금은 없음)
+# 새 페이지로 합쳐져서 없어진 페이지. 설치할 때 MES 폴더에서 지운다 (이전 버전에서 설치한 것, MES 원본의 현장모니터링).
+# MES 원본의 13_현장모니터링.py 는 지우기 전에 .orig 로 백업한다 (원본은 센서 테이블 구조가 달라 어차피 열리지 않았다).
+OBSOLETE_PAGES = ("pages/13_현장모니터링.py", "pages/14_설비현황.py", "pages/15_공정3D.py", "pages/16_프레스라인.py", "pages/17_공장현황.py")
+BACKUP_BEFORE_REMOVE = {"pages/13_현장모니터링.py"}
 
 
 class MesAdapter:
@@ -108,8 +113,18 @@ class MesAdapter:
         c.close()
 
     def install_addons(self):
-        """mes/addons 의 추가 파일(OEE 계산, 설비 현황 페이지)을 MES 폴더로 복사한다. 같은 이름은 덮어쓴다."""
+        """mes/addons 의 추가 파일(OEE 계산, 라인별 페이지, 공장 현황 페이지)을 MES 폴더로 복사한다. 같은 이름은 덮어쓴다. 합쳐져서 없어진 옛 페이지는 지운다."""
         base = TWIN_ROOT / "mes" / "addons"
+        for rel in OBSOLETE_PAGES:                                   # 합쳐져서 없어진 페이지 정리
+            old = self.root / rel
+            if not old.exists():
+                continue
+            bak = old.with_name(old.name + ".orig")
+            if rel in BACKUP_BEFORE_REMOVE and not bak.exists():
+                shutil.copy2(old, bak)
+                self.log(f"[MES] 원본 백업: {bak.relative_to(self.root)}")
+            old.unlink()
+            self.log(f"[MES] 정리: {rel} (새 페이지로 합쳐짐)")
         for f in sorted(base.rglob("*")):
             if f.is_file() and "__pycache__" not in f.parts:
                 rel = f.relative_to(base)
@@ -241,6 +256,9 @@ class MesAdapter:
         return None
 
     def _handle(self, ev):
+        if ev.get("line_id") == COBOT_LINE_ID:       # 협동로봇 팔레타이징 셀: MES 기록은 만들지 않고 설비 이벤트로만 보관한다
+            self._store(ev)
+            return
         if ev.get("line_id") == LOGISTICS_LINE_ID:   # 물류 · 출하 구역
             self.logi.handle(ev)
             self._store(ev)

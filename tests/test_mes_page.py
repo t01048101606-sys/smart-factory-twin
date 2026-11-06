@@ -1,4 +1,5 @@
-"""설비 현황 페이지(14_설비현황.py)를 Streamlit 없이 끝까지 실행해서 오류가 없는지 확인합니다.
+"""가공 라인 페이지(14_가공라인.py: OEE + AI 이상 감지 + 2D/3D 트윈)를 Streamlit 없이 끝까지 실행해서 오류가 없는지 확인합니다.
+설치할 때 합쳐져서 없어진 옛 페이지(13~17번)가 지워지고 새 페이지 5개가 설치되는지도 확인합니다.
 
 Streamlit과 plotly는 흉내 내는 임시 모듈로 바꿔 끼우고, DB는 실제 어댑터가 채운 것을 씁니다.
 MES 폴더는 임시 폴더로 복사해서 쓰므로 원본은 바뀌지 않습니다.
@@ -26,11 +27,16 @@ ad.init_db(); ad.seed_master()
 for e in T.ev:
     ad.handle(e)
 ad.install_addons()
-page = mes / "pages" / "14_설비현황.py"
+page = mes / "pages" / "14_가공라인.py"
 assert page.exists() and (mes / "src" / "oee.py").exists()
+OLD = ("13_현장모니터링", "14_설비현황", "15_공정3D", "16_프레스라인", "17_공장현황")
+NEW = ("13_공장현황", "14_가공라인", "15_프레스라인", "16_협동로봇셀", "17_물류출하")
+assert not any((mes / "pages" / f"{n}.py").exists() for n in OLD), "합쳐져서 없어진 옛 페이지가 지워져야 합니다"
+assert all((mes / "pages" / f"{n}.py").exists() for n in NEW)
+print("페이지 정리: 옛 페이지 5개 삭제, 새 페이지 5개 설치:", ", ".join(NEW))
 
 # ---- 흉내 내는 streamlit / plotly
-calls = {"kpi": None, "iframe": None, "dataframes": 0, "reruns": 0}
+calls = {"kpi": {}, "iframes": [], "dataframes": 0, "reruns": 0, "radio": 0, "hide": False}
 
 
 class FakeSt(types.ModuleType):
@@ -44,7 +50,9 @@ class FakeSt(types.ModuleType):
 
     def selectbox(self, label, options, **k): return options[0]
     def text_input(self, label, value="", **k): return value
-    def checkbox(self, label, value=False, **k): return value
+    def checkbox(self, label, value=False, **k): return calls["hide"] if "숨기기" in label else value
+    def tabs(self, labels): return [MagicMock() for _ in labels]
+    def radio(self, label, options, **k): return options[calls["radio"]]
     def number_input(self, label, value=0, **k): return value
     def dataframe(self, df, **k): calls["dataframes"] += 1
     def rerun(self): calls["reruns"] += 1
@@ -53,7 +61,7 @@ class FakeSt(types.ModuleType):
 
 st = FakeSt()
 comp = types.ModuleType("streamlit.components.v1")
-comp.iframe = lambda src, **k: calls.__setitem__("iframe", (src, k))
+comp.iframe = lambda src, **k: calls["iframes"].append(src)
 st.components = types.SimpleNamespace(v1=comp)
 sys.modules.update({"streamlit": st, "streamlit.components": st.components, "streamlit.components.v1": comp})
 sys.modules["plotly"] = MagicMock()
@@ -64,25 +72,25 @@ for name in [m for m in sys.modules if m == "src" or m.startswith("src.")]:
     del sys.modules[name]
 sys.path.insert(0, str(mes))
 import src.ui as ui  # noqa: E402  (MES의 공통 UI. streamlit을 흉내 낸 모듈 위에서 불러온다)
-ui.kpi_row = lambda items, columns=3: calls.__setitem__("kpi", dict((a, b) for a, b, _ in items))
+ui.kpi_row = lambda items, columns=3: calls["kpi"].update(dict((a, b) for a, b, _ in items))      # 합쳐진 페이지는 KPI 를 여러 번(OEE, AI) 낸다
 runpy.run_path(str(page), run_name="__main__")
 
 kpi = calls["kpi"]
 print("KPI:", kpi)
-print("iframe:", calls["iframe"][0], "| 이벤트 표 표시 횟수:", calls["dataframes"])
+print("iframe:", calls["iframes"], "| 이벤트 표 표시 횟수:", calls["dataframes"])
 assert kpi and all(k in kpi for k in ("OEE", "가용률", "성능률", "품질률"))
-assert calls["iframe"][0] == "http://localhost:5001/?embed=1"
+assert calls["iframes"] == ["http://localhost:5001/?embed=1", "http://localhost:5001/3d?embed=view"], calls["iframes"]      # 2D(조작 포함)와 3D(보기 전용)가 동시에
 assert calls["dataframes"] >= 2
 q = float(kpi["품질률"].rstrip("%"))
 assert 40 <= q <= 60, f"번갈아 투입이므로 품질률은 50% 안팎이어야 합니다: {q}"
 a, p, o = (float(kpi[k].rstrip("%")) for k in ("가용률", "성능률", "OEE"))
 assert abs(a * p * q / 10000 - o) < 0.2, (a, p, q, o)
-# ---- 공정 3D 페이지(15번): 공정 선택에 따라 iframe 주소가 바뀐다
-for pick, want in ((0, "http://localhost:5001/3d?embed=1"), (1, "http://localhost:5001/3d/line?embed=1")):
-    st.selectbox = lambda label, options, _p=pick, **k: options[_p]
-    calls["iframe"] = None
-    runpy.run_path(str(mes / "pages" / "15_공정3D.py"), run_name="__main__")
-    assert calls["iframe"][0] == want, (calls["iframe"], want)
-print("공정 3D 페이지: 가공 라인 / 프레스·용접·도장 라인 주소 확인")
+# ---- 배치(좌우, 위아래)와 2D 조작 패널 숨기기: 어느 쪽이든 2D 와 3D 가 둘 다 나온다
+for radio, hide, want2d in ((0, False, "http://localhost:5001/?embed=1"), (1, False, "http://localhost:5001/?embed=1"),
+                            (0, True, "http://localhost:5001/?embed=view"), (1, True, "http://localhost:5001/?embed=view")):
+    calls["radio"], calls["hide"], calls["iframes"] = radio, hide, []
+    runpy.run_path(str(page), run_name="__main__")
+    assert calls["iframes"] == [want2d, "http://localhost:5001/3d?embed=view"], (radio, hide, calls["iframes"])
+print("가공 라인 페이지: 2D와 3D가 동시에 표시됨 (좌우 / 위아래, 2D 조작 패널 숨기기 선택에 따라 2D 주소만 바뀜)")
 
 print("\n페이지 실행 테스트 통과")

@@ -66,10 +66,10 @@ streamlit run app.py
 `mes/addons/` 의 파일을 MES 폴더에 복사해서 쓰는 추가 페이지입니다. 기존 MES 파일은 건드리지 않고 새 파일 2개만 추가합니다.
 
 ```
-python src\mes_adapter.py --install-addons      # pages/14_설비현황.py, src/oee.py 를 MES 폴더에 복사
+python src\mes_adapter.py --install-addons      # pages/14_가공라인.py 등 라인별 페이지, src/oee.py 를 MES 폴더에 복사
 ```
 
-MES 화면(Streamlit)을 새로고침하면 왼쪽 메뉴에 **설비현황**이 생깁니다.
+MES 화면(Streamlit)을 새로고침하면 왼쪽 메뉴에 **공장현황, 가공라인, 프레스라인, 협동로봇셀, 물류출하** 페이지가 생깁니다 (구성은 `mes_pages.md`).
 
 - 위쪽: 트윈 화면(iframe). 트윈 서버(`server.py`)가 켜져 있어야 보입니다. 보기 전용(조작 패널 숨김) 선택 가능.
 - OEE = 가용률 x 성능률 x 품질률
@@ -95,9 +95,9 @@ python src\mes_adapter.py --reset-demo        # 확인 질문에 y 입력
 
 ## 현장 모니터링 · AI 이상 감지 (MES 추가 페이지)
 
-같은 `--install-addons`로 **현장모니터링** 페이지(`pages/13_현장모니터링.py`)와 `src/monitor.py`도 설치됩니다.
+같은 `--install-addons`로 **가공라인** 페이지(`pages/14_가공라인.py`의 "AI 이상 감지" 탭)와 `src/monitor.py`도 설치됩니다.
 MES에 원래 있던 `13_현장모니터링.py`(아두이노 센서용, 저장소에 없는 함수를 불러와 오류가 나던 파일)는
-`13_현장모니터링.py.orig`로 백업하고 새 페이지로 대체합니다. 자세한 내용은 `ai_anomaly.md`를 보세요.
+`13_현장모니터링.py.orig`로 백업한 뒤 지웁니다 (기능은 가공라인 페이지가 대신합니다). 자세한 내용은 `ai_anomaly.md`를 보세요.
 
 ## 프레스 · 용접 · 도장 라인
 

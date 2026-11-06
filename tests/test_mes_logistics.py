@@ -168,16 +168,23 @@ fail_lots = [r["lot_no"] for r in rows("SELECT l.lot_no FROM lot l JOIN inspecti
 assert fail_lots and all(any(lot in o and "불합격" in o for o in opts) for lot in fail_lots if rows("SELECT 1 FROM lot WHERE lot_no=?", (lot,))), (fail_lots, opts[:3])
 print(f"MES 출하 관리 페이지 실행 확인: 출하 가능한 LOT {len(opts)}개 중 FAIL LOT 는 '불합격(출하불가)' 배지, 오류 없음")
 
-# 8) MES 공장 현황 대시보드(17_공장현황.py): 화면의 숫자를 MES 데이터에서 따로 계산한 값과 비교한다
+# 8) MES 공장 현황 대시보드(13_공장현황.py): 화면의 숫자를 MES 데이터에서 따로 계산한 값과 비교한다
 ad.log = lambda m: None
 ad.install_addons()
-for f in ("pages/17_공장현황.py", "src/factory_dash.py", "src/lineoee.py"):
+for f in ("pages/13_공장현황.py", "pages/17_물류출하.py", "pages/16_협동로봇셀.py", "src/factory_dash.py", "src/lineoee.py"):
     assert (mes / f).exists(), f
 
 
+sys.path.insert(0, str(ROOT / "tests"))
+import fake_cols            # noqa: E402
+import fake_twin_server     # noqa: E402
+twin_srv, TWIN, twin_log, _ = fake_twin_server.start()
+
+
 class FakeSt2(FakeSt):
+    def columns(self, spec, **k): return [fake_cols.Col() for _ in range(spec if isinstance(spec, int) else len(spec))]
     def checkbox(self, *a, **k): return False
-    def text_input(self, label, value="", **k): return value
+    def text_input(self, label, value="", **k): return TWIN if "트윈 서버 주소" in label else value
     def number_input(self, label, value=0, **k): return value
     def stop(self): raise AssertionError("대시보드가 st.stop() 으로 멈췄습니다 (MES 테이블을 읽지 못함)")
 
@@ -192,11 +199,16 @@ orig_df = ui.show_dataframe
 ui.show_dataframe = lambda df, msg="": (seen8.__setitem__("tables", seen8["tables"] + 1), None)[1]
 import streamlit as _st
 _st.plotly_chart = lambda *a, **k: seen8.__setitem__("plots", seen8["plots"] + 1)
-runpy.run_path(str(mes / "pages" / "17_공장현황.py"), run_name="__main__")
+fake_cols.Col.clicks = {"▶ 라인 시작", "가공 라인 연속동작"}
+runpy.run_path(str(mes / "pages" / "13_공장현황.py"), run_name="__main__")
+reqs13 = [(p, b) for m, p, b in twin_log if m == "POST"]
+assert reqs13 == [("/api/line/control", {"action": "start"}), ("/api/press", {"dev": "M101"})], reqs13      # 공장현황: 프레스 라인 시작 + 가공 라인 연속동작
+print("공장현황 페이지 버튼: 프레스 라인 시작과 가공 라인 연속동작이 트윈 서버로 전달됨")
+twin_log.clear()
 k = seen8["kpi"]
 print("대시보드 KPI:", k)
 assert k and list(k) == ["양품 생산", "불량", "출하 수량", "출하 대기", "출하 차단 LOT", "재고 부족 자재"], k
-assert seen8["plots"] >= 4 and seen8["tables"] >= 6, seen8
+assert seen8["plots"] >= 3 and seen8["tables"] >= 4, seen8              # 재고와 출하 상세는 물류 · 출하 페이지로 옮겨졌다
 
 import pandas as pd
 from src import factory_dash as fd, oee, lineoee
@@ -264,4 +276,24 @@ assert list(live["구분"]) == ["AI", "결함"] and "경보 중" in live.iloc[0]
 print("경보 목록: 지금 진행 중인 AI 경보와 결함만 나오고, 해제된 것은 이력(최근 것이 위)에만 남음")
 print(f"대시보드 숫자 검증: 양품 {good_direct} / 불량 {scrap_direct}, 냉연강판 소비 {steel['consumed']:.1f}kg (공정 실행 x 0.5), 출하 {ship['count']}건 {ship['qty']:.0f}개 "
       f"(양품 {brka_good}개 이하), FAIL 차단 LOT {len(ship['blocked'])}개, 용접 균열 {weld_direct:.0f}개, 프레스 OEE {ov.iloc[1]['OEE']}")
+
+# 9) 물류 · 출하 페이지(17_물류출하.py): 재고, 출하, 입고 이력. 화면 숫자를 MES 데이터와 이벤트에서 따로 센 값과 비교한다
+seen8.update(kpi=None, plots=0, tables=0)
+fake_cols.Col.clicks = {"▶ 라인 시작", "입고 요청 (트럭 부르기)"}
+runpy.run_path(str(mes / "pages" / "17_물류출하.py"), run_name="__main__")
+reqs17 = [(p, b) for m, p, b in twin_log if m == "POST"]
+assert reqs17 == [("/api/line/control", {"action": "start"}), ("/api/logistics/request_inbound", {})], reqs17      # 물류출하: 라인 시작 + 입고 요청
+print("물류출하 페이지 버튼: 라인 시작과 입고 요청이 트윈 서버로 전달됨")
+kl = seen8["kpi"]
+print("물류 페이지 KPI:", kl)
+assert list(kl) == ["입고 횟수", "파렛트 보관", "출하", "출하 대기", "출하 차단 LOT", "재고 부족 자재"], kl
+n_recv_direct = sum(1 for e in ev if e["line_id"] == LINE_ID and e["type"] == "lot.received")
+n_pal_direct = sum(1 for e in ev if e["line_id"] == LINE_ID and e["type"] == "pallet.stored")
+assert kl["입고 횟수"] == f"{n_recv_direct} 회" and kl["파렛트 보관"] == f"{n_pal_direct} 개", (kl, n_recv_direct, n_pal_direct)
+assert kl["출하"] == f"{ship['qty']:,.0f} 개 ({ship['count']}건)" and kl["출하 차단 LOT"] == f"{len(ship['blocked'])} 개"
+assert seen8["plots"] >= 1 and seen8["tables"] >= 5, seen8          # 재고 그래프, 재고 표, 최근 출하, 출하 대기, 입고 이력, 물류 이벤트
+rec = fd.receipts(F)
+assert len(rec) >= 1 and set(rec.columns) >= {"LOT", "자재", "수량", "공급업체"} and rec["공급업체"].isin(["한국제철", "대한볼트산업", "삼성도료", "블랭크 공급사(시연)"]).all(), rec
+assert (oee.recent_events(oee.load_events(None, line_id=fd.LOGISTICS), 25)["내용"].str.contains("입고|보관|출하")).any()
+print(f"물류 페이지: 입고 {n_recv_direct}회, 파렛트 {n_pal_direct}개, 출하 {ship['count']}건과 일치, 입고 이력 {len(rec)}건(공급업체 확인), 물류 이벤트 설명 확인")
 print("\n테스트 통과")

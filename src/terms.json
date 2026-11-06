@@ -165,6 +165,34 @@
   "paint_stock": {
    "field": "도료 재고",
    "lab": "도료 재고"
+  },
+  "cobot": {
+   "field": "협동로봇",
+   "lab": "협동로봇"
+  },
+  "vision_cam": {
+   "field": "비전 카메라",
+   "lab": "비전 카메라"
+  },
+  "infeed": {
+   "field": "인피드 컨베이어",
+   "lab": "인피드 컨베이어"
+  },
+  "pallet_station": {
+   "field": "팔레타이징 파렛트",
+   "lab": "팔레타이징 파렛트"
+  },
+  "ng_bin_cobot": {
+   "field": "불량(NG) 수납함",
+   "lab": "불량(NG) 수납함"
+  },
+  "telescopic": {
+   "field": "신축 컨베이어",
+   "lab": "신축 컨베이어"
+  },
+  "dock_leveler": {
+   "field": "도크 레벨러",
+   "lab": "도크 레벨러"
   }
  },
  "tags": {

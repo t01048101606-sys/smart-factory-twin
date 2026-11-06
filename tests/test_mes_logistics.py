@@ -167,4 +167,82 @@ assert opts is not None, "출하할 LOT 선택 목록까지 도달하지 못했�
 fail_lots = [r["lot_no"] for r in rows("SELECT l.lot_no FROM lot l JOIN inspection i USING (lot_id) WHERE i.result='FAIL'")]
 assert fail_lots and all(any(lot in o and "불합격" in o for o in opts) for lot in fail_lots if rows("SELECT 1 FROM lot WHERE lot_no=?", (lot,))), (fail_lots, opts[:3])
 print(f"MES 출하 관리 페이지 실행 확인: 출하 가능한 LOT {len(opts)}개 중 FAIL LOT 는 '불합격(출하불가)' 배지, 오류 없음")
+
+# 8) MES 공장 현황 대시보드(17_공장현황.py): 화면의 숫자를 MES 데이터에서 따로 계산한 값과 비교한다
+ad.log = lambda m: None
+ad.install_addons()
+for f in ("pages/17_공장현황.py", "src/factory_dash.py", "src/lineoee.py"):
+    assert (mes / f).exists(), f
+
+
+class FakeSt2(FakeSt):
+    def checkbox(self, *a, **k): return False
+    def text_input(self, label, value="", **k): return value
+    def number_input(self, label, value=0, **k): return value
+    def stop(self): raise AssertionError("대시보드가 st.stop() 으로 멈췄습니다 (MES 테이블을 읽지 못함)")
+
+
+seen8 = {"kpi": None, "plots": 0, "tables": 0}
+sys.modules.update({"streamlit": FakeSt2(), "plotly": MagicMock(), "plotly.graph_objects": MagicMock()})
+for name in [m for m in sys.modules if m == "src" or m.startswith("src.")]:
+    del sys.modules[name]
+import src.ui as ui   # noqa: E402
+ui.kpi_row = lambda items, columns=3: seen8.__setitem__("kpi", {a: b for a, b, _ in items})
+orig_df = ui.show_dataframe
+ui.show_dataframe = lambda df, msg="": (seen8.__setitem__("tables", seen8["tables"] + 1), None)[1]
+import streamlit as _st
+_st.plotly_chart = lambda *a, **k: seen8.__setitem__("plots", seen8["plots"] + 1)
+runpy.run_path(str(mes / "pages" / "17_공장현황.py"), run_name="__main__")
+k = seen8["kpi"]
+print("대시보드 KPI:", k)
+assert k and list(k) == ["양품 생산", "불량", "출하 수량", "출하 대기", "출하 차단 LOT", "재고 부족 자재"], k
+assert seen8["plots"] >= 4 and seen8["tables"] >= 6, seen8
+
+import pandas as pd
+from src import factory_dash as fd, oee, lineoee
+from src.db import fetch_dataframe as F
+# 생산: 시리얼 수를 직접 센 값과 같다
+good_direct = rows("SELECT COUNT(*) n FROM unit_serial WHERE status='COMPLETED'")[0]["n"]
+scrap_direct = rows("SELECT COUNT(*) n FROM unit_serial WHERE status='SCRAPPED'")[0]["n"]
+serial, wo = fd.production(F)
+assert int(serial["good"].sum()) == good_direct and int(serial["scrap"].sum()) == scrap_direct and good_direct > 0 and scrap_direct >= 5
+assert k["양품 생산"] == f"{good_direct:,} 개", k["양품 생산"]
+# 재고: 냉연강판 소비량 = 프레스 1단계 공정 실행 수량 x 0.5
+inv = fd.inventory(F)
+steel = inv[inv["item_code"] == "RM-STEEL"].iloc[0]
+op1 = rows("SELECT COALESCE(SUM(o.qty),0) q FROM operation o JOIN routing_step rs USING (routing_step_id) JOIN work_order w USING (work_order_id) "
+           "JOIN item i ON i.item_id=w.product_item_id WHERE i.item_code='FG-BRKA' AND rs.step_no=1")[0]["q"]
+recv = rows("SELECT COALESCE(SUM(l.qty),0) q FROM lot l JOIN item i USING (item_id) WHERE i.item_code='RM-STEEL' AND l.lot_type='RECEIPT'")[0]["q"]
+assert abs(steel["consumed"] - 0.5 * op1) < 1e-6 and abs(steel["received"] - recv) < 1e-6
+assert abs(steel["balance"] - (recv - 0.5 * op1)) < 1e-6 and abs(steel["makeable"] - steel["balance"] / 0.5) < 1e-6
+assert (inv["balance"] >= -1e-9).all()
+# 출하: 건수와 수량은 shipment 테이블과 같고, 출하 가능 수량은 양품 - 출하
+ship = fd.shipments(F)
+assert ship["count"] == rows("SELECT COUNT(*) n FROM shipment")[0]["n"] and abs(ship["qty"] - rows("SELECT COALESCE(SUM(qty),0) q FROM shipment_item")[0]["q"]) < 1e-9
+assert k["출하 수량"] == f"{ship['qty']:,.0f} 개 ({ship['count']}건)"
+brka_good = rows("SELECT COUNT(*) n FROM unit_serial u JOIN lot l USING (lot_id) JOIN item i ON i.item_id=l.item_id WHERE i.item_code='FG-BRKA' AND u.status='COMPLETED'")[0]["n"]
+assert ship["qty"] <= brka_good, (ship["qty"], brka_good)                                 # 양품보다 많이 출하하지 않았다
+assert int(ship["waiting"]["shippable"].sum()) == brka_good - int(ship["qty"])               # 출하 대기 = 양품 - 출하 (FAIL LOT 는 양품이 0개)
+assert len(ship["blocked"]) >= 1 and all(r == "FAIL" for r in ship["blocked"]["result"]) and set(ship["blocked"]["lot_no"]) >= set(fail_lots)
+assert k["출하 차단 LOT"] == f"{len(ship['blocked'])} 개"
+# 품질: 검사 결과 분포의 LOT 합 = 완제품 검사 건수, 용접 균열 불량 수량 = 검사의 불량 합
+dist, reasons = fd.quality(F)
+assert int(dist["lots"].sum()) == rows("SELECT COUNT(*) n FROM inspection WHERE inspection_type='FINISHED'")[0]["n"]
+weld_direct = rows("SELECT COALESCE(SUM(defect_qty),0) q FROM inspection WHERE reason_code='WELD_CRACK'")[0]["q"]
+assert float(reasons[reasons["reason"] == "용접 균열"]["qty"].iloc[0]) == weld_direct and weld_direct >= 5
+# 라인 현황: 프레스 라인 OEE 는 lineoee 와 같고, 물류 건수는 이벤트 수와 같다
+ev_m, ev_p, ev_l = (oee.load_events(None, line_id=x) for x in (fd.MACHINING, fd.PRESS, fd.LOGISTICS))
+ov, res = fd.line_overview(ev_m, ev_p, ev_l, now=ev_p["ts"].max())
+assert ov.iloc[0]["상태"] == "연결 없음"                                                  # 이 시험에는 가공 라인 이벤트가 없다
+assert ov.iloc[1]["OEE"] == f"{lineoee.compute_line_oee(ev_p)['oee'] * 100:.1f}%"
+assert res["logistics"] == {"received": int((ev_l["event_type"] == "lot.received").sum()), "shipments": int((ev_l["event_type"] == "shipment.dispatched").sum()),
+                            "pallets": int((ev_l["event_type"] == "pallet.stored").sum())}
+al = fd.alerts(oee.load_events(None), inv, ship, ov)
+assert any("출하 차단" in t for t in al["내용"]), al
+assert not any(g == "설비" for g in al["구분"]), "이벤트가 없는 라인(연결 없음)은 경보가 아닙니다"
+ov_old, _ = fd.line_overview(ev_m, ev_p, ev_l, now=ev_p["ts"].max() + pd.Timedelta(minutes=10))    # 10분 동안 이벤트가 없으면 무응답
+al2 = fd.alerts(oee.load_events(None), inv, ship, ov_old)
+assert ov_old.iloc[1]["상태"].startswith("무응답") and any(g == "설비" and "무응답" in t for g, t in zip(al2["구분"], al2["내용"])), al2
+print(f"대시보드 숫자 검증: 양품 {good_direct} / 불량 {scrap_direct}, 냉연강판 소비 {steel['consumed']:.1f}kg (공정 실행 x 0.5), 출하 {ship['count']}건 {ship['qty']:.0f}개 "
+      f"(양품 {brka_good}개 이하), FAIL 차단 LOT {len(ship['blocked'])}개, 용접 균열 {weld_direct:.0f}개, 프레스 OEE {ov.iloc[1]['OEE']}")
 print("\n테스트 통과")

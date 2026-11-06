@@ -77,7 +77,22 @@ function makeBelt(o) {
   belts.push({ tex, path: o.path });
 }
 
-function makeShape(o) {
+function makeShape(o, parent = scene) {
+  if (o.shape === 'group') {                 // 그룹: 자식을 가진 관절/부착 단위 (좌표는 그룹 기준 상대). 프레스 슬라이드, 용접 로봇 관절, 행거 등
+    const g = new THREE.Group();
+    g.userData = { id: o.id || null };
+    g.position.set(...(o.pos || [0, 0, 0])); if (o.rot) g.rotation.set(...o.rot);
+    parent.add(g);
+    (o.anim || []).forEach(a => binds.push({ obj: g, ...a }));
+    (o.children || []).forEach(c => makeShape(c, g));
+    return g;
+  }
+  if (o.shape === 'light') {                 // 점광원 (용접 불꽃이 주변을 비춘다)
+    const l = new THREE.PointLight(o.color || 0xffffff, o.intensity || 0, o.distance || 30);
+    l.position.set(...o.pos); parent.add(l);
+    (o.anim || []).forEach(a => binds.push({ obj: l, ...a }));
+    return l;
+  }
   let geo;
   if (o.shape === 'box') geo = new THREE.BoxGeometry(...o.size);
   else if (o.shape === 'cylinder') geo = new THREE.CylinderGeometry(o.rt ?? o.r, o.rb ?? o.r, o.h, 28);
@@ -89,7 +104,7 @@ function makeShape(o) {
   m.position.set(...o.pos);
   if (o.rot) m.rotation.set(...o.rot);
   m.castShadow = o.opacity == null; m.receiveShadow = true;
-  scene.add(m);
+  parent.add(m);
   (o.anim || []).forEach(a => binds.push({ obj: m, ...a }));
   return m;
 }
@@ -126,6 +141,12 @@ function applyBind(b, v, k) {
       const target = b.from + (b.to - b.from) * clamp01(Number(v) || 0);
       b.cur = ease(b.cur ?? target, target, k); m.position[b.prop] = b.cur; break;
     }
+    case 'rotate': {   // 관절 회전: 값 x scale + bias (라디안)
+      const target = (b.bias || 0) + (Number(v) || 0) * (b.scale ?? 1);
+      b.cur = ease(b.cur ?? target, target, k); m.rotation[b.axis] = b.cur; break;
+    }
+    case 'spin': if (v) m.rotation[b.axis] += (b.speed || 1) * frameDt; break;   // 값이 참인 동안 계속 회전 (플라이휠, 코일)
+    case 'intensity': m.intensity = v ? b.on : b.off; break;
     case 'visible': m.visible = !!v; break;
     case 'emissive': m.material.emissive.set(v ? b.on : b.off); m.material.emissiveIntensity = v ? 1.2 : 0; break;
     case 'lamp': {                         // 상태 이름 -> 색 (램프)
@@ -145,8 +166,10 @@ function partColor(p) {
   return 'normal';
 }
 
+let frameDt = 0;
 function frame(dt) {
   const s = state; if (!s) return;
+  frameDt = dt;
   const k = 1 - Math.exp(-dt * 12);
   binds.forEach(b => applyBind(b, get(s, b.path), k));
   belts.forEach(b => { if (get(s, b.path)) b.tex.offset.x -= dt * 0.9 * Math.max(1, s.speed || 1); });
@@ -161,12 +184,13 @@ function frame(dt) {
     m.visible = !!p;
     if (!p) return;
     const seg = partSpec.segments[p.stage];
-    if (!seg) { m.visible = false; return; }
+    if (!seg && !p.pos) { m.visible = false; return; }          // p.pos: 시뮬레이터가 부품 위치를 직접 주는 경우 (행거에 매달려 액 속으로 내려가는 부품)
     const t = clamp01(p.t);
     const kk = m.userData.placed ? 1 - Math.exp(-dt * 14) : 1;
-    m.position.x = ease(m.position.x, ease(seg[0][0], seg[1][0], t), kk);
-    m.position.y = ease(m.position.y, ease(seg[0][1], seg[1][1], t), kk);
-    m.position.z = ease(m.position.z, ease(seg[0][2], seg[1][2], t), kk);
+    const tx = p.pos ? p.pos[0] : ease(seg[0][0], seg[1][0], t), ty = p.pos ? p.pos[1] : ease(seg[0][1], seg[1][1], t), tz = p.pos ? p.pos[2] : ease(seg[0][2], seg[1][2], t);
+    m.position.x = ease(m.position.x, tx, kk);
+    m.position.y = ease(m.position.y, ty, kk);
+    m.position.z = ease(m.position.z, tz, kk);
     m.userData.placed = true;
     m.material = partMats[partColor(p)];
   });

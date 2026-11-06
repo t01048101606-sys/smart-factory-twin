@@ -12,6 +12,9 @@
 state()가 돌려주는 값은 3D 화면(src/scenes/*.json 의 path)이 그대로 읽는다.
 """
 import math
+
+from paint_cell import STATION_X as PAINT_X, dip as paint_dip, part_y as paint_part_y
+from weld_cell import pose as weld_pose
 import random
 
 ELEMENTS = ["press", "c1", "weld", "c2", "paint", "c3"]
@@ -184,14 +187,21 @@ class LineSim:
                 "spark": bool(working and name == "weld" and 0.25 < p < 0.75),
                 "spray": bool(working and name == "paint" and 0.15 < p < 0.85),
             }
-            if name == "weld" and self.fault == "weld_slow" and working:
-                st[name]["spark"] = bool(0.25 < p < 0.75)
+            if name == "weld":      # 6축 스폿 용접 로봇의 관절, 건 닫힘, 불꽃, 지그 클램프 (weld_cell.py: 용접 점 세 곳을 차례로)
+                rp = weld_pose(p, working)
+                st[name].update(robot={k: rp[k] for k in ("yaw", "shoulder", "elbow", "wrist")}, gun=rp["gun"], clamp=rp["clamp"], spark=rp["spark"])
+            if name == "paint":     # 행거가 부품을 전착조 액 속으로 내렸다 올린다 (paint_cell.py)
+                d = paint_dip(p, working)
+                st[name].update(dip=round(d, 3), voltage=bool(d > 0.9))
         conv = {c: {"moving": bool(self.occ[c] is not None and self.occ[c]["t_el"] < self.duration(c))} for c in ("c1", "c2", "c3")}
         for e in ELEMENTS:
             o = self.occ[e]
             if o is not None:
-                parts.append({"id": o["id"], "stage": e, "t": round(min(1.0, o["t_el"] / self.duration(e)), 3),
-                              "pressed": o["pressed"], "welded": o["welded"], "painted": o["painted"], "defect": o["defect"]})
+                item = {"id": o["id"], "stage": e, "t": round(min(1.0, o["t_el"] / self.duration(e)), 3),
+                        "pressed": o["pressed"], "welded": o["welded"], "painted": o["painted"], "defect": o["defect"]}
+                if e == "paint":    # 도장 공정에서는 부품이 행거에 매달려 액 속으로 내려간다: 높이는 침지 깊이를 따른다
+                    item["pos"] = [PAINT_X, paint_part_y(st["paint"]["dip"]), 0.0]
+                parts.append(item)
         total = max(self.time, 1e-9)
         util = {s: {k: round(v / total, 3) for k, v in self.acc[s].items()} for s in STATIONS}
         done = self.counts["good"] + self.counts["scrap"]
@@ -200,7 +210,7 @@ class LineSim:
             bott = max(STATIONS, key=lambda s: util[s]["working"] + util[s]["down"])
         return {
             "time": round(self.time, 1), "running": self.running, "draining": self.running and not self.feeding, "fault": self.fault, "speed": self.speed,
-            "stations": st, "conveyors": conv, "parts": parts, "counts": dict(self.counts),
+            "stations": st, "conveyors": conv, "parts": parts, "counts": dict(self.counts), "oven": {"heat": 1 if self.running else 0},
             "util": util, "kpi": {"throughput_per_min": self._throughput(done),
                                    "good_rate": round(self.counts["good"] / done, 3) if done else None,
                                    "bottleneck": bott, "bottleneck_name": NAMES.get(bott)},

@@ -45,10 +45,12 @@ box("vision_back_post", [0.2, 1.4, 0.2], [PICK[0], 0.7, 1.55], DARK)
 box("vision_backlight", [1.0, 0.7, 0.1], [PICK[0], 1.45, 1.2], "#2d3541", anim=[{"prop": "emissive", "path": "vision.active", "on": "#5ad6ff", "off": "#000000", "ei": 1.0}])
 
 # ---- 로봇 받침과 팔 (그룹 = 관절)
-box("robot_pedestal", [2.2, BY, 2.2], [BX, BY / 2, BZ], DARK)
-cyl("robot_base_ring", 1.05, 0.12, [BX, BY + 0.06, BZ], "#2d3541")
+# 어깨 관절의 높이는 IK 가 가정하는 ARM["base"] 높이(BY)와 같아야 한다: 받침대 + 링 + 회전대 + 어깨 = BY (받침대 높이 = BY - 0.47)
+PED = BY - 0.47
+box("robot_pedestal", [2.2, PED, 2.2], [BX, PED / 2, BZ], DARK)
+cyl("robot_base_ring", 1.05, 0.12, [BX, PED + 0.06, BZ], "#2d3541")
 arm = {
-    "id": "arm_yaw", "shape": "group", "pos": [BX, BY + 0.12, BZ], "anim": [{"prop": "rotate", "axis": "y", "path": "arm.yaw"}],
+    "id": "arm_yaw", "shape": "group", "pos": [BX, PED + 0.12, BZ], "anim": [{"prop": "rotate", "axis": "y", "path": "arm.yaw"}],
     "children": [
         {"shape": "cylinder", "r": 0.62, "h": 0.7, "pos": [0, 0.35, 0], "color": COBOT_GREY},
         {"id": "arm_shoulder", "shape": "group", "pos": [0, 0.35, 0], "anim": [{"prop": "rotate", "axis": "z", "path": "arm.shoulder"}], "children": [

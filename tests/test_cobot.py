@@ -153,4 +153,17 @@ for i in range(6):
     em2.emit("piece.exited", {"result": "good"}, piece_id=f"Q-{i}", line_id=PRESS_LINE_ID, sim_t=i)
 assert lg2.counts["pallets"] == 0
 print(f"이벤트: 비전 검사 12건(불량 1건), 놓기 12건(NG 1건), 파렛트 3개(5개, 5개, 모자란 1개 마감), 스키마 통과, 물류는 로봇이 마감한 파렛트로만 생성")
+
+# ---- 장면의 어깨 관절 높이가 IK 가 가정하는 높이와 같다 (같지 않으면 그리퍼가 워크 위에 떠 있거나 파묻힌다)
+import json as _json
+_scene = _json.loads((ROOT / "src" / "scenes" / "cobot.json").read_text(encoding="utf-8"))
+_yaw = next(o for o in _scene["objects"] if o.get("id") == "arm_yaw")
+_sh = next(c for c in _yaw["children"] if c.get("id") == "arm_shoulder")
+_pivot = _yaw["pos"][1] + _sh["pos"][1]
+assert abs(_pivot - C.ARM["base"][1]) < 1e-9, (_pivot, C.ARM["base"])
+_j = C.ik(C.PICK, C.ARM); _a = _j["shoulder"]; _b = _a + _j["elbow"]; _c = _b + _j["wrist"]
+_tip = _pivot + C.ARM["L1"] * math.sin(_a) + C.ARM["L2"] * math.sin(_b) + C.ARM["L3"] * math.sin(_c)
+assert abs(_tip - C.PICK[1]) < 1e-9, (_tip, C.PICK)
+print(f"장면의 어깨 높이 {_pivot} = IK 가정 {C.ARM['base'][1]}, 집는 자세에서 그리퍼 끝 {round(_tip, 3)} = 워크 높이 {C.PICK[1]}")
+
 print("\n테스트 통과")

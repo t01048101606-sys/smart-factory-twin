@@ -1,252 +1,881 @@
 {
  "title": "프레스 · 용접 · 도장 라인",
  "background": "#111418",
- "camera": {
-  "position": [
-   3.5,
-   11,
-   17.5
+ "parts": {
+  "size": [
+   0.9,
+   0.22,
+   0.9
   ],
-  "target": [
-   3.5,
-   1.3,
-   0.2
-  ]
+  "colors": {
+   "normal": "#9aa7b5",
+   "pressed": "#cfd6df",
+   "welded": "#d8a060",
+   "painted": "#4aa3ff",
+   "defect": "#ef4b4b"
+  },
+  "segments": {
+   "press": [
+    [
+     -9,
+     1.42,
+     0
+    ],
+    [
+     -9,
+     1.42,
+     0
+    ]
+   ],
+   "c1": [
+    [
+     -7.6,
+     1.12,
+     0
+    ],
+    [
+     -2.2,
+     1.12,
+     0
+    ]
+   ],
+   "weld": [
+    [
+     -0.5,
+     1.42,
+     0
+    ],
+    [
+     -0.5,
+     1.42,
+     0
+    ]
+   ],
+   "c2": [
+    [
+     1.2,
+     1.12,
+     0
+    ],
+    [
+     5.8,
+     1.12,
+     0
+    ]
+   ],
+   "paint": [
+    [
+     7.8,
+     1.42,
+     0
+    ],
+    [
+     7.8,
+     1.42,
+     0
+    ]
+   ],
+   "c3": [
+    [
+     9.8,
+     1.12,
+     0
+    ],
+    [
+     14.0,
+     1.12,
+     0
+    ]
+   ]
+  },
+  "shape": "box",
+  "rules": [
+   {
+    "if": {
+     "defect": true
+    },
+    "color": "defect"
+   },
+   {
+    "if": {
+     "painted": true
+    },
+    "color": "painted"
+   },
+   {
+    "if": {
+     "welded": true
+    },
+    "color": "welded"
+   },
+   {
+    "if": {
+     "pressed": true
+    },
+    "color": "pressed"
+   }
+  ],
+  "default": "normal"
  },
- "views": {
-  "diag": {
-   "position": [
-    3.5,
-    11,
-    17.5
-   ],
-   "target": [
-    3.5,
-    1.3,
-    0.2
-   ]
+ "summary": {
+  "title": "프레스 · 용접 · 도장 라인",
+  "status": {
+   "path": "running",
+   "map": {
+    "true": "가동",
+    "false": "정지"
+   }
   },
-  "front": {
-   "position": [
-    3.5,
-    5.0,
-    23.0
-   ],
-   "target": [
-    3.5,
-    1.8,
-    0.0
-   ]
-  },
-  "top": {
-   "position": [
-    3.5,
-    27.0,
-    0.6
-   ],
-   "target": [
-    3.5,
-    0.0,
-    0.0
-   ]
-  },
-  "side": {
-   "position": [
-    -20.0,
-    8.0,
-    7.0
-   ],
-   "target": [
-    3.5,
-    1.5,
-    0.0
-   ]
-  }
+  "metrics": [
+   {
+    "label": "투입",
+    "path": "counts.in"
+   },
+   {
+    "label": "양품",
+    "path": "counts.good"
+   },
+   {
+    "label": "불량",
+    "path": "counts.scrap"
+   },
+   {
+    "label": "처리량",
+    "path": "kpi.throughput_per_min",
+    "suffix": " 개/분",
+    "zero": "-"
+   },
+   {
+    "label": "병목 공정",
+    "path": "kpi.bottleneck_name",
+    "zero": "-"
+   }
+  ],
+  "actions": [
+   {
+    "label": "시작",
+    "post": "/api/line/control",
+    "body": {
+     "action": "start"
+    }
+   },
+   {
+    "label": "정지",
+    "post": "/api/line/control",
+    "body": {
+     "action": "stop"
+    }
+   },
+   {
+    "label": "리셋",
+    "post": "/api/line/control",
+    "body": {
+     "action": "reset"
+    }
+   }
+  ]
  },
  "objects": [
   {
    "id": "floor",
    "shape": "box",
    "size": [
-    34,
+    42,
     0.4,
-    12
+    17
    ],
    "pos": [
-    3.3,
+    -0.7,
     -0.2,
-    0
+    -1.0
    ],
    "color": "#2a323d"
   },
   {
-   "id": "press_base",
+   "id": "walk_line0",
    "shape": "box",
    "size": [
-    2.6,
-    1.0,
-    2.6
+    20,
+    0.03,
+    0.14
    ],
    "pos": [
-    -9,
-    0.5,
+    -5,
+    0.02,
+    3.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "press_pit",
+   "shape": "box",
+   "size": [
+    4.2,
+    0.12,
+    3.8
+   ],
+   "pos": [
+    -9.0,
+    0.06,
+    0
+   ],
+   "color": "#1d232b"
+  },
+  {
+   "id": "press_bed",
+   "shape": "box",
+   "size": [
+    3.0,
+    0.73,
+    2.8
+   ],
+   "pos": [
+    -9.0,
+    0.485,
     0
    ],
    "color": "#4a5566"
   },
   {
-   "id": "press_die",
+   "id": "press_bolster",
    "shape": "box",
    "size": [
-    1.6,
-    0.3,
-    1.6
+    2.6,
+    0.15,
+    2.4
    ],
    "pos": [
-    -9,
-    1.15,
+    -9.0,
+    0.925,
     0
    ],
    "color": "#6a7686"
   },
   {
-   "id": "press_post0",
+   "id": "press_lowerdie_shoe",
    "shape": "box",
    "size": [
-    0.35,
-    3.2,
-    0.35
+    1.8,
+    0.12,
+    1.8
    ],
    "pos": [
-    -10.1,
-    2.6,
-    -1.1
+    -9.0,
+    1.06,
+    0
+   ],
+   "color": "#3d4757"
+  },
+  {
+   "id": "press_lowerdie",
+   "shape": "box",
+   "size": [
+    1.4,
+    0.18,
+    1.4
+   ],
+   "pos": [
+    -9.0,
+    1.21,
+    0
+   ],
+   "color": "#5f6c7d"
+  },
+  {
+   "id": "press_guidepin0",
+   "shape": "cylinder",
+   "r": 0.06,
+   "h": 0.4,
+   "pos": [
+    -9.62,
+    1.5,
+    -0.62
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "press_guidepin1",
+   "shape": "cylinder",
+   "r": 0.06,
+   "h": 0.4,
+   "pos": [
+    -8.38,
+    1.5,
+    -0.62
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "press_guidepin2",
+   "shape": "cylinder",
+   "r": 0.06,
+   "h": 0.4,
+   "pos": [
+    -9.62,
+    1.5,
+    0.62
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "press_guidepin3",
+   "shape": "cylinder",
+   "r": 0.06,
+   "h": 0.4,
+   "pos": [
+    -8.38,
+    1.5,
+    0.62
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "press_column0",
+   "shape": "box",
+   "size": [
+    0.38,
+    3.45,
+    0.38
+   ],
+   "pos": [
+    -10.2,
+    2.575,
+    -1.2
    ],
    "color": "#39424f"
   },
   {
-   "id": "press_post1",
+   "id": "press_tierod0",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 0.25,
+   "pos": [
+    -10.2,
+    5.325,
+    -1.2
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "press_column1",
    "shape": "box",
    "size": [
-    0.35,
-    3.2,
-    0.35
+    0.38,
+    3.45,
+    0.38
    ],
    "pos": [
-    -7.9,
-    2.6,
-    -1.1
+    -7.8,
+    2.575,
+    -1.2
    ],
    "color": "#39424f"
   },
   {
-   "id": "press_post2",
+   "id": "press_tierod1",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 0.25,
+   "pos": [
+    -7.8,
+    5.325,
+    -1.2
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "press_column2",
    "shape": "box",
    "size": [
-    0.35,
-    3.2,
-    0.35
+    0.38,
+    3.45,
+    0.38
    ],
    "pos": [
-    -10.1,
-    2.6,
-    1.1
+    -10.2,
+    2.575,
+    1.2
    ],
    "color": "#39424f"
   },
   {
-   "id": "press_post3",
+   "id": "press_tierod2",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 0.25,
+   "pos": [
+    -10.2,
+    5.325,
+    1.2
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "press_column3",
    "shape": "box",
    "size": [
-    0.35,
-    3.2,
-    0.35
+    0.38,
+    3.45,
+    0.38
    ],
    "pos": [
-    -7.9,
-    2.6,
-    1.1
+    -7.8,
+    2.575,
+    1.2
    ],
    "color": "#39424f"
   },
   {
-   "id": "press_beam",
+   "id": "press_tierod3",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 0.25,
+   "pos": [
+    -7.8,
+    5.325,
+    1.2
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "press_crown",
    "shape": "box",
    "size": [
-    2.6,
-    0.5,
-    2.6
+    3.0,
+    0.9,
+    3.0
    ],
    "pos": [
-    -9,
-    4.45,
+    -9.0,
+    4.75,
     0
    ],
    "color": "#4a5566"
   },
   {
-   "id": "press_ram",
+   "id": "press_motor",
    "shape": "box",
    "size": [
-    1.6,
+    1.1,
     0.7,
-    1.6
+    0.8
    ],
    "pos": [
-    -9,
-    3.6,
+    -9.3,
+    5.55,
+    -0.8
+   ],
+   "color": "#2f6aa3"
+  },
+  {
+   "id": "press_airtank",
+   "shape": "cylinder",
+   "r": 0.28,
+   "h": 1.3,
+   "pos": [
+    -9.3,
+    5.5,
+    0.8
+   ],
+   "color": "#8a94a3",
+   "rot": [
+    0,
+    0,
+    1.5707963267948966
+   ]
+  },
+  {
+   "id": "press_flywheel",
+   "shape": "group",
+   "pos": [
+    -7.25,
+    4.75,
     0
    ],
-   "color": "#aab4c0",
    "anim": [
     {
-     "prop": "y",
-     "path": "stations.press.ram",
-     "from": 3.6,
-     "to": 1.95
+     "prop": "spin",
+     "axis": "x",
+     "speed": -2.2,
+     "path": "running"
+    }
+   ],
+   "children": [
+    {
+     "shape": "cylinder",
+     "r": 0.9,
+     "h": 0.25,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      1.5707963267948966
+     ],
+     "color": "#7b8798"
+    },
+    {
+     "shape": "cylinder",
+     "r": 0.3,
+     "h": 0.4,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "rot": [
+      0,
+      0,
+      1.5707963267948966
+     ],
+     "color": "#2d3541"
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.06,
+      1.6,
+      0.14
+     ],
+     "pos": [
+      0.14,
+      0,
+      0
+     ],
+     "color": "#f2c230"
     }
    ]
   },
   {
-   "id": "press_rod",
+   "id": "press_sleeve-0.7",
    "shape": "cylinder",
-   "r": 0.28,
-   "h": 1.2,
+   "r": 0.24,
+   "h": 0.9,
    "pos": [
-    -9,
-    4.5,
+    -9.7,
+    3.85,
     0
    ],
-   "color": "#8a94a3",
+   "color": "#3a4452"
+  },
+  {
+   "id": "press_sleeve0.7",
+   "shape": "cylinder",
+   "r": 0.24,
+   "h": 0.9,
+   "pos": [
+    -8.3,
+    3.85,
+    0
+   ],
+   "color": "#3a4452"
+  },
+  {
+   "id": "press_slide",
+   "shape": "group",
+   "pos": [
+    -9.0,
+    2.5300000000000002,
+    0
+   ],
    "anim": [
     {
      "prop": "y",
      "path": "stations.press.ram",
-     "from": 4.5,
-     "to": 2.85
+     "from": 2.5300000000000002,
+     "to": 1.53
+    }
+   ],
+   "children": [
+    {
+     "shape": "box",
+     "size": [
+      1.4,
+      0.18,
+      1.4
+     ],
+     "pos": [
+      0,
+      0.09,
+      0
+     ],
+     "color": "#5f6c7d"
+    },
+    {
+     "shape": "box",
+     "size": [
+      1.8,
+      0.12,
+      1.8
+     ],
+     "pos": [
+      0,
+      0.24,
+      0
+     ],
+     "color": "#3d4757"
+    },
+    {
+     "shape": "box",
+     "size": [
+      2.5,
+      0.5,
+      2.5
+     ],
+     "pos": [
+      0,
+      0.55,
+      0
+     ],
+     "color": "#aab4c0"
+    },
+    {
+     "shape": "cylinder",
+     "r": 0.15,
+     "h": 2.6,
+     "pos": [
+      -0.7,
+      2.1,
+      0
+     ],
+     "color": "#8a94a3"
+    },
+    {
+     "shape": "cylinder",
+     "r": 0.15,
+     "h": 2.6,
+     "pos": [
+      0.7,
+      2.1,
+      0
+     ],
+     "color": "#8a94a3"
     }
    ]
+  },
+  {
+   "id": "press_lc_post-1.55",
+   "shape": "box",
+   "size": [
+    0.14,
+    2.3,
+    0.14
+   ],
+   "pos": [
+    -10.55,
+    2.15,
+    1.75
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "press_lc_post1.55",
+   "shape": "box",
+   "size": [
+    0.14,
+    2.3,
+    0.14
+   ],
+   "pos": [
+    -7.45,
+    2.15,
+    1.75
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "press_lc_beam0",
+   "shape": "box",
+   "size": [
+    2.96,
+    0.03,
+    0.03
+   ],
+   "pos": [
+    -9.0,
+    1.5,
+    1.75
+   ],
+   "color": "#401010",
+   "anim": [
+    {
+     "prop": "emissive",
+     "path": "running",
+     "on": "#ff3030",
+     "off": "#000000"
+    }
+   ]
+  },
+  {
+   "id": "press_lc_beam1",
+   "shape": "box",
+   "size": [
+    2.96,
+    0.03,
+    0.03
+   ],
+   "pos": [
+    -9.0,
+    2.2,
+    1.75
+   ],
+   "color": "#401010",
+   "anim": [
+    {
+     "prop": "emissive",
+     "path": "running",
+     "on": "#ff3030",
+     "off": "#000000"
+    }
+   ]
+  },
+  {
+   "id": "press_lc_beam2",
+   "shape": "box",
+   "size": [
+    2.96,
+    0.03,
+    0.03
+   ],
+   "pos": [
+    -9.0,
+    2.9,
+    1.75
+   ],
+   "color": "#401010",
+   "anim": [
+    {
+     "prop": "emissive",
+     "path": "running",
+     "on": "#ff3030",
+     "off": "#000000"
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "라이트 커튼",
+   "pos": [
+    -9.0,
+    3.55,
+    1.75
+   ],
+   "w": 1.6
+  },
+  {
+   "id": "press_2hand_post",
+   "shape": "cylinder",
+   "r": 0.06,
+   "h": 1.2,
+   "pos": [
+    -11.3,
+    0.6,
+    2.3
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "press_2hand_head",
+   "shape": "box",
+   "size": [
+    0.8,
+    0.2,
+    0.4
+   ],
+   "pos": [
+    -11.3,
+    1.3,
+    2.3
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "press_2hand_btn-0.25",
+   "shape": "cylinder",
+   "r": 0.1,
+   "h": 0.1,
+   "pos": [
+    -11.55,
+    1.45,
+    2.3
+   ],
+   "color": "#33c27f"
+  },
+  {
+   "id": "press_2hand_btn0.25",
+   "shape": "cylinder",
+   "r": 0.1,
+   "h": 0.1,
+   "pos": [
+    -11.05,
+    1.45,
+    2.3
+   ],
+   "color": "#33c27f"
+  },
+  {
+   "shape": "label",
+   "text": "양손 조작",
+   "pos": [
+    -11.3,
+    2.0,
+    2.3
+   ],
+   "w": 1.6
+  },
+  {
+   "id": "press_cabinet",
+   "shape": "box",
+   "size": [
+    1.0,
+    1.8,
+    0.7
+   ],
+   "pos": [
+    -6.0,
+    0.9,
+    1.3
+   ],
+   "color": "#3c4654"
+  },
+  {
+   "id": "press_cabinet_screen",
+   "shape": "box",
+   "size": [
+    0.6,
+    0.35,
+    0.02
+   ],
+   "pos": [
+    -6.0,
+    1.3,
+    1.66
+   ],
+   "color": "#1a3a5c"
   },
   {
    "id": "press_pole",
    "shape": "cylinder",
    "r": 0.08,
-   "h": 2.2,
+   "h": 3.2,
    "pos": [
-    -9,
-    2.1,
-    2.0
+    -6.7,
+    1.6,
+    2.3
    ],
-   "color": "#6a7686"
+   "color": "#8a94a3"
   },
   {
    "id": "press_lamp",
    "shape": "sphere",
    "r": 0.28,
    "pos": [
-    -9,
-    3.3,
-    2.0
+    -6.7,
+    3.45,
+    2.3
    ],
    "color": "#222222",
    "anim": [
@@ -266,297 +895,608 @@
    "shape": "label",
    "text": "프레스",
    "pos": [
-    -9,
-    5.3,
+    -9.0,
+    6.4,
     0
    ],
    "w": 2.4
   },
   {
-   "id": "weld_table",
+   "id": "uncoiler_base",
    "shape": "box",
    "size": [
-    2.4,
+    2.8,
+    0.15,
+    2.6
+   ],
+   "pos": [
+    -18.9,
+    0.075,
+    0
+   ],
+   "color": "#2a303a"
+  },
+  {
+   "id": "uncoiler_stand",
+   "shape": "box",
+   "size": [
     1.0,
-    2.4
+    1.4,
+    0.5
    ],
    "pos": [
-    -0.5,
-    0.5,
-    0
+    -18.9,
+    0.85,
+    -1.0
    ],
-   "color": "#4a5566"
+   "color": "#3c4a5c"
   },
   {
-   "id": "weld_fixture",
+   "id": "uncoiler_mandrel",
+   "shape": "cylinder",
+   "r": 0.22,
+   "h": 1.6,
+   "pos": [
+    -18.9,
+    1.15,
+    -0.2
+   ],
+   "color": "#8a94a3",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "uncoiler_coil",
+   "shape": "group",
+   "pos": [
+    -18.9,
+    1.15,
+    0
+   ],
+   "anim": [
+    {
+     "prop": "spin",
+     "axis": "z",
+     "speed": 0.35,
+     "path": "running"
+    }
+   ],
+   "children": [
+    {
+     "shape": "cylinder",
+     "r": 0.85,
+     "h": 1.0,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "rot": [
+      1.5707963267948966,
+      0,
+      0
+     ],
+     "color": "#8f98a6"
+    },
+    {
+     "shape": "cylinder",
+     "r": 0.3,
+     "h": 1.06,
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "rot": [
+      1.5707963267948966,
+      0,
+      0
+     ],
+     "color": "#2d3541"
+    },
+    {
+     "shape": "box",
+     "size": [
+      0.08,
+      0.5,
+      0.02
+     ],
+     "pos": [
+      0,
+      0.58,
+      0.52
+     ],
+     "color": "#f2c230"
+    }
+   ]
+  },
+  {
+   "id": "strip_a",
    "shape": "box",
    "size": [
-    1.4,
-    0.25,
-    1.4
+    2.374531532744933,
+    0.03,
+    1.0
    ],
    "pos": [
-    -0.5,
-    1.125,
+    -17.9,
+    1.3599999999999999,
     0
    ],
-   "color": "#6a7686"
+   "color": "#9aa7b5",
+   "rot": [
+    0,
+    0,
+    -0.5693131911006619
+   ]
   },
   {
-   "id": "weld_robot_base",
-   "shape": "cylinder",
-   "r": 0.7,
-   "h": 0.6,
+   "id": "strip_b",
+   "shape": "box",
+   "size": [
+    1.4999999999999982,
+    0.03,
+    1.0
+   ],
    "pos": [
-    -0.5,
-    0.3,
-    -2.6
+    -16.15,
+    0.72,
+    0
+   ],
+   "color": "#9aa7b5",
+   "rot": [
+    0,
+    0,
+    0.0
+   ]
+  },
+  {
+   "id": "strip_c",
+   "shape": "box",
+   "size": [
+    0.8879893017373579,
+    0.03,
+    1.0
+   ],
+   "pos": [
+    -15.075,
+    1.0225,
+    0
+   ],
+   "color": "#9aa7b5",
+   "rot": [
+    0,
+    0,
+    0.7495569447079964
+   ]
+  },
+  {
+   "id": "strip_main",
+   "shape": "box",
+   "size": [
+    4.949999999999999,
+    0.03,
+    1.0
+   ],
+   "pos": [
+    -12.275,
+    1.325,
+    0
+   ],
+   "color": "#9aa7b5",
+   "rot": [
+    0,
+    0,
+    0.0
+   ]
+  },
+  {
+   "id": "loop_post-16.8-0.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    0.65,
+    0.1
+   ],
+   "pos": [
+    -16.8,
+    0.325,
+    -0.6
    ],
    "color": "#39424f"
   },
   {
-   "id": "weld_robot_col",
+   "id": "loop_post-15.5-0.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    0.65,
+    0.1
+   ],
+   "pos": [
+    -15.5,
+    0.325,
+    -0.6
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "loop_post-16.80.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    0.65,
+    0.1
+   ],
+   "pos": [
+    -16.8,
+    0.325,
+    0.6
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "loop_post-15.50.6",
+   "shape": "box",
+   "size": [
+    0.1,
+    0.65,
+    0.1
+   ],
+   "pos": [
+    -15.5,
+    0.325,
+    0.6
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "loop_roller0",
    "shape": "cylinder",
-   "r": 0.3,
-   "h": 3.4,
+   "r": 0.07,
+   "h": 1.1,
    "pos": [
-    -0.5,
-    2.0,
-    -2.6
-   ],
-   "color": "#4a5566"
-  },
-  {
-   "id": "weld_robot_arm",
-   "shape": "box",
-   "size": [
-    0.35,
-    0.35,
-    2.6
-   ],
-   "pos": [
-    -0.5,
-    3.7,
-    -1.3
-   ],
-   "color": "#4a5566"
-  },
-  {
-   "id": "weld_torch",
-   "shape": "box",
-   "size": [
-    0.3,
-    1.2,
-    0.3
-   ],
-   "pos": [
-    -0.5,
-    3.0,
+    -16.5,
+    0.6,
     0
    ],
-   "color": "#aab4c0",
-   "anim": [
-    {
-     "prop": "y",
-     "path": "stations.weld.arm",
-     "from": 3.0,
-     "to": 2.15
-    }
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
    ]
   },
   {
-   "id": "weld_tip",
-   "shape": "sphere",
-   "r": 0.18,
+   "id": "loop_roller1",
+   "shape": "cylinder",
+   "r": 0.07,
+   "h": 1.1,
    "pos": [
-    -0.5,
-    2.38,
+    -16.1,
+    0.6,
     0
    ],
-   "color": "#555555",
-   "anim": [
-    {
-     "prop": "y",
-     "path": "stations.weld.arm",
-     "from": 2.38,
-     "to": 1.53
-    },
-    {
-     "prop": "emissive",
-     "path": "stations.weld.spark",
-     "on": "#ffb020",
-     "off": "#000000"
-    }
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
    ]
   },
   {
-   "id": "weld_spark",
-   "shape": "sphere",
-   "r": 0.38,
+   "id": "loop_roller2",
+   "shape": "cylinder",
+   "r": 0.07,
+   "h": 1.1,
    "pos": [
-    -0.5,
+    -15.7,
+    0.6,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "슬랙 루프",
+   "pos": [
+    -16.1,
+    1.5,
+    0.9
+   ],
+   "w": 1.8
+  },
+  {
+   "id": "straightener_stand",
+   "shape": "box",
+   "size": [
+    1.7,
+    0.85,
+    1.7
+   ],
+   "pos": [
+    -14.2,
+    0.425,
+    0
+   ],
+   "color": "#3c4a5c"
+  },
+  {
+   "id": "straightener_plate-0.78",
+   "shape": "box",
+   "size": [
     1.6,
-    0
+    0.9,
+    0.12
    ],
-   "color": "#ffd070",
-   "opacity": 0.75,
-   "anim": [
-    {
-     "prop": "visible",
-     "path": "stations.weld.spark"
-    }
-   ]
-  },
-  {
-   "id": "weld_pole",
-   "shape": "cylinder",
-   "r": 0.08,
-   "h": 2.2,
    "pos": [
-    -0.5,
-    2.1,
-    2.0
+    -14.2,
+    1.3,
+    -0.78
    ],
-   "color": "#6a7686"
+   "color": "#4a5566"
   },
   {
-   "id": "weld_lamp",
-   "shape": "sphere",
-   "r": 0.28,
-   "pos": [
-    -0.5,
-    3.3,
-    2.0
-   ],
-   "color": "#222222",
-   "anim": [
-    {
-     "prop": "lamp",
-     "path": "stations.weld.state",
-     "map": {
-      "working": "#33c27f",
-      "blocked": "#f2c230",
-      "starved": "#7a8696",
-      "down": "#ef4b4b"
-     }
-    }
-   ]
-  },
-  {
-   "shape": "label",
-   "text": "용접",
-   "pos": [
-    -0.5,
-    5.0,
-    -1.3
-   ],
-   "w": 2.4
-  },
-  {
-   "id": "paint_base",
+   "id": "straightener_plate0.78",
    "shape": "box",
    "size": [
-    3.6,
-    1.0,
-    3.2
+    1.6,
+    0.9,
+    0.12
    ],
    "pos": [
-    7.8,
+    -14.2,
+    1.3,
+    0.78
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "straightener_lroll0",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -14.649999999999999,
+    1.2,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_lroll1",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -14.35,
+    1.2,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_lroll2",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -14.049999999999999,
+    1.2,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_lroll3",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -13.75,
+    1.2,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_uroll0",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -14.5,
+    1.45,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_screw0",
+   "shape": "cylinder",
+   "r": 0.05,
+   "h": 0.3,
+   "pos": [
+    -14.5,
+    1.85,
+    0
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "straightener_uroll1",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -14.2,
+    1.45,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_screw1",
+   "shape": "cylinder",
+   "r": 0.05,
+   "h": 0.3,
+   "pos": [
+    -14.2,
+    1.85,
+    0
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "straightener_uroll2",
+   "shape": "cylinder",
+   "r": 0.11,
+   "h": 1.4,
+   "pos": [
+    -13.899999999999999,
+    1.45,
+    0
+   ],
+   "color": "#c3ccd6",
+   "rot": [
+    1.5707963267948966,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "straightener_screw2",
+   "shape": "cylinder",
+   "r": 0.05,
+   "h": 0.3,
+   "pos": [
+    -13.899999999999999,
+    1.85,
+    0
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "straightener_motor",
+   "shape": "box",
+   "size": [
+    0.6,
     0.5,
+    0.5
+   ],
+   "pos": [
+    -14.2,
+    1.2,
+    1.15
+   ],
+   "color": "#2f6aa3"
+  },
+  {
+   "id": "feeder_stand",
+   "shape": "box",
+   "size": [
+    0.8,
+    0.5,
+    1.2
+   ],
+   "pos": [
+    -12.0,
+    0.25,
+    0
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "feeder_lower",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.8,
+    1.5
+   ],
+   "pos": [
+    -12.0,
+    0.9,
+    0
+   ],
+   "color": "#3c4a5c"
+  },
+  {
+   "id": "feeder_upper",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.55,
+    1.5
+   ],
+   "pos": [
+    -12.0,
+    1.625,
     0
    ],
    "color": "#4a5566"
   },
   {
-   "id": "paint_booth",
-   "shape": "box",
-   "size": [
-    3.6,
-    3.4,
-    3.2
-   ],
+   "id": "feeder_servo",
+   "shape": "cylinder",
+   "r": 0.22,
+   "h": 0.7,
    "pos": [
-    7.8,
-    2.7,
+    -12.0,
+    2.2,
     0
    ],
-   "color": "#4aa3ff",
-   "opacity": 0.16
-  },
-  {
-   "id": "paint_nozzle",
-   "shape": "cylinder",
-   "r": 0.2,
-   "h": 0.8,
-   "pos": [
-    7.8,
-    3.6,
+   "color": "#2f6aa3",
+   "rot": [
+    1.5707963267948966,
+    0,
     0
-   ],
-   "color": "#aab4c0"
-  },
-  {
-   "id": "paint_spray",
-   "shape": "cylinder",
-   "r": 0.15,
-   "h": 1.7,
-   "pos": [
-    7.8,
-    2.55,
-    0
-   ],
-   "color": "#4aa3ff",
-   "rt": 0.15,
-   "rb": 0.9,
-   "opacity": 0.38,
-   "anim": [
-    {
-     "prop": "visible",
-     "path": "stations.paint.spray"
-    }
-   ]
-  },
-  {
-   "id": "paint_pole",
-   "shape": "cylinder",
-   "r": 0.08,
-   "h": 2.2,
-   "pos": [
-    7.8,
-    2.1,
-    2.2
-   ],
-   "color": "#6a7686"
-  },
-  {
-   "id": "paint_lamp",
-   "shape": "sphere",
-   "r": 0.28,
-   "pos": [
-    7.8,
-    3.3,
-    2.2
-   ],
-   "color": "#222222",
-   "anim": [
-    {
-     "prop": "lamp",
-     "path": "stations.paint.state",
-     "map": {
-      "working": "#33c27f",
-      "blocked": "#f2c230",
-      "starved": "#7a8696",
-      "down": "#ef4b4b"
-     }
-    }
    ]
   },
   {
    "shape": "label",
-   "text": "도장",
+   "text": "코일 라인",
    "pos": [
-    7.8,
-    5.0,
+    -15.5,
+    3.4,
     0
    ],
    "w": 2.4
@@ -621,10 +1561,85 @@
    "color": "#6a7686"
   },
   {
+   "id": "c1_leg-2.5-0.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    -7.4,
+    0.25,
+    -0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c1_leg-2.50.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    -7.4,
+    0.25,
+    0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c1_leg2.5-0.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    -2.4000000000000004,
+    0.25,
+    -0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c1_leg2.50.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    -2.4000000000000004,
+    0.25,
+    0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c1_motor",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.4,
+    0.5
+   ],
+   "pos": [
+    -2.6000000000000005,
+    0.55,
+    1.15
+   ],
+   "color": "#2f6aa3"
+  },
+  {
    "id": "c2_body",
    "shape": "box",
    "size": [
-    4.800000000000001,
+    4.8,
     0.5,
     1.7
    ],
@@ -639,7 +1654,7 @@
    "id": "c2_belt",
    "shape": "belt",
    "size": [
-    4.700000000000001,
+    4.7,
     1.5
    ],
    "pos": [
@@ -653,7 +1668,7 @@
    "id": "c2_railA",
    "shape": "box",
    "size": [
-    4.800000000000001,
+    4.8,
     0.25,
     0.12
    ],
@@ -668,7 +1683,7 @@
    "id": "c2_railB",
    "shape": "box",
    "size": [
-    4.800000000000001,
+    4.8,
     0.25,
     0.12
    ],
@@ -680,6 +1695,81 @@
    "color": "#6a7686"
   },
   {
+   "id": "c2_leg-2.1-0.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    1.4,
+    0.25,
+    -0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c2_leg-2.10.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    1.4,
+    0.25,
+    0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c2_leg2.1-0.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    5.6,
+    0.25,
+    -0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c2_leg2.10.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    5.6,
+    0.25,
+    0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c2_motor",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.4,
+    0.5
+   ],
+   "pos": [
+    5.4,
+    0.55,
+    1.15
+   ],
+   "color": "#2f6aa3"
+  },
+  {
    "id": "c3_body",
    "shape": "box",
    "size": [
@@ -688,7 +1778,7 @@
     1.7
    ],
    "pos": [
-    11.899999999999999,
+    11.9,
     0.75,
     0
    ],
@@ -702,7 +1792,7 @@
     1.5
    ],
    "pos": [
-    11.899999999999999,
+    11.9,
     1.012,
     0
    ],
@@ -717,7 +1807,7 @@
     0.12
    ],
    "pos": [
-    11.899999999999999,
+    11.9,
     1.12,
     -0.9
    ],
@@ -732,11 +1822,86 @@
     0.12
    ],
    "pos": [
-    11.899999999999999,
+    11.9,
     1.12,
     0.9
    ],
    "color": "#6a7686"
+  },
+  {
+   "id": "c3_leg-1.9-0.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    10.0,
+    0.25,
+    -0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c3_leg-1.90.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    10.0,
+    0.25,
+    0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c3_leg1.9-0.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    13.8,
+    0.25,
+    -0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c3_leg1.90.7",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.5,
+    0.2
+   ],
+   "pos": [
+    13.8,
+    0.25,
+    0.7
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "c3_motor",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.4,
+    0.5
+   ],
+   "pos": [
+    13.600000000000001,
+    0.55,
+    1.15
+   ],
+   "color": "#2f6aa3"
   },
   {
    "shape": "label",
@@ -744,7 +1909,7 @@
    "pos": [
     -4.9,
     2.1,
-    1.3
+    1.5
    ],
    "w": 2.2
   },
@@ -754,9 +1919,2161 @@
    "pos": [
     3.5,
     2.1,
-    1.3
+    1.5
    ],
    "w": 2.2
+  },
+  {
+   "id": "weld_table",
+   "shape": "box",
+   "size": [
+    2.4,
+    1.0,
+    1.4
+   ],
+   "pos": [
+    -0.5,
+    0.5,
+    0
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "weld_basefix",
+   "shape": "box",
+   "size": [
+    1.6,
+    0.06,
+    1.2
+   ],
+   "pos": [
+    -0.5,
+    1.03,
+    0
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "id": "weld_fixture",
+   "shape": "box",
+   "size": [
+    0.62,
+    0.19,
+    0.62
+   ],
+   "pos": [
+    -0.5,
+    1.155,
+    0
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "weld_pad0",
+   "shape": "box",
+   "size": [
+    0.14,
+    0.06,
+    0.14
+   ],
+   "pos": [
+    -0.7,
+    1.28,
+    -0.2
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "weld_pad1",
+   "shape": "box",
+   "size": [
+    0.14,
+    0.06,
+    0.14
+   ],
+   "pos": [
+    -0.3,
+    1.28,
+    -0.2
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "weld_pad2",
+   "shape": "box",
+   "size": [
+    0.14,
+    0.06,
+    0.14
+   ],
+   "pos": [
+    -0.5,
+    1.28,
+    0.2
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "weld_pin0",
+   "shape": "cylinder",
+   "rt": 0.03,
+   "rb": 0.06,
+   "h": 0.4,
+   "pos": [
+    -0.72,
+    1.45,
+    0.2
+   ],
+   "color": "#e8edf2"
+  },
+  {
+   "id": "weld_pin1",
+   "shape": "cylinder",
+   "rt": 0.03,
+   "rb": 0.06,
+   "h": 0.4,
+   "pos": [
+    -0.28,
+    1.45,
+    0.2
+   ],
+   "color": "#e8edf2"
+  },
+  {
+   "id": "weld_clampstand0",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.55,
+    0.25
+   ],
+   "pos": [
+    -1.12,
+    1.275,
+    0.15
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "weld_clamp0",
+   "shape": "group",
+   "pos": [
+    -1.05,
+    1.58,
+    0.15
+   ],
+   "rot": [
+    0,
+    0.0,
+    0
+   ],
+   "children": [
+    {
+     "shape": "group",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "z",
+       "path": "stations.weld.clamp",
+       "scale": -1.35,
+       "bias": 1.35
+      }
+     ],
+     "children": [
+      {
+       "shape": "box",
+       "size": [
+        0.5,
+        0.1,
+        0.14
+       ],
+       "pos": [
+        0.25,
+        0,
+        0
+       ],
+       "color": "#d4352c"
+      },
+      {
+       "shape": "cylinder",
+       "r": 0.05,
+       "h": 0.06,
+       "pos": [
+        0.45,
+        -0.08,
+        0
+       ],
+       "color": "#2d3541"
+      },
+      {
+       "shape": "cylinder",
+       "r": 0.08,
+       "h": 0.18,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ],
+       "color": "#2d3541"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "weld_clampstand1",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.55,
+    0.25
+   ],
+   "pos": [
+    0.12,
+    1.275,
+    0.15
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "weld_clamp1",
+   "shape": "group",
+   "pos": [
+    0.04999999999999999,
+    1.58,
+    0.15
+   ],
+   "rot": [
+    0,
+    3.141592653589793,
+    0
+   ],
+   "children": [
+    {
+     "shape": "group",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "z",
+       "path": "stations.weld.clamp",
+       "scale": -1.35,
+       "bias": 1.35
+      }
+     ],
+     "children": [
+      {
+       "shape": "box",
+       "size": [
+        0.5,
+        0.1,
+        0.14
+       ],
+       "pos": [
+        0.25,
+        0,
+        0
+       ],
+       "color": "#d4352c"
+      },
+      {
+       "shape": "cylinder",
+       "r": 0.05,
+       "h": 0.06,
+       "pos": [
+        0.45,
+        -0.08,
+        0
+       ],
+       "color": "#2d3541"
+      },
+      {
+       "shape": "cylinder",
+       "r": 0.08,
+       "h": 0.18,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ],
+       "color": "#2d3541"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "weld_clampstand2",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.55,
+    0.25
+   ],
+   "pos": [
+    -0.5,
+    1.275,
+    0.62
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "weld_clamp2",
+   "shape": "group",
+   "pos": [
+    -0.5,
+    1.58,
+    0.62
+   ],
+   "rot": [
+    0,
+    1.5707963267948966,
+    0
+   ],
+   "children": [
+    {
+     "shape": "group",
+     "pos": [
+      0,
+      0,
+      0
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "z",
+       "path": "stations.weld.clamp",
+       "scale": -1.35,
+       "bias": 1.35
+      }
+     ],
+     "children": [
+      {
+       "shape": "box",
+       "size": [
+        0.5,
+        0.1,
+        0.14
+       ],
+       "pos": [
+        0.25,
+        0,
+        0
+       ],
+       "color": "#d4352c"
+      },
+      {
+       "shape": "cylinder",
+       "r": 0.05,
+       "h": 0.06,
+       "pos": [
+        0.45,
+        -0.08,
+        0
+       ],
+       "color": "#2d3541"
+      },
+      {
+       "shape": "cylinder",
+       "r": 0.08,
+       "h": 0.18,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ],
+       "color": "#2d3541"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "용접 지그",
+   "pos": [
+    -0.5,
+    2.45,
+    1.4
+   ],
+   "w": 2.2
+  },
+  {
+   "id": "robot_pedestal",
+   "shape": "box",
+   "size": [
+    1.5,
+    0.73,
+    1.5
+   ],
+   "pos": [
+    -0.5,
+    0.365,
+    -2.6
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "robot_base_ring",
+   "shape": "cylinder",
+   "r": 0.85,
+   "h": 0.12,
+   "pos": [
+    -0.5,
+    0.79,
+    -2.6
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "robot_yaw",
+   "shape": "group",
+   "pos": [
+    -0.5,
+    0.85,
+    -2.6
+   ],
+   "anim": [
+    {
+     "prop": "rotate",
+     "axis": "y",
+     "path": "stations.weld.robot.yaw"
+    }
+   ],
+   "children": [
+    {
+     "shape": "cylinder",
+     "r": 0.62,
+     "h": 0.36,
+     "pos": [
+      0,
+      0.18,
+      0
+     ],
+     "color": "#2d3541"
+    },
+    {
+     "id": "robot_shoulder",
+     "shape": "group",
+     "pos": [
+      0,
+      0.35,
+      0
+     ],
+     "anim": [
+      {
+       "prop": "rotate",
+       "axis": "z",
+       "path": "stations.weld.robot.shoulder"
+      }
+     ],
+     "children": [
+      {
+       "shape": "cylinder",
+       "r": 0.46,
+       "h": 0.9,
+       "pos": [
+        0,
+        0,
+        0
+       ],
+       "rot": [
+        1.5707963267948966,
+        0,
+        0
+       ],
+       "color": "#2d3541"
+      },
+      {
+       "shape": "box",
+       "size": [
+        2.7,
+        0.7,
+        0.8
+       ],
+       "pos": [
+        1.35,
+        0,
+        0
+       ],
+       "color": "#e07b2a"
+      },
+      {
+       "id": "robot_elbow",
+       "shape": "group",
+       "pos": [
+        2.7,
+        0,
+        0
+       ],
+       "anim": [
+        {
+         "prop": "rotate",
+         "axis": "z",
+         "path": "stations.weld.robot.elbow"
+        }
+       ],
+       "children": [
+        {
+         "shape": "cylinder",
+         "r": 0.4,
+         "h": 0.85,
+         "pos": [
+          0,
+          0,
+          0
+         ],
+         "rot": [
+          1.5707963267948966,
+          0,
+          0
+         ],
+         "color": "#2d3541"
+        },
+        {
+         "shape": "box",
+         "size": [
+          2.5,
+          0.55,
+          0.65
+         ],
+         "pos": [
+          1.25,
+          0,
+          0
+         ],
+         "color": "#e07b2a"
+        },
+        {
+         "id": "robot_wrist",
+         "shape": "group",
+         "pos": [
+          2.5,
+          0,
+          0
+         ],
+         "anim": [
+          {
+           "prop": "rotate",
+           "axis": "z",
+           "path": "stations.weld.robot.wrist"
+          }
+         ],
+         "children": [
+          {
+           "shape": "cylinder",
+           "r": 0.28,
+           "h": 0.6,
+           "pos": [
+            0,
+            0,
+            0
+           ],
+           "rot": [
+            1.5707963267948966,
+            0,
+            0
+           ],
+           "color": "#2d3541"
+          },
+          {
+           "shape": "cylinder",
+           "r": 0.22,
+           "h": 0.5,
+           "pos": [
+            0.4,
+            0,
+            0
+           ],
+           "rot": [
+            0,
+            0,
+            1.5707963267948966
+           ],
+           "color": "#e07b2a"
+          },
+          {
+           "shape": "box",
+           "size": [
+            0.14,
+            0.9,
+            0.55
+           ],
+           "pos": [
+            0.72,
+            -0.25,
+            0
+           ],
+           "color": "#39424f"
+          },
+          {
+           "shape": "box",
+           "size": [
+            0.9,
+            0.55,
+            0.5
+           ],
+           "pos": [
+            1.2,
+            -0.55,
+            0
+           ],
+           "color": "#c8d0da"
+          },
+          {
+           "shape": "box",
+           "size": [
+            0.65,
+            0.14,
+            0.2
+           ],
+           "pos": [
+            1.82,
+            -0.55,
+            0
+           ],
+           "color": "#8a94a3"
+          },
+          {
+           "shape": "box",
+           "size": [
+            0.14,
+            0.64,
+            0.2
+           ],
+           "pos": [
+            2.07,
+            -0.27,
+            0
+           ],
+           "color": "#8a94a3"
+          },
+          {
+           "shape": "cylinder",
+           "r": 0.06,
+           "h": 0.28,
+           "pos": [
+            1.8599999999999999,
+            0,
+            0
+           ],
+           "rot": [
+            0,
+            0,
+            1.5707963267948966
+           ],
+           "color": "#d8a060"
+          },
+          {
+           "shape": "group",
+           "pos": [
+            0,
+            0,
+            0
+           ],
+           "anim": [
+            {
+             "prop": "x",
+             "path": "stations.weld.gun",
+             "from": -0.28,
+             "to": 0.0
+            }
+           ],
+           "children": [
+            {
+             "shape": "box",
+             "size": [
+              0.14,
+              0.64,
+              0.2
+             ],
+             "pos": [
+              1.0,
+              -0.27,
+              0
+             ],
+             "color": "#aab4c0"
+            },
+            {
+             "shape": "cylinder",
+             "r": 0.07,
+             "h": 0.5,
+             "pos": [
+              1.25,
+              0,
+              0
+             ],
+             "rot": [
+              0,
+              0,
+              1.5707963267948966
+             ],
+             "color": "#d8a060"
+            }
+           ]
+          },
+          {
+           "shape": "sphere",
+           "r": 0.2,
+           "pos": [
+            1.61,
+            0,
+            0
+           ],
+           "color": "#ffd070",
+           "anim": [
+            {
+             "prop": "visible",
+             "path": "stations.weld.spark"
+            },
+            {
+             "prop": "emissive",
+             "path": "stations.weld.spark",
+             "on": "#ffd070",
+             "off": "#000000"
+            }
+           ]
+          },
+          {
+           "shape": "light",
+           "pos": [
+            1.61,
+            0,
+            0
+           ],
+           "color": "#ffd070",
+           "intensity": 0,
+           "distance": 7,
+           "anim": [
+            {
+             "prop": "intensity",
+             "path": "stations.weld.spark",
+             "on": 5,
+             "off": 0
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "용접 로봇",
+   "pos": [
+    -0.5,
+    5.6,
+    -2.0
+   ],
+   "w": 2.4
+  },
+  {
+   "id": "fence_back_mesh",
+   "shape": "box",
+   "size": [
+    5.0,
+    1.5,
+    0.04
+   ],
+   "pos": [
+    -0.5,
+    1.2,
+    -4.0
+   ],
+   "color": "#c8d0da",
+   "opacity": 0.2
+  },
+  {
+   "id": "fence_back_top",
+   "shape": "box",
+   "size": [
+    5.0,
+    0.06,
+    0.06
+   ],
+   "pos": [
+    -0.5,
+    1.95,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_back_bottom",
+   "shape": "box",
+   "size": [
+    5.0,
+    0.06,
+    0.06
+   ],
+   "pos": [
+    -0.5,
+    0.1,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_back_post0",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_back_post1",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -1.3333333333333335,
+    1.0,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_back_post2",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    0.33333333333333304,
+    1.0,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_back_post3",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_front_mesh",
+   "shape": "box",
+   "size": [
+    5.0,
+    1.5,
+    0.04
+   ],
+   "pos": [
+    -0.5,
+    1.2,
+    2.4
+   ],
+   "color": "#c8d0da",
+   "opacity": 0.2
+  },
+  {
+   "id": "fence_front_top",
+   "shape": "box",
+   "size": [
+    5.0,
+    0.06,
+    0.06
+   ],
+   "pos": [
+    -0.5,
+    1.95,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_front_bottom",
+   "shape": "box",
+   "size": [
+    5.0,
+    0.06,
+    0.06
+   ],
+   "pos": [
+    -0.5,
+    0.1,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_front_post0",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_front_post1",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -1.3333333333333335,
+    1.0,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_front_post2",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    0.33333333333333304,
+    1.0,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_front_post3",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left0_mesh",
+   "shape": "box",
+   "size": [
+    0.04,
+    1.5,
+    2.8
+   ],
+   "pos": [
+    -3.0,
+    1.2,
+    -2.6
+   ],
+   "color": "#c8d0da",
+   "opacity": 0.2
+  },
+  {
+   "id": "fence_left0_top",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    2.8
+   ],
+   "pos": [
+    -3.0,
+    1.95,
+    -2.6
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left0_bottom",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    2.8
+   ],
+   "pos": [
+    -3.0,
+    0.1,
+    -2.6
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left0_post0",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left0_post1",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    -2.6
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left0_post2",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    -1.2000000000000002
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left1_mesh",
+   "shape": "box",
+   "size": [
+    0.04,
+    1.5,
+    1.2
+   ],
+   "pos": [
+    -3.0,
+    1.2,
+    1.7999999999999998
+   ],
+   "color": "#c8d0da",
+   "opacity": 0.2
+  },
+  {
+   "id": "fence_left1_top",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    1.2
+   ],
+   "pos": [
+    -3.0,
+    1.95,
+    1.7999999999999998
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left1_bottom",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    1.2
+   ],
+   "pos": [
+    -3.0,
+    0.1,
+    1.7999999999999998
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left1_post0",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    1.2
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_left1_post1",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    -3.0,
+    1.0,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right0_mesh",
+   "shape": "box",
+   "size": [
+    0.04,
+    1.5,
+    2.8
+   ],
+   "pos": [
+    2.0,
+    1.2,
+    -2.6
+   ],
+   "color": "#c8d0da",
+   "opacity": 0.2
+  },
+  {
+   "id": "fence_right0_top",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    2.8
+   ],
+   "pos": [
+    2.0,
+    1.95,
+    -2.6
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right0_bottom",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    2.8
+   ],
+   "pos": [
+    2.0,
+    0.1,
+    -2.6
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right0_post0",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    -4.0
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right0_post1",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    -2.6
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right0_post2",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    -1.2000000000000002
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right1_mesh",
+   "shape": "box",
+   "size": [
+    0.04,
+    1.5,
+    1.2
+   ],
+   "pos": [
+    2.0,
+    1.2,
+    1.7999999999999998
+   ],
+   "color": "#c8d0da",
+   "opacity": 0.2
+  },
+  {
+   "id": "fence_right1_top",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    1.2
+   ],
+   "pos": [
+    2.0,
+    1.95,
+    1.7999999999999998
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right1_bottom",
+   "shape": "box",
+   "size": [
+    0.06,
+    0.06,
+    1.2
+   ],
+   "pos": [
+    2.0,
+    0.1,
+    1.7999999999999998
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right1_post0",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    1.2
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "fence_right1_post1",
+   "shape": "box",
+   "size": [
+    0.1,
+    2.0,
+    0.1
+   ],
+   "pos": [
+    2.0,
+    1.0,
+    2.4
+   ],
+   "color": "#d8a020"
+  },
+  {
+   "id": "weld_door_lock",
+   "shape": "box",
+   "size": [
+    0.2,
+    0.3,
+    0.1
+   ],
+   "pos": [
+    0.5,
+    1.0,
+    2.4
+   ],
+   "color": "#d4352c"
+  },
+  {
+   "id": "weld_controller",
+   "shape": "box",
+   "size": [
+    0.9,
+    2.0,
+    0.7
+   ],
+   "pos": [
+    -3.9,
+    1.0,
+    -3.0
+   ],
+   "color": "#3c4654"
+  },
+  {
+   "id": "weld_controller_screen",
+   "shape": "box",
+   "size": [
+    0.5,
+    0.3,
+    0.02
+   ],
+   "pos": [
+    -3.9,
+    1.4,
+    -2.64
+   ],
+   "color": "#1a3a5c"
+  },
+  {
+   "id": "weld_pole",
+   "shape": "cylinder",
+   "r": 0.08,
+   "h": 3.2,
+   "pos": [
+    -0.5,
+    1.6,
+    2.9
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "weld_lamp",
+   "shape": "sphere",
+   "r": 0.28,
+   "pos": [
+    -0.5,
+    3.45,
+    2.9
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "stations.weld.state",
+     "map": {
+      "working": "#33c27f",
+      "blocked": "#f2c230",
+      "starved": "#7a8696",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "용접",
+   "pos": [
+    -0.5,
+    4.2,
+    2.9
+   ],
+   "w": 1.6
+  },
+  {
+   "id": "paint_tank_floor",
+   "shape": "box",
+   "size": [
+    3.6,
+    0.1,
+    3.2
+   ],
+   "pos": [
+    7.8,
+    0.05,
+    0
+   ],
+   "color": "#2a303a"
+  },
+  {
+   "id": "paint_tank_wall-1.525",
+   "shape": "box",
+   "size": [
+    3.6,
+    0.95,
+    0.15
+   ],
+   "pos": [
+    7.8,
+    0.475,
+    -1.525
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "paint_tank_wall1.525",
+   "shape": "box",
+   "size": [
+    3.6,
+    0.95,
+    0.15
+   ],
+   "pos": [
+    7.8,
+    0.475,
+    1.525
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "paint_tank_wall_x-1.725",
+   "shape": "box",
+   "size": [
+    0.15,
+    0.95,
+    3.2
+   ],
+   "pos": [
+    6.074999999999999,
+    0.475,
+    0
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "paint_tank_wall_x1.725",
+   "shape": "box",
+   "size": [
+    0.15,
+    0.95,
+    3.2
+   ],
+   "pos": [
+    9.525,
+    0.475,
+    0
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "paint_liquid",
+   "shape": "box",
+   "size": [
+    3.3,
+    0.8,
+    2.9
+   ],
+   "pos": [
+    7.8,
+    0.5,
+    0
+   ],
+   "color": "#41546e",
+   "opacity": 0.55
+  },
+  {
+   "id": "paint_anode-1.45",
+   "shape": "box",
+   "size": [
+    0.1,
+    0.7,
+    2.2
+   ],
+   "pos": [
+    6.35,
+    0.5,
+    0
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "paint_anode1.45",
+   "shape": "box",
+   "size": [
+    0.1,
+    0.7,
+    2.2
+   ],
+   "pos": [
+    9.25,
+    0.5,
+    0
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "paint_rectifier",
+   "shape": "box",
+   "size": [
+    0.8,
+    1.8,
+    0.7
+   ],
+   "pos": [
+    10.4,
+    0.9,
+    -2.0
+   ],
+   "color": "#3c4654"
+  },
+  {
+   "id": "paint_rectifier_lamp",
+   "shape": "sphere",
+   "r": 0.1,
+   "pos": [
+    10.4,
+    1.6,
+    -1.63
+   ],
+   "color": "#103018",
+   "anim": [
+    {
+     "prop": "emissive",
+     "path": "stations.paint.voltage",
+     "on": "#33ff88",
+     "off": "#000000"
+    }
+   ]
+  },
+  {
+   "id": "monorail_post-3.0-1.9",
+   "shape": "box",
+   "size": [
+    0.25,
+    4.7,
+    0.25
+   ],
+   "pos": [
+    4.8,
+    2.35,
+    -1.9
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "monorail_post-3.01.9",
+   "shape": "box",
+   "size": [
+    0.25,
+    4.7,
+    0.25
+   ],
+   "pos": [
+    4.8,
+    2.35,
+    1.9
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "monorail_post2.4-1.9",
+   "shape": "box",
+   "size": [
+    0.25,
+    4.7,
+    0.25
+   ],
+   "pos": [
+    10.2,
+    2.35,
+    -1.9
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "monorail_post2.41.9",
+   "shape": "box",
+   "size": [
+    0.25,
+    4.7,
+    0.25
+   ],
+   "pos": [
+    10.2,
+    2.35,
+    1.9
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "monorail_beam",
+   "shape": "box",
+   "size": [
+    5.9,
+    0.25,
+    0.3
+   ],
+   "pos": [
+    7.5,
+    4.7,
+    0
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "id": "monorail_trolley",
+   "shape": "box",
+   "size": [
+    0.7,
+    0.4,
+    0.6
+   ],
+   "pos": [
+    7.8,
+    4.4,
+    0
+   ],
+   "color": "#2d3541"
+  },
+  {
+   "id": "hoist_tube",
+   "shape": "cylinder",
+   "r": 0.13,
+   "h": 1.3,
+   "pos": [
+    7.8,
+    3.55,
+    0
+   ],
+   "color": "#3a4452"
+  },
+  {
+   "id": "hanger",
+   "shape": "group",
+   "pos": [
+    7.8,
+    1.42,
+    0
+   ],
+   "anim": [
+    {
+     "prop": "y",
+     "path": "stations.paint.dip",
+     "from": 1.42,
+     "to": 0.47
+    }
+   ],
+   "children": [
+    {
+     "shape": "cylinder",
+     "r": 0.05,
+     "h": 2.33,
+     "pos": [
+      0,
+      1.515,
+      0
+     ],
+     "color": "#8a94a3"
+    },
+    {
+     "shape": "box",
+     "size": [
+      1.3,
+      0.08,
+      0.1
+     ],
+     "pos": [
+      0,
+      0.35,
+      0
+     ],
+     "color": "#d8a020"
+    },
+    {
+     "shape": "cylinder",
+     "r": 0.03,
+     "h": 0.24,
+     "pos": [
+      -0.4,
+      0.23,
+      0
+     ],
+     "color": "#8a94a3"
+    },
+    {
+     "shape": "cylinder",
+     "r": 0.03,
+     "h": 0.24,
+     "pos": [
+      0.4,
+      0.23,
+      0
+     ],
+     "color": "#8a94a3"
+    }
+   ]
+  },
+  {
+   "id": "paint_pole",
+   "shape": "cylinder",
+   "r": 0.08,
+   "h": 3.2,
+   "pos": [
+    10.0,
+    1.6,
+    2.3
+   ],
+   "color": "#8a94a3"
+  },
+  {
+   "id": "paint_lamp",
+   "shape": "sphere",
+   "r": 0.28,
+   "pos": [
+    10.0,
+    3.45,
+    2.3
+   ],
+   "color": "#222222",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "stations.paint.state",
+     "map": {
+      "working": "#33c27f",
+      "blocked": "#f2c230",
+      "starved": "#7a8696",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "전착조",
+   "pos": [
+    7.8,
+    5.6,
+    0
+   ],
+   "w": 2.0
+  },
+  {
+   "id": "pre_tank0",
+   "shape": "box",
+   "size": [
+    2.4,
+    1.05,
+    2.0
+   ],
+   "pos": [
+    4.4,
+    0.525,
+    -4.6
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "pre_liquid0",
+   "shape": "box",
+   "size": [
+    2.2,
+    0.03,
+    1.8
+   ],
+   "pos": [
+    4.4,
+    1.065,
+    -4.6
+   ],
+   "color": "#c9b458"
+  },
+  {
+   "shape": "label",
+   "text": "탈지",
+   "pos": [
+    4.4,
+    1.8,
+    -4.6
+   ],
+   "w": 1.4
+  },
+  {
+   "id": "pre_tank1",
+   "shape": "box",
+   "size": [
+    2.4,
+    1.05,
+    2.0
+   ],
+   "pos": [
+    7.0,
+    0.525,
+    -4.6
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "pre_liquid1",
+   "shape": "box",
+   "size": [
+    2.2,
+    0.03,
+    1.8
+   ],
+   "pos": [
+    7.0,
+    1.065,
+    -4.6
+   ],
+   "color": "#6ea8c8"
+  },
+  {
+   "shape": "label",
+   "text": "수세",
+   "pos": [
+    7.0,
+    1.8,
+    -4.6
+   ],
+   "w": 1.4
+  },
+  {
+   "id": "pre_tank2",
+   "shape": "box",
+   "size": [
+    2.4,
+    1.05,
+    2.0
+   ],
+   "pos": [
+    9.6,
+    0.525,
+    -4.6
+   ],
+   "color": "#4a5566"
+  },
+  {
+   "id": "pre_liquid2",
+   "shape": "box",
+   "size": [
+    2.2,
+    0.03,
+    1.8
+   ],
+   "pos": [
+    9.6,
+    1.065,
+    -4.6
+   ],
+   "color": "#7aa07a"
+  },
+  {
+   "shape": "label",
+   "text": "인산아연",
+   "pos": [
+    9.6,
+    1.8,
+    -4.6
+   ],
+   "w": 1.4
+  },
+  {
+   "id": "rinse_pipe0",
+   "shape": "box",
+   "size": [
+    0.08,
+    0.08,
+    1.6
+   ],
+   "pos": [
+    10.5,
+    1.9,
+    0
+   ],
+   "color": "#6ea8c8"
+  },
+  {
+   "id": "rinse_nozzle0-0.5",
+   "shape": "cylinder",
+   "r": 0.03,
+   "h": 0.15,
+   "pos": [
+    10.5,
+    1.78,
+    -0.5
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "rinse_nozzle00",
+   "shape": "cylinder",
+   "r": 0.03,
+   "h": 0.15,
+   "pos": [
+    10.5,
+    1.78,
+    0
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "rinse_nozzle00.5",
+   "shape": "cylinder",
+   "r": 0.03,
+   "h": 0.15,
+   "pos": [
+    10.5,
+    1.78,
+    0.5
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "rinse_pipe1",
+   "shape": "box",
+   "size": [
+    0.08,
+    0.08,
+    1.6
+   ],
+   "pos": [
+    11.0,
+    1.9,
+    0
+   ],
+   "color": "#6ea8c8"
+  },
+  {
+   "id": "rinse_nozzle1-0.5",
+   "shape": "cylinder",
+   "r": 0.03,
+   "h": 0.15,
+   "pos": [
+    11.0,
+    1.78,
+    -0.5
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "rinse_nozzle10",
+   "shape": "cylinder",
+   "r": 0.03,
+   "h": 0.15,
+   "pos": [
+    11.0,
+    1.78,
+    0
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "id": "rinse_nozzle10.5",
+   "shape": "cylinder",
+   "r": 0.03,
+   "h": 0.15,
+   "pos": [
+    11.0,
+    1.78,
+    0.5
+   ],
+   "color": "#c3ccd6"
+  },
+  {
+   "shape": "label",
+   "text": "후수세",
+   "pos": [
+    10.75,
+    2.6,
+    -1.1
+   ],
+   "w": 1.6
+  },
+  {
+   "id": "oven_shell",
+   "shape": "box",
+   "size": [
+    2.0,
+    1.8,
+    2.1
+   ],
+   "pos": [
+    12.7,
+    1.9,
+    0
+   ],
+   "color": "#c06a2a",
+   "opacity": 0.22
+  },
+  {
+   "id": "oven_heater-0.9",
+   "shape": "box",
+   "size": [
+    1.6,
+    0.5,
+    0.06
+   ],
+   "pos": [
+    12.7,
+    1.7,
+    -0.9
+   ],
+   "color": "#331a08",
+   "anim": [
+    {
+     "prop": "emissive",
+     "path": "oven.heat",
+     "on": "#ff8a30",
+     "off": "#000000"
+    }
+   ]
+  },
+  {
+   "id": "oven_heater0.9",
+   "shape": "box",
+   "size": [
+    1.6,
+    0.5,
+    0.06
+   ],
+   "pos": [
+    12.7,
+    1.7,
+    0.9
+   ],
+   "color": "#331a08",
+   "anim": [
+    {
+     "prop": "emissive",
+     "path": "oven.heat",
+     "on": "#ff8a30",
+     "off": "#000000"
+    }
+   ]
+  },
+  {
+   "id": "oven_post-1.0-1.0",
+   "shape": "box",
+   "size": [
+    0.1,
+    1.9,
+    0.1
+   ],
+   "pos": [
+    11.7,
+    1.95,
+    -1.0
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "oven_post-1.01.0",
+   "shape": "box",
+   "size": [
+    0.1,
+    1.9,
+    0.1
+   ],
+   "pos": [
+    11.7,
+    1.95,
+    1.0
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "oven_post1.0-1.0",
+   "shape": "box",
+   "size": [
+    0.1,
+    1.9,
+    0.1
+   ],
+   "pos": [
+    13.7,
+    1.95,
+    -1.0
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "oven_post1.01.0",
+   "shape": "box",
+   "size": [
+    0.1,
+    1.9,
+    0.1
+   ],
+   "pos": [
+    13.7,
+    1.95,
+    1.0
+   ],
+   "color": "#39424f"
+  },
+  {
+   "id": "oven_stack",
+   "shape": "cylinder",
+   "r": 0.15,
+   "h": 1.8,
+   "pos": [
+    12.7,
+    3.7,
+    0
+   ],
+   "color": "#6a7686"
+  },
+  {
+   "shape": "label",
+   "text": "건조로",
+   "pos": [
+    12.7,
+    5.0,
+    0
+   ],
+   "w": 2.0
   },
   {
    "shape": "label",
@@ -764,7 +4081,7 @@
    "pos": [
     11.9,
     2.1,
-    1.3
+    1.5
    ],
    "w": 2.2
   },
@@ -939,182 +4256,106 @@
    "w": 1.6
   }
  ],
- "parts": {
-  "size": [
-   0.9,
-   0.22,
-   0.9
+ "camera": {
+  "position": [
+   -1.0,
+   12.0,
+   20.0
   ],
-  "colors": {
-   "normal": "#9aa7b5",
-   "pressed": "#cfd6df",
-   "welded": "#d8a060",
-   "painted": "#4aa3ff",
-   "defect": "#ef4b4b"
-  },
-  "segments": {
-   "press": [
-    [
-     -9,
-     1.42,
-     0
-    ],
-    [
-     -9,
-     1.42,
-     0
-    ]
+  "target": [
+   -1.0,
+   1.5,
+   -0.5
+  ]
+ },
+ "views": {
+  "diag": {
+   "position": [
+    -1.0,
+    12.0,
+    20.0
    ],
-   "c1": [
-    [
-     -7.6,
-     1.12,
-     0
-    ],
-    [
-     -2.2,
-     1.12,
-     0
-    ]
-   ],
-   "weld": [
-    [
-     -0.5,
-     1.42,
-     0
-    ],
-    [
-     -0.5,
-     1.42,
-     0
-    ]
-   ],
-   "c2": [
-    [
-     1.2,
-     1.12,
-     0
-    ],
-    [
-     5.8,
-     1.12,
-     0
-    ]
-   ],
-   "paint": [
-    [
-     7.8,
-     1.42,
-     0
-    ],
-    [
-     7.8,
-     1.42,
-     0
-    ]
-   ],
-   "c3": [
-    [
-     9.8,
-     1.12,
-     0
-    ],
-    [
-     14.0,
-     1.12,
-     0
-    ]
+   "target": [
+    -1.0,
+    1.5,
+    -0.5
    ]
   },
-  "shape": "box",
-  "rules": [
-   {
-    "if": {
-     "defect": true
-    },
-    "color": "defect"
-   },
-   {
-    "if": {
-     "painted": true
-    },
-    "color": "painted"
-   },
-   {
-    "if": {
-     "welded": true
-    },
-    "color": "welded"
-   },
-   {
-    "if": {
-     "pressed": true
-    },
-    "color": "pressed"
-   }
-  ],
-  "default": "normal"
+  "front": {
+   "position": [
+    -1.0,
+    5.0,
+    24.0
+   ],
+   "target": [
+    -1.0,
+    1.8,
+    -0.5
+   ]
+  },
+  "top": {
+   "position": [
+    -1.0,
+    30.0,
+    0.5
+   ],
+   "target": [
+    -1.0,
+    0.0,
+    -0.5
+   ]
+  },
+  "side": {
+   "position": [
+    -30.0,
+    9.0,
+    8.0
+   ],
+   "target": [
+    -1.0,
+    1.5,
+    -0.5
+   ]
+  },
+  "press": {
+   "position": [
+    -12.5,
+    6.5,
+    11.0
+   ],
+   "target": [
+    -10.0,
+    2.2,
+    0.0
+   ]
+  },
+  "weld": {
+   "position": [
+    -0.5,
+    6.0,
+    9.5
+   ],
+   "target": [
+    -0.5,
+    1.8,
+    -1.0
+   ]
+  },
+  "paint": {
+   "position": [
+    9.5,
+    7.0,
+    10.5
+   ],
+   "target": [
+    9.5,
+    1.5,
+    -0.5
+   ]
+  }
  },
  "fit": {
-  "width": 30.0,
+  "width": 40.0,
   "height": 12.0
- },
- "summary": {
-  "title": "프레스 · 용접 · 도장 라인",
-  "status": {
-   "path": "running",
-   "map": {
-    "true": "가동",
-    "false": "정지"
-   }
-  },
-  "metrics": [
-   {
-    "label": "투입",
-    "path": "counts.in"
-   },
-   {
-    "label": "양품",
-    "path": "counts.good"
-   },
-   {
-    "label": "불량",
-    "path": "counts.scrap"
-   },
-   {
-    "label": "처리량",
-    "path": "kpi.throughput_per_min",
-    "suffix": " 개/분",
-    "zero": "-"
-   },
-   {
-    "label": "병목 공정",
-    "path": "kpi.bottleneck_name",
-    "zero": "-"
-   }
-  ],
-  "actions": [
-   {
-    "label": "시작",
-    "post": "/api/line/control",
-    "body": {
-     "action": "start"
-    }
-   },
-   {
-    "label": "정지",
-    "post": "/api/line/control",
-    "body": {
-     "action": "stop"
-    }
-   },
-   {
-    "label": "리셋",
-    "post": "/api/line/control",
-    "body": {
-     "action": "reset"
-    }
-   }
-  ]
  }
 }

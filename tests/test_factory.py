@@ -257,8 +257,24 @@ for p, src in zip(mv, mst["pieces"]):
     c = MSC["parts"]["colors"][want]
     assert str(p[4]).lower() == (c if isinstance(c, str) else c["color"]).lower(), (want, p[4])
 for p, src in zip(pv, pst["parts"]):
-    in_seg(p, PSC["parts"]["segments"][src["stage"]], poff)
+    if "pos" in src:                                  # 시뮬레이터가 위치를 직접 준 부품 (행거에 매달려 액 속으로 내려가는 도장 부품): pos + offset
+        for i in range(3):
+            assert abs(p[1 + i] - (src["pos"][i] + poff[i])) < 0.06, (src, p, poff)
+    else:
+        in_seg(p, PSC["parts"]["segments"][src["stage"]], poff)
 print(f"부품: 가공 라인 {len(mv)}개, 프레스 라인 {len(pv)}개가 각자의 구간 + offset 안에 있고 색 규칙이 맞음")
+
+# 프레스 라인의 새 동작: 슬라이드와 행거의 높이(+offset), 용접 로봇 관절, 클램프는 상태를 따라간다 (그룹 위치/회전)
+G = out["groups"]
+anim_of = lambda oid: next(o for o in PSC["objects"] if o.get("id") == oid)["anim"][0]
+sl, hg = anim_of("press_slide"), anim_of("hanger")
+exp_sl = sl["from"] + (sl["to"] - sl["from"]) * pst["stations"]["press"]["ram"] + poff[1]
+exp_hg = hg["from"] + (hg["to"] - hg["from"]) * pst["stations"]["paint"]["dip"] + poff[1]
+assert abs(G["press_slide"]["pos"][1] - exp_sl) < 0.05 and abs(G["hanger"]["pos"][1] - exp_hg) < 0.05, (G["press_slide"], exp_sl, G["hanger"], exp_hg)
+rb = pst["stations"]["weld"]["robot"]
+for gid, axis, key in (("robot_yaw", 1, "yaw"), ("robot_shoulder", 2, "shoulder"), ("robot_elbow", 2, "elbow"), ("robot_wrist", 2, "wrist")):
+    assert abs(G[gid]["rot"][axis] - rb[key]) < 2e-3, (gid, G[gid], rb)
+print(f"프레스 라인 동작: 슬라이드 {G['press_slide']['pos'][1]:.2f}, 행거 {G['hanger']['pos'][1]:.2f} (offset 포함), 용접 로봇 관절 4개가 상태의 각도를 따라감")
 
 # 협동로봇 셀: 관절 그룹 회전 = 상태의 각도, 손가락 간격 = 그리퍼, 부품 위치(pos + offset)와 색, 스택 라이트, 요약 카드
 coff = [l for l in layout["lines"] if l["id"] == "cobot"][0]["offset"]
@@ -338,7 +354,7 @@ def scene_bounds():
         sc = {"machining": MSC, "press_weld_paint": PSC, "logistics": LSC, "cobot": CSC}[l["scene"]]
         for o in sc["objects"]:
             if o["shape"] == "box": h = [v / 2 for v in o["size"]]
-            elif o["shape"] == "cylinder": h = [o["r"], o["h"] / 2, o["r"]]
+            elif o["shape"] == "cylinder": h = [o.get("r", o.get("rt")), o["h"] / 2, o.get("r", o.get("rt"))]
             elif o["shape"] == "sphere": h = [o["r"]] * 3
             elif o["shape"] == "belt": h = [o["size"][0] / 2, 0.05, o["size"][1] / 2]
             else: continue

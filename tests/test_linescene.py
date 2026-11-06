@@ -37,20 +37,28 @@ sim = LineSim(); sim.start(); sim.advance(45)
 state = sim.state()
 ids = [o["id"] for o in SCENE["objects"] if "id" in o]
 assert len(ids) == len(set(ids)), "오브젝트 id 가 겹칩니다"
-for o in SCENE["objects"]:
-    assert o["shape"] in ("box", "cylinder", "sphere", "belt", "label"), o
+def check(o):
+    assert o["shape"] in ("box", "cylinder", "sphere", "belt", "label", "group", "light"), o
     assert len(o["pos"]) == 3, o
     if o["shape"] == "box":
         assert len(o["size"]) == 3
     for a in o.get("anim", []):
         assert get(state, a["path"]) is not KeyError, f"상태에 없는 path: {a['path']} ({o.get('id')})"
-        assert a["prop"] in ("x", "y", "z", "visible", "emissive", "lamp", "color"), a
+        assert a["prop"] in ("x", "y", "z", "visible", "emissive", "lamp", "color", "rotate", "spin", "intensity"), a
         if a["prop"] in ("x", "y", "z"):
             assert "from" in a and "to" in a
+        if a["prop"] in ("rotate", "spin"):
+            assert a["axis"] in ("x", "y", "z"), a
         if a["prop"] == "lamp":
             assert set(a["map"]) >= {"working", "blocked", "starved", "down"}
     if o["shape"] == "belt":
         assert get(state, o["path"]) is not KeyError, o["path"]
+    for c in o.get("children", []):
+        check(c)
+
+
+for o in SCENE["objects"]:
+    check(o)
 segs = SCENE["parts"]["segments"]
 assert set(segs) == set(ELEMENTS), "부품 구간이 시뮬레이터의 칸과 다릅니다"
 assert {"normal", "pressed", "welded", "painted", "defect"} <= set(SCENE["parts"]["colors"])
@@ -102,12 +110,15 @@ await new Promise(r => setTimeout(r, 500));
 check();
 const parts = registry.meshes.filter(m => m.geometry.type === 'Box' && m.geometry.args[0] === 0.9 && m.geometry.args[1] === 0.22);
 const lamps = registry.meshes.filter(m => m.geometry.type === 'Sphere' && m.geometry.args[0] === 0.28);
-const ram = registry.meshes.find(m => m.geometry.type === 'Box' && m.geometry.args[0] === 1.6 && m.geometry.args[1] === 0.7);
+const grp = id => registry.groups.find(g => g.userData.id === id);
+const slide = grp('press_slide'), hanger = grp('hanger'), yaw = grp('robot_yaw'), shoulder = grp('robot_shoulder'), elbow = grp('robot_elbow'), wrist = grp('robot_wrist');
+const clamp0 = grp('weld_clamp0').children[0], flywheel = grp('press_flywheel');
 console.log(JSON.stringify({
   ready: !!globalThis.__twin3dReady, renders: registry.renders, meshes: registry.meshes.length, sprites: registry.sprites.length,
   parts: parts.map(m => [m.visible, +m.position.x.toFixed(2), +m.position.y.toFixed(2), +m.position.z.toFixed(2), m.material.color.hex ?? m.material.color.value]),
   lamps: lamps.map(m => [m.material.color.value, +m.material.emissiveIntensity.toFixed(1)]),
-  ramY: +ram.position.y.toFixed(3),
+  ramY: +slide.position.y.toFixed(3), hangerY: +hanger.position.y.toFixed(3),
+  joints: [yaw.rotation.y, shoulder.rotation.z, elbow.rotation.z, wrist.rotation.z].map(v => +v.toFixed(3)), clampZ: +clamp0.rotation.z.toFixed(3), flyX: +flywheel.rotation.x.toFixed(3),
   hud: { good: els.c_good.textContent, tput: els.k_tput.textContent, bott: els.k_bott.textContent, press: els.u_press.textContent },
   title: els.title.textContent, cam: registry.camera.position,
 }));
@@ -118,7 +129,7 @@ r = subprocess.run(["node", "run.mjs"], cwd=tmp, capture_output=True, text=True,
 assert r.returncode == 0, f"실행 오류:\n{r.stderr[-1500:]}"
 out = json.loads(r.stdout.strip().splitlines()[-1])
 print("뷰어 실행:", {k: out[k] for k in ("ready", "renders", "meshes", "sprites")})
-assert out["ready"] and out["renders"] > 50 and out["sprites"] == 8 and out["title"] == SCENE["title"]
+assert out["ready"] and out["renders"] > 50 and out["sprites"] == sum(1 for o in SCENE["objects"] if o["shape"] == "label") and out["title"] == SCENE["title"]
 
 # 부품: 상태의 부품마다 하나씩, 의도한 구간 안의 좌표에 있다
 visible = [p for p in out["parts"] if p[0]]
@@ -126,6 +137,9 @@ assert len(visible) == len(st["parts"]), (len(visible), len(st["parts"]))
 for p, src in zip(visible, st["parts"]):
     a, b = segs[src["stage"]]
     for ax, i in (("x", 1), ("y", 2), ("z", 3)):
+        if "pos" in src:        # 시뮬레이터가 위치를 직접 준 부품 (행거에 매달린 도장 부품)
+            assert abs(p[i] - src["pos"]["xyz".index(ax)]) < 0.06, (src["stage"], ax, p[i], src["pos"])
+            continue
         lo, hi = sorted((a["xyz".index(ax)], b["xyz".index(ax)]))
         assert lo - 0.06 <= p[i] <= hi + 0.06, (src["stage"], ax, p[i], (lo, hi))
 colors = SCENE["parts"]["colors"]
@@ -138,10 +152,22 @@ print(f"부품 {len(visible)}개: 칸(구간) 안의 좌표와 공정 진행에 
 lamp_obj = {o["id"]: o for o in SCENE["objects"] if o.get("id", "").endswith("_lamp")}
 want = sorted(lamp_obj["%s_lamp" % n]["anim"][0]["map"][st["stations"][n]["state"]] for n in ("press", "weld", "paint"))
 assert sorted(l[0] for l in out["lamps"]) == want, (out["lamps"], want)
-ramo = next(o for o in SCENE["objects"] if o.get("id") == "press_ram")["anim"][0]
+ramo = next(o for o in SCENE["objects"] if o.get("id") == "press_slide")["anim"][0]
 exp = ramo["from"] + (ramo["to"] - ramo["from"]) * st["stations"]["press"]["ram"]
 assert abs(out["ramY"] - exp) < 0.05, (out["ramY"], exp)
-print(f"램프 색 3개, 프레스 램 높이({out['ramY']}) 반영 확인")
+print(f"램프 색 3개, 프레스 슬라이드 높이({out['ramY']}) 반영 확인")
+# 용접 로봇 관절, 클램프, 행거, 플라이휠이 상태를 따라간다 (뷰어 안의 값 = 장면 규칙으로 계산한 값)
+rb = st["stations"]["weld"]["robot"]
+for got, want_ in zip(out["joints"], (rb["yaw"], rb["shoulder"], rb["elbow"], rb["wrist"])):
+    assert abs(got - want_) < 0.02, (out["joints"], rb)
+clamp_anim = next(c for c in next(o for o in SCENE["objects"] if o.get("id") == "weld_clamp0")["children"][0]["anim"])
+exp_clamp = clamp_anim["bias"] + st["stations"]["weld"]["clamp"] * clamp_anim["scale"]
+assert abs(out["clampZ"] - exp_clamp) < 0.03, (out["clampZ"], exp_clamp)
+han = next(o for o in SCENE["objects"] if o.get("id") == "hanger")["anim"][0]
+exp_h = han["from"] + (han["to"] - han["from"]) * st["stations"]["paint"]["dip"]
+assert abs(out["hangerY"] - exp_h) < 0.05, (out["hangerY"], exp_h)
+assert out["flyX"] != 0 if st["running"] else True
+print(f"용접 로봇 관절 {out['joints']}, 클램프 {out['clampZ']}, 행거 높이 {out['hangerY']}, 플라이휠 회전 반영 확인")
 # 시점 맞춤: 창 비율(1000x700)에서 장면 폭(30)이 가로 화각 안에 들어오는 거리
 import math
 tan_v = math.tan(math.radians(45 / 2)); aspect = 1000 / 700

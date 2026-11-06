@@ -11,6 +11,7 @@
 | `title` | 화면 제목 |
 | `background` | 배경색 (`#rrggbb`) |
 | `camera` | `{position:[x,y,z], target:[x,y,z]}` 처음 시점 |
+| `fit` | `{width, height}` 장면의 가로, 세로 크기. 있으면 창 크기에 맞춰 대각선 시점의 거리를 자동으로 정함 (사용자가 직접 돌리거나 다른 시점을 고르면 그대로 둠) |
 | `views` | 시점 버튼 `{이름: {position, target}}` (이름: diag, front, top, side) |
 | `objects` | 그릴 오브젝트 목록 |
 | `parts` | 움직이는 부품 설정 |

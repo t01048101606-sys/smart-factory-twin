@@ -30,10 +30,23 @@ sun.shadow.camera.left = -25; sun.shadow.camera.right = 25; sun.shadow.camera.to
 scene.add(sun);
 
 let VIEWS = {};
+let fit = null;            // 창 크기에 맞춰 대각선 시점의 거리를 자동으로 정한다 (장면 JSON 의 fit)
+let userMoved = false;     // 사용자가 직접 돌렸거나 다른 시점을 골랐으면 창 크기가 바뀌어도 건드리지 않는다
+function fitDiag() {
+  if (!fit) return;
+  const tanV = Math.tan((camera.fov || 45) / 2 * Math.PI / 180);
+  const a = camera.aspect || 1.8;
+  const d = Math.min(90, Math.max(fit.width / 2 / (tanV * a), fit.height / 2 / tanV) * 1.08);   // 가로, 세로 중 더 빡빡한 쪽 + 8% 여유
+  camera.position.set(fit.target[0] + fit.dir[0] * d, fit.target[1] + fit.dir[1] * d, fit.target[2] + fit.dir[2] * d);
+  controls.target.set(...fit.target); controls.update();
+}
 function setView(name) {
+  if (name === 'diag' && fit) { userMoved = false; fitDiag(); return; }
   const v = VIEWS[name]; if (!v) return;
+  userMoved = true;
   camera.position.set(...v.position); controls.target.set(...v.target); controls.update();
 }
+if (controls.addEventListener) controls.addEventListener('start', () => { userMoved = true; });
 
 // ---------------------------------------------------------------- 장면 만들기
 const binds = [];          // {obj, ...anim}
@@ -87,6 +100,11 @@ function build(def) {
   scene.background = new THREE.Color(def.background || '#111418');
   VIEWS = def.views || {};
   camera.position.set(...def.camera.position); controls.target.set(...def.camera.target); controls.update();
+  if (def.fit) {
+    const dir = def.camera.position.map((v, i) => v - def.camera.target[i]);
+    const len = Math.hypot(...dir) || 1;
+    fit = { width: def.fit.width, height: def.fit.height || 10, target: def.camera.target, dir: dir.map(v => v / len) };
+  }
   for (const o of def.objects) {
     if (o.shape === 'label') makeLabel(o);
     else if (o.shape === 'belt') makeBelt(o);
@@ -180,6 +198,7 @@ async function poll() {
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+  if (fit && !userMoved) fitDiag();
 }
 window.addEventListener('resize', resize);
 document.querySelectorAll('button[data-act]').forEach(b => { b.onclick = () => post('/api/line/control', { action: b.dataset.act }); });

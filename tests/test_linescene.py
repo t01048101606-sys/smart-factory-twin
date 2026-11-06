@@ -109,7 +109,7 @@ console.log(JSON.stringify({
   lamps: lamps.map(m => [m.material.color.value, +m.material.emissiveIntensity.toFixed(1)]),
   ramY: +ram.position.y.toFixed(3),
   hud: { good: els.c_good.textContent, tput: els.k_tput.textContent, bott: els.k_bott.textContent, press: els.u_press.textContent },
-  title: els.title.textContent,
+  title: els.title.textContent, cam: registry.camera.position,
 }));
 process.exit(0);
 ''')
@@ -142,6 +142,15 @@ ramo = next(o for o in SCENE["objects"] if o.get("id") == "press_ram")["anim"][0
 exp = ramo["from"] + (ramo["to"] - ramo["from"]) * st["stations"]["press"]["ram"]
 assert abs(out["ramY"] - exp) < 0.05, (out["ramY"], exp)
 print(f"램프 색 3개, 프레스 램 높이({out['ramY']}) 반영 확인")
+# 시점 맞춤: 창 비율(1000x700)에서 장면 폭(30)이 가로 화각 안에 들어오는 거리
+import math
+tan_v = math.tan(math.radians(45 / 2)); aspect = 1000 / 700
+need = SCENE["fit"]["width"] / 2 / (tan_v * aspect)
+tgt = SCENE["camera"]["target"]; cam = out["cam"]
+dist = math.dist((cam["x"], cam["y"], cam["z"]), tgt)
+assert need <= dist <= need * 1.3, (dist, need)
+assert abs(cam["x"] - tgt[0]) < 1e-6      # 장면 중심을 정면으로 보는 방향 (옆으로 치우치지 않음)
+print(f"시점 맞춤: 카메라 거리 {dist:.1f} (장면 폭이 들어오는 최소 거리 {need:.1f})")
 print("HUD:", out["hud"])
 
 # ---- 3) 서버 경로 ---------------------------------------------------------------------------------

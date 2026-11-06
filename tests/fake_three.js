@@ -6,7 +6,7 @@ const asNum = (o, k) => { for (const key of ['position', 'scale']) { const v = o
 export const RepeatWrapping = 1000, SRGBColorSpace = 'srgb';
 export class Scene extends Obj { constructor() { super(); this.children = []; this.background = null; } add(o) { this.children.push(o); return o; } }
 export class Color { constructor(v) { this.hex = v; } setHex(v) { this.hex = v; } set(v) { this.value = v; } }
-export class PerspectiveCamera extends Obj { constructor() { super(); this.aspect = 1; } updateProjectionMatrix() {} }
+export class PerspectiveCamera extends Obj { constructor() { super(); this.aspect = 1; this.fov = 45; registry.camera = this; } updateProjectionMatrix() {} }
 export class WebGLRenderer { constructor() { this.shadowMap = {}; this.domElement = { addEventListener() {} }; } setPixelRatio() {} setSize() {} render() { registry.renders = (registry.renders || 0) + 1; } }
 export class AmbientLight extends Obj {}
 export class DirectionalLight extends Obj { constructor() { super(); this.shadow = { mapSize: {}, camera: {} }; } }

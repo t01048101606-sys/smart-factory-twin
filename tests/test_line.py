@@ -87,3 +87,25 @@ a, b = run(), run()
 assert a.counts == b.counts and a.state()["util"] == b.state()["util"]
 print("재현성 확인")
 print("\n테스트 통과")
+
+# 재공품(WIP): 칸마다 empty / working / waiting / down, kpi.wip = 비어 있지 않은 칸 수, 일을 마치고 기다리는 부품은 waiting 으로 표시
+from line_sim import ELEMENTS  # noqa: E402
+sim = LineSim(); sim.start()
+st0 = sim.state()
+assert set(st0["occ"]) == set(ELEMENTS) and st0["kpi"]["wip"] == 0 and st0["kpi"]["waiting"] == 0 and set(st0["occ"].values()) == {"empty"}
+seen, max_wip = set(), 0
+for _ in range(1200):
+    sim.advance(0.5)
+    st = sim.state()
+    assert set(st["occ"].values()) <= {"empty", "working", "waiting", "down"}
+    assert st["kpi"]["wip"] == sum(v != "empty" for v in st["occ"].values()) == len(st["parts"])           # 재공품 수 = 라인 안의 부품 수
+    assert st["kpi"]["waiting"] == sum(v == "waiting" for v in st["occ"].values()) == sum(p["waiting"] for p in st["parts"])
+    seen |= set(st["occ"].values()); max_wip = max(max_wip, st["kpi"]["wip"])
+assert {"empty", "working", "waiting"} <= seen and 3 <= max_wip <= len(ELEMENTS), (seen, max_wip)         # 병목(도장) 앞에서 용접 부품이 기다린다
+sim.set_fault("press_down"); sim.advance(5)
+assert sim.state()["occ"]["press"] in ("empty", "down")
+sim = LineSim(); sim.start(); sim.set_fault("paint_down"); sim.advance(300)
+st = sim.state()
+assert st["occ"]["paint"] == "down" and st["kpi"]["waiting"] >= 1 and st["kpi"]["wip"] >= 3, st["occ"]        # 도장이 서면 뒤가 막혀 부품이 쌓이고 기다린다
+print(f"재공품: 최대 {max_wip}개, 상태 {sorted(seen)}, 도장 정지 시 {st['kpi']['wip']}개가 라인에 머물고 {st['kpi']['waiting']}개가 기다림")
+print("\n테스트 통과")

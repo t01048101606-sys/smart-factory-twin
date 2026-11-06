@@ -193,12 +193,18 @@ class LineSim:
             if name == "paint":     # 행거가 부품을 전착조 액 속으로 내렸다 올린다 (paint_cell.py)
                 d = paint_dip(p, working)
                 st[name].update(dip=round(d, 3), voltage=bool(d > 0.9))
+        # 재공품(WIP): 라인 안에 있는 부품. 칸마다 비어 있음(empty) / 작업 중(working) / 일을 마치고 다음 칸이 차서 기다림(waiting) / 설비 정지(down)
+        occ = {}
+        for e in ELEMENTS:
+            o = self.occ[e]
+            occ[e] = "empty" if o is None else "down" if self._down(e) else "waiting" if o["t_el"] >= self.duration(e) else "working"
         conv = {c: {"moving": bool(self.occ[c] is not None and self.occ[c]["t_el"] < self.duration(c))} for c in ("c1", "c2", "c3")}
         for e in ELEMENTS:
             o = self.occ[e]
             if o is not None:
                 item = {"id": o["id"], "stage": e, "t": round(min(1.0, o["t_el"] / self.duration(e)), 3),
-                        "pressed": o["pressed"], "welded": o["welded"], "painted": o["painted"], "defect": o["defect"]}
+                        "pressed": o["pressed"], "welded": o["welded"], "painted": o["painted"], "defect": o["defect"],
+                        "waiting": occ[e] == "waiting"}
                 if e == "paint":    # 도장 공정에서는 부품이 행거에 매달려 액 속으로 내려간다: 높이는 침지 깊이를 따른다
                     item["pos"] = [PAINT_X, paint_part_y(st["paint"]["dip"]), 0.0]
                 parts.append(item)
@@ -210,8 +216,9 @@ class LineSim:
             bott = max(STATIONS, key=lambda s: util[s]["working"] + util[s]["down"])
         return {
             "time": round(self.time, 1), "running": self.running, "draining": self.running and not self.feeding, "fault": self.fault, "speed": self.speed,
-            "stations": st, "conveyors": conv, "parts": parts, "counts": dict(self.counts), "oven": {"heat": 1 if self.running else 0},
-            "util": util, "kpi": {"throughput_per_min": self._throughput(done),
+            "stations": st, "conveyors": conv, "occ": occ, "parts": parts, "counts": dict(self.counts), "oven": {"heat": 1 if self.running else 0},
+            "util": util, "kpi": {"wip": sum(1 for v in occ.values() if v != "empty"), "waiting": sum(1 for v in occ.values() if v == "waiting"),
+                                   "throughput_per_min": self._throughput(done),
                                    "good_rate": round(self.counts["good"] / done, 3) if done else None,
                                    "bottleneck": bott, "bottleneck_name": NAMES.get(bott)},
         }

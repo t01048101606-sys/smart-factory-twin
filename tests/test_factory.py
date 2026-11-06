@@ -159,15 +159,15 @@ import { registry, check } from 'three';
 const E = process.env, layout = JSON.parse(E.LAYOUT), scenes = JSON.parse(E.SCENES), state = JSON.parse(E.STATE), terms = JSON.parse(E.TERMS);
 const els = {};
 const el = id => (els[id] ||= { id, textContent: '', innerHTML: '', style: {}, classList: { add() {} }, value: '', href: '', checked: true, className: '' });
-const texts = [];
-const ctx = new Proxy({}, { get: (t, k) => (k === 'fillText' ? (txt) => { texts.push(txt); } : () => {}), set: () => true });
+const texts = [], downloads = [], drawn = [];
+const ctx = new Proxy({}, { get: (t, k) => (k === 'fillText' ? (txt) => { texts.push(txt); drawn.push(txt); } : k === 'measureText' ? () => ({ width: 100 }) : () => {}), set: () => true });
 globalThis.window = globalThis;
 globalThis.addEventListener = () => {};
 globalThis.innerWidth = 1000; globalThis.innerHeight = 700; globalThis.devicePixelRatio = 1;
 globalThis.location = { search: process.env.SEARCH || '?embed=1' };
 globalThis.localStorage = { getItem: () => null, setItem() {} };
 globalThis.document = { title: '', activeElement: null, body: { classList: { add() {} }, appendChild() {} }, getElementById: el,
-  createElement: () => ({ width: 0, height: 0, getContext: () => ctx }), querySelectorAll: () => [] };
+  createElement: () => ({ width: 0, height: 0, getContext: () => ctx, toDataURL: () => 'data:image/png;base64,AAAA', click() { downloads.push({ name: this.download, href: this.href }); } }), querySelectorAll: () => [] };
 globalThis.fetch = async url => {
   url = String(url);
   const body = url.includes('layout') ? layout : url.includes('/api/scene/') ? scenes[url.split('/').pop()] : url.includes('terms') ? terms : state;
@@ -195,6 +195,8 @@ const forks = registry.meshes.filter(m => m.geometry.type === 'Box' && m.geometr
 const groups = Object.fromEntries(registry.groups.filter(g => g.userData && g.userData.id).map(g => [g.userData.id, { rot: [g.rotation.x, g.rotation.y, g.rotation.z], pos: [g.position.x, g.position.y, g.position.z] }]));
 const fingers = registry.meshes.filter(m => m.geometry.type === 'Box' && m.geometry.args[0] === 0.5 && m.geometry.args[1] === 0.5 && m.geometry.args[2] === 0.1).map(m => +m.position.z.toFixed(3));
 const wheelRot = registry.groups.filter(g => g.userData && g.userData.id && g.userData.id.includes('_wheel_')).map(g => [g.userData.id, +g.rotation.z.toFixed(3)]);
+const hudHtml = els.hud.innerHTML, hudShow = els.hud.style.display;
+drawn.length = 0; els.capBtn.onclick(); const capDrawn = drawn.slice();
 const labelsField = texts.slice(); texts.length = 0;
 els.termsMode.value = 'lab'; els.termsMode.onchange();
 const labelsLab = texts.slice();
@@ -207,6 +209,7 @@ console.log(JSON.stringify({
   mv: [0, 1, 2, 3].map(i => els['mv_machining_' + i].textContent), pv: [0, 1, 2, 3, 4].map(i => els['mv_press_' + i].textContent),
   lv: [0, 1, 2, 3, 4, 5].map(i => els['mv_logistics_' + i].textContent), lst: els.st_logistics.textContent,
   ml: els.ml_machining_0.textContent, labelsField: labelsField.slice(0, 40), labelsLab, cam: [cam.x, cam.y, cam.z],
+  hudHtml, hudShow, downloads, capDrawn,
   demoCap: els.demoCap && els.demoCap.textContent, demoBtn: els.demoBtn && els.demoBtn.textContent,
   views: els.views.innerHTML.includes('v_overview') && els.views.innerHTML.includes('v_press'),
 }));
@@ -418,4 +421,14 @@ for _, view, _ in steps:
 od = run(fs, "demo", "?embed=1&demo=1")
 assert od["demoCap"].startswith("1 / 12") and od["demoBtn"] == "■ 데모 중지", (od["demoCap"], od["demoBtn"])
 print(f"데모 모드: {len(steps)}단계, 모든 시점 존재, ?demo=1 로 바로 시작 ('{od['demoCap'][:30]}...')")
+# 공장 전체 수치(오른쪽 위)와 캡처: 수치가 상태 값과 일치하고, 캡처는 수치를 그림에 그려 넣어 날짜가 든 PNG 이름으로 저장한다
+import re as _re
+hud = _re.findall(r"<span>([^<]+)</span><b>([^<]+)</b>", od["hudHtml"])
+assert [k for k, _ in hud][:6] == ["프레스 라인", "가공 라인", "협동로봇 셀", "출하", "원자재", "재공품"], hud
+assert od["hudShow"] == "block"
+assert any("양품" in v and "불량" in v for _, v in hud) and any("트럭" in v and "/" in v for k, v in hud if k == "출하")
+assert len(od["downloads"]) == 1 and _re.fullmatch(r"smart-factory_\d{8}_\d{6}\.png", od["downloads"][0]["name"]) and od["downloads"][0]["href"].startswith("data:image/png")
+assert any("프레스 라인" == t for t in od["capDrawn"]) and any("트럭" in t for t in od["capDrawn"]), od["capDrawn"]       # 그림에 수치가 그려졌다
+assert any(t.startswith("1 / 12") for t in od["capDrawn"])                                                              # 데모 중이면 설명도
+print("공장 수치 박스:", " | ".join(f"{k} {v}" for k, v in hud), "/ 캡처 파일:", od["downloads"][0]["name"])
 print("\n테스트 통과")

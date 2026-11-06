@@ -37,6 +37,12 @@ box("walk_line0", [20, 0.03, 0.14], [-5, 0.02, 3.0], YEL)
 
 # ================================================================ 프레스 (스트레이트 사이드)
 CX = -9.0
+# 재공품(WIP) 현황 띠: 바닥에 칸 6개 (프레스, 컨베이어1, 용접, 컨베이어2, 도장, 컨베이어3), 칸마다 부품 유무와 상태를 색으로 보여 준다
+WIP_X = {"press": CX, "c1": -4.9, "weld": -0.5, "c2": 3.5, "paint": 7.8, "c3": 11.9}
+WIP_MAP = {"empty": "#2c3440", "working": "#33c27f", "waiting": "#f2c230", "down": "#ef4b4b"}
+for _k, _x in WIP_X.items():
+    add(id=f"wip_{_k}", shape="box", size=[1.1, 0.06, 0.5], pos=[_x, 0.03, 4.5], color="#2c3440", anim=[{"prop": "lamp", "path": f"occ.{_k}", "map": WIP_MAP}])
+label("재공품 현황", [-12.2, 0.8, 4.5], 2.2)
 box("press_pit", [4.2, 0.12, 3.8], [CX, 0.06, 0], "#1d232b")
 box("press_bed", [3.0, 0.73, 2.8], [CX, 0.485, 0], PRESS)
 box("press_bolster", [2.6, 0.15, 2.4], [CX, 0.925, 0], "#6a7686")
@@ -280,6 +286,14 @@ label("불량", [15.8, 1.9, 1.6], 1.6)
 
 scene = {k: v for k, v in old.items() if k not in ("objects", "camera", "views", "fit")}
 scene["objects"] = O
+# 일을 마치고 다음 칸이 차서 기다리는 부품(waiting)은 노란색으로, 재공품 수는 카드에 보인다 (이미 들어 있으면 다시 넣지 않는다)
+scene["parts"] = json.loads(json.dumps(scene["parts"]))
+scene["parts"]["colors"]["waiting"] = "#f2c230"
+if not any(r["if"].get("waiting") for r in scene["parts"]["rules"]):
+    scene["parts"]["rules"].insert(1, {"if": {"waiting": True}, "color": "waiting"})
+scene["summary"] = json.loads(json.dumps(scene["summary"]))
+if not any(m.get("path") == "kpi.wip" for m in scene["summary"]["metrics"]):
+    scene["summary"]["metrics"].insert(3, {"label": "재공품 (대기)", "path": "kpi.wip", "suffix": " 개"})
 scene["camera"] = {"position": [-1.0, 12.0, 20.0], "target": [-1.0, 1.5, -0.5]}
 scene["views"] = {
     "diag": {"position": [-1.0, 12.0, 20.0], "target": [-1.0, 1.5, -0.5]},

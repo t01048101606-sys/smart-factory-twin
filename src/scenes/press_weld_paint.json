@@ -12,7 +12,8 @@
    "pressed": "#cfd6df",
    "welded": "#d8a060",
    "painted": "#4aa3ff",
-   "defect": "#ef4b4b"
+   "defect": "#ef4b4b",
+   "waiting": "#f2c230"
   },
   "segments": {
    "press": [
@@ -98,6 +99,12 @@
    },
    {
     "if": {
+     "waiting": true
+    },
+    "color": "waiting"
+   },
+   {
+    "if": {
      "painted": true
     },
     "color": "painted"
@@ -138,6 +145,11 @@
    {
     "label": "불량",
     "path": "counts.scrap"
+   },
+   {
+    "label": "재공품 (대기)",
+    "path": "kpi.wip",
+    "suffix": " 개"
    },
    {
     "label": "처리량",
@@ -205,6 +217,178 @@
     3.0
    ],
    "color": "#d8a020"
+  },
+  {
+   "id": "wip_press",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.06,
+    0.5
+   ],
+   "pos": [
+    -9.0,
+    0.03,
+    4.5
+   ],
+   "color": "#2c3440",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "occ.press",
+     "map": {
+      "empty": "#2c3440",
+      "working": "#33c27f",
+      "waiting": "#f2c230",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "wip_c1",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.06,
+    0.5
+   ],
+   "pos": [
+    -4.9,
+    0.03,
+    4.5
+   ],
+   "color": "#2c3440",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "occ.c1",
+     "map": {
+      "empty": "#2c3440",
+      "working": "#33c27f",
+      "waiting": "#f2c230",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "wip_weld",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.06,
+    0.5
+   ],
+   "pos": [
+    -0.5,
+    0.03,
+    4.5
+   ],
+   "color": "#2c3440",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "occ.weld",
+     "map": {
+      "empty": "#2c3440",
+      "working": "#33c27f",
+      "waiting": "#f2c230",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "wip_c2",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.06,
+    0.5
+   ],
+   "pos": [
+    3.5,
+    0.03,
+    4.5
+   ],
+   "color": "#2c3440",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "occ.c2",
+     "map": {
+      "empty": "#2c3440",
+      "working": "#33c27f",
+      "waiting": "#f2c230",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "wip_paint",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.06,
+    0.5
+   ],
+   "pos": [
+    7.8,
+    0.03,
+    4.5
+   ],
+   "color": "#2c3440",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "occ.paint",
+     "map": {
+      "empty": "#2c3440",
+      "working": "#33c27f",
+      "waiting": "#f2c230",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "wip_c3",
+   "shape": "box",
+   "size": [
+    1.1,
+    0.06,
+    0.5
+   ],
+   "pos": [
+    11.9,
+    0.03,
+    4.5
+   ],
+   "color": "#2c3440",
+   "anim": [
+    {
+     "prop": "lamp",
+     "path": "occ.c3",
+     "map": {
+      "empty": "#2c3440",
+      "working": "#33c27f",
+      "waiting": "#f2c230",
+      "down": "#ef4b4b"
+     }
+    }
+   ]
+  },
+  {
+   "shape": "label",
+   "text": "재공품 현황",
+   "pos": [
+    -12.2,
+    0.8,
+    4.5
+   ],
+   "w": 2.2
   },
   {
    "id": "press_pit",

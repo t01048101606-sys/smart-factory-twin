@@ -343,12 +343,67 @@ function applyCards() {
   });
 }
 
+// ---------------------------------------------------------------- 공장 전체 수치 (화면 오른쪽 위) + 캡처
+const FAULT_NAMES = { weld_slow: '용접 속도 저하', press_down: '프레스 정지', paint_down: '도장 정지' };
+function hudLines() {
+  const by = id => lines.find(c => c.ln.id === id)?.state;
+  const p = by('press'), l = by('logistics'), c = by('cobot'), m = by('machining');
+  if (!p || !l || !c || !m) return [];
+  const good = p.counts?.good ?? 0, scrap = p.counts?.scrap ?? 0, tot = good + scrap;
+  const low = (l.kpi?.low_stock || []).map(k => l.stock?.[k]?.name || k);
+  const o = l.outbound || {};
+  const out = [
+    ['프레스 라인', `양품 ${good} · 불량 ${scrap}${tot ? ` (${(scrap / tot * 100).toFixed(1)}%)` : ''} · ${p.running ? '가동' : '정지'}`],
+    ['가공 라인', `양품 ${m.D0 ?? 0} · 불량 ${m.D2 ?? 0} · ${m.ai?.alarm ? 'AI 이상 감지' : 'AI 정상'}`],
+    ['협동로봇 셀', `검사 ${c.counts?.inspected ?? 0} · 불량 ${c.counts?.ng ?? 0} · 파렛트 ${c.counts?.pallets ?? 0}`],
+    ['출하', `${l.counts?.shipped_pcs ?? 0}개 출하 · 트럭 ${o.loaded ?? 0}/${o.capacity ?? 4}`],
+    ['원자재', low.length ? `부족: ${low.join(', ')}` : '재고 정상'],
+    ['재공품', `프레스 라인 ${p.kpi?.wip ?? 0}개 (기다림 ${p.kpi?.waiting ?? 0})`],
+  ];
+  const f = FAULT_NAMES[p.fault];
+  if (f) out.push(['결함', f + ' 주입 중']);
+  return out;
+}
+function applyHud() {
+  const h = $('hud'); if (!h) return;
+  const rows = hudLines();
+  h.innerHTML = rows.map(([k, v]) => `<div class="row"><span>${k}</span><b>${v}</b></div>`).join('');
+  h.style.display = rows.length && (!$('hudOn') || $('hudOn').checked) ? 'block' : 'none';
+}
+function capture() {
+  // 3D 화면에 수치 박스와 데모 설명을 그려 넣은 한 장의 그림으로 저장한다 (README, 보고서용)
+  renderer.render(scene, camera);
+  const src = renderer.domElement, w = src.width || window.innerWidth, h = src.height || window.innerHeight;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d'), k = w / (window.innerWidth || w);
+  g.drawImage(src, 0, 0, w, h);
+  g.font = `${Math.round(13 * k)}px "Malgun Gothic", sans-serif`;
+  const rows = ($('hud') && $('hud').style.display !== 'none') ? hudLines() : [];
+  if (rows.length) {
+    const bw = 330 * k, lh = 20 * k, bh = rows.length * lh + 14 * k, x0 = w - bw - 12 * k, y0 = 12 * k;
+    g.fillStyle = 'rgba(27,32,39,0.88)'; g.fillRect(x0, y0, bw, bh);
+    rows.forEach(([a, b], i) => { g.fillStyle = '#8a94a3'; g.fillText(a, x0 + 10 * k, y0 + 20 * k + i * lh); g.fillStyle = '#e6e9ee'; g.fillText(b, x0 + 86 * k, y0 + 20 * k + i * lh); });
+  }
+  const cap = $('demoCap') && $('demoCap').style.display !== 'none' ? $('demoCap').textContent : '';
+  if (cap) {
+    g.font = `bold ${Math.round(17 * k)}px "Malgun Gothic", sans-serif`;
+    const tw = g.measureText(cap).width + 40 * k;
+    g.fillStyle = 'rgba(27,32,39,0.88)'; g.fillRect((w - tw) / 2, 14 * k, tw, 38 * k);
+    g.fillStyle = '#e6e9ee'; g.fillText(cap, (w - tw) / 2 + 20 * k, 40 * k);
+  }
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  const a = document.createElement('a');
+  a.download = `smart-factory_${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}.png`;
+  a.href = cv.toDataURL('image/png'); a.click();
+}
+
 // ---------------------------------------------------------------- 시작
 async function poll() {
   try {
     const all = await (await fetch('/api/factory/state')).json();
     lines.forEach(ctx => { ctx.state = all[ctx.ln.state]; });
     applyCards();
+    applyHud();
   } catch (e) { /* 서버가 잠시 응답하지 않아도 다음 주기에 다시 시도한다 */ }
 }
 function resize() {
@@ -401,6 +456,7 @@ function loop(now) {
     lines.forEach(c => { $('v_' + c.ln.id).onclick = () => setView(c.ln.id); });
     buildCards();
     if ($('demoBtn')) $('demoBtn').onclick = demoToggle;
+    if ($('capBtn')) $('capBtn').onclick = capture;
   } catch (e) {
     $('msg').textContent = '공장 장면을 불러오지 못했습니다: ' + e;
     return;

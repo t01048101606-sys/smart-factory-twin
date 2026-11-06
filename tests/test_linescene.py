@@ -50,7 +50,8 @@ def check(o):
         if a["prop"] in ("rotate", "spin"):
             assert a["axis"] in ("x", "y", "z"), a
         if a["prop"] == "lamp":
-            assert set(a["map"]) >= {"working", "blocked", "starved", "down"}
+            need = {"empty", "working", "waiting", "down"} if a["path"].startswith("occ.") else {"working", "blocked", "starved", "down"}   # 재공품 띠 / 공정 램프
+            assert set(a["map"]) >= need, a["path"]
     if o["shape"] == "belt":
         assert get(state, o["path"]) is not KeyError, o["path"]
     for c in o.get("children", []):

@@ -3506,16 +3506,6 @@
    ]
   },
   {
-   "shape": "label",
-   "text": "용접",
-   "pos": [
-    -0.5,
-    4.2,
-    2.9
-   ],
-   "w": 1.6
-  },
-  {
    "id": "paint_tank_floor",
    "shape": "box",
    "size": [

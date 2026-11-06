@@ -224,7 +224,6 @@ box("weld_controller", [0.9, 2.0, 0.7], [-3.9, 1.0, -3.0], "#3c4654")
 box("weld_controller_screen", [0.5, 0.3, 0.02], [-3.9, 1.4, -2.64], "#1a3a5c")
 cyl("weld_pole", 0.08, 3.2, [WX, 1.6, 2.9], LIGHT)
 add(id="weld_lamp", shape="sphere", r=0.28, pos=[WX, 3.45, 2.9], color="#222222", anim=[{"prop": "lamp", "path": "stations.weld.state", "map": LAMP_MAP}])
-label("용접", [WX, 4.2, 2.9], 1.6)
 
 # ================================================================ 도장 (전착)
 box("paint_tank_floor", [3.6, 0.1, 3.2], [PX, 0.05, 0], "#2a303a")

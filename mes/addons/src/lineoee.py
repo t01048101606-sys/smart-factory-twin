@@ -22,11 +22,20 @@ FAULT_KO = {"none": "해제 (정상)", "weld_slow": "용접 속도 저하 (2.2�
 
 
 def line_events(events: pd.DataFrame) -> pd.DataFrame:
-    """sim_t 가 있는 이벤트만 시뮬레이터 시간 순서로."""
+    """sim_t 가 있는 이벤트만 발생 순서(seq)대로. 서버를 다시 켜면 sim_t 가 0부터 다시 시작하므로
+    sim_t 가 줄어드는 지점을 새 실행 세션으로 보고(session 열), 세션을 이어 붙인 연속 시간(gt 열)을 만든다.
+    (sim_t 로 정렬하면 서로 다른 세션의 이벤트가 뒤섞여서 가동 시간이 틀어진다.)"""
     if events is None or events.empty or "sim_t" not in events:
         return pd.DataFrame()
-    ev = events[events["sim_t"].notna()]
-    return ev.sort_values(["sim_t", "seq"]).reset_index(drop=True)
+    ev = events[events["sim_t"].notna()].sort_values("seq").reset_index(drop=True)
+    sess, gt, base, end, prev, cur = [], [], 0.0, 0.0, None, 0
+    for t in ev["sim_t"].astype(float):
+        if prev is not None and t < prev - 1e-9:      # 시간이 거꾸로 감 = 서버를 다시 켠 것
+            cur, base, end = cur + 1, base + end, 0.0
+        end = max(end, t)
+        sess.append(cur); gt.append(base + t); prev = t
+    ev["session"], ev["gt"] = sess, gt
+    return ev
 
 
 def compute_line_oee(events: pd.DataFrame) -> dict | None:
@@ -41,9 +50,13 @@ def compute_line_oee(events: pd.DataFrame) -> dict | None:
     nominal = {}
     good = scrap = 0
     exit_t = []
-    t_prev = float(ev["sim_t"].iloc[0])
+    t_prev, session = float(ev["gt"].iloc[0]), ev["session"].iloc[0]
     for _, r in ev.iterrows():
-        t = float(r["sim_t"])
+        t = float(r["gt"])
+        if r["session"] != session:        # 서버를 다시 켠 지점: 이전 세션의 가동 상태와 공정 상태는 이어가지 않는다
+            session, running, down = r["session"], False, set()
+            st = {s: "starved" for s in STATIONS}
+            t_prev = t
         dt = max(0.0, t - t_prev)
         if running:
             run += dt
@@ -78,7 +91,8 @@ def compute_line_oee(events: pd.DataFrame) -> dict | None:
         "oee": availability * performance * quality, "availability": availability, "performance": performance, "quality": quality,
         "run_s": run, "down_s": downtime, "work_s": work, "good": good, "scrap": scrap, "done": done, "ideal_cycle_s": ideal,
         "throughput_per_min": (done / work * 60) if work > 0 else 0.0, "util": util, "bottleneck": bott,
-        "cycles": cycles, "nominal": nominal, "exit_t": exit_t, "t0": float(ev["sim_t"].iloc[0]), "t1": float(ev["sim_t"].iloc[-1]),
+        "cycles": cycles, "nominal": nominal, "exit_t": exit_t, "t0": float(ev["gt"].iloc[0]), "t1": float(ev["gt"].iloc[-1]),
+        "sessions": int(ev["session"].iloc[-1]) + 1,
     }
 
 
@@ -94,15 +108,21 @@ def station_table(res: dict) -> pd.DataFrame:
 
 
 def _running_intervals(ev: pd.DataFrame) -> list[tuple[float, float]]:
-    out, start = [], None
-    for _, r in ev[ev["event_type"] == "machine.state"].iterrows():
-        on = str(r["payload"].get("state", "")).startswith("running")
-        if on and start is None:
-            start = float(r["sim_t"])
-        elif not on and start is not None:
-            out.append((start, float(r["sim_t"]))); start = None
+    out, start, last_t, cur = [], None, None, None
+    for _, r in ev.iterrows():
+        if r["session"] != cur:                       # 세션이 바뀌면 열려 있던 가동 구간을 그 세션의 마지막 시각에서 닫는다
+            if start is not None:
+                out.append((start, last_t))
+            start, cur = None, r["session"]
+        last_t = float(r["gt"])
+        if r["event_type"] == "machine.state":
+            on = str(r["payload"].get("state", "")).startswith("running")
+            if on and start is None:
+                start = last_t
+            elif not on and start is not None:
+                out.append((start, last_t)); start = None
     if start is not None:
-        out.append((start, float(ev["sim_t"].iloc[-1])))
+        out.append((start, last_t))
     return out
 
 
@@ -112,11 +132,11 @@ def fault_report(events: pd.DataFrame, res: dict | None = None) -> pd.DataFrame:
     ev = line_events(events)
     if ev.empty:
         return pd.DataFrame(columns=cols)
-    faults = [(float(r["sim_t"]), r["payload"]["mode"]) for _, r in ev[ev["event_type"] == "sim.fault"].iterrows()]
+    faults = [(float(r["gt"]), r["payload"]["mode"]) for _, r in ev[ev["event_type"] == "sim.fault"].iterrows()]
     if not faults:
         return pd.DataFrame(columns=cols)
     res = res or compute_line_oee(events)
-    end = float(ev["sim_t"].iloc[-1])
+    end = float(ev["gt"].iloc[-1])
     runs = _running_intervals(ev)
     exits = res["exit_t"]
     overlap = lambda a, b: sum(max(0.0, min(b, e) - max(a, s)) for s, e in runs)

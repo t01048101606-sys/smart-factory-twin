@@ -105,6 +105,8 @@ for l in layout["lines"]:
     assert R[("GET", "/api/scene/<name>")](l["scene"])["title"] and l["state"] in fs
 assert R[("GET", "/api/scene/<name>")]("nope")[1] == 404
 assert "/static/factory.js" in R[("GET", "/3d/factory")]() and "__IMPORTMAP__" not in R[("GET", "/3d/factory")]()
+html = (ROOT / "src" / "static" / "factory.html").read_text(encoding="utf-8"); fjs = (ROOT / "src" / "static" / "factory.js").read_text(encoding="utf-8")
+assert "body.scene #bar, body.scene #cards { display:none; }" in html and "embed === 'scene'" in fjs      # MES 대시보드에 끼우는 3D 전용 모드
 print("공장 배치/경로 확인: /3d/factory, /api/factory/layout, /api/scene/<name>, /api/factory/state")
 
 if not shutil.which("node"):

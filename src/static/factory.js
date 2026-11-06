@@ -10,6 +10,7 @@ const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'ap
 const embed = new URLSearchParams(location.search).get('embed');
 if (embed) document.body.classList.add('embed');
 if (embed === 'view') document.body.classList.add('view');
+if (embed === 'scene') { document.body.classList.add('embed'); document.body.classList.add('scene'); }
 
 const get = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
 const clamp01 = v => Math.max(0, Math.min(1, v));

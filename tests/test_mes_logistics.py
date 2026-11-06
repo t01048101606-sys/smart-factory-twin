@@ -243,6 +243,25 @@ assert not any(g == "설비" for g in al["구분"]), "이벤트가 없는 라인
 ov_old, _ = fd.line_overview(ev_m, ev_p, ev_l, now=ev_p["ts"].max() + pd.Timedelta(minutes=10))    # 10분 동안 이벤트가 없으면 무응답
 al2 = fd.alerts(oee.load_events(None), inv, ship, ov_old)
 assert ov_old.iloc[1]["상태"].startswith("무응답") and any(g == "설비" and "무응답" in t for g, t in zip(al2["구분"], al2["내용"])), al2
+# 자동 입고 자재(가공용 블랭크)는 부족으로 보지 않는다. 물류 구역이 발주하는 자재만 부족 판정
+assert bool(inv.loc[inv["item_code"] == "RM-BLANK", "auto"].iloc[0]) and not bool(inv.loc[inv["item_code"] == "RM-BLANK", "low"].iloc[0])
+low_df = fd.inventory(F, low_units=10 ** 9)                                                   # 기준을 아주 크게 하면 물류 자재는 모두 부족
+assert set(low_df[low_df["low"]]["item_code"]) == {"RM-STEEL", "RM-BOLT", "RM-PAINT"}, low_df[["item_code", "low"]]
+# 경보와 이력: 지금 진행 중인 것만 '주의', 지나간 것은 이력에만
+T = pd.Timestamp("2026-11-06T01:00:00Z")
+mk = lambda i, line, typ, payload: {"seq": i, "ts": T + pd.Timedelta(seconds=i), "line_id": line, "event_type": typ, "payload": payload, "piece_id": None, "sim_t": None}
+empty_ship = {"blocked": ship["blocked"].iloc[0:0]}
+no_ov = pd.DataFrame(columns=["라인", "상태"])
+inv_ok = inv.assign(low=False)
+done_ev = pd.DataFrame([mk(1, fd.MACHINING, "alarm.raised", {"metric": "CYCLE_TIME_ANOMALY"}), mk(2, fd.MACHINING, "alarm.cleared", {}),
+                        mk(3, fd.PRESS, "sim.fault", {"mode": "weld_slow"}), mk(4, fd.PRESS, "sim.fault", {"mode": "none"})])
+assert fd.alerts(done_ev, inv_ok, empty_ship, no_ov).empty, "해제된 경보와 결함이 주의 목록에 남아 있습니다"
+h = fd.history(done_ev)
+assert list(h["내용"]) == ["결함 주입: 해제", "결함 주입: 용접 속도 저하", "AI 이상 감지 경보 해제", "AI 이상 감지 경보 발생"], list(h["내용"])   # 최근 것이 위
+live_ev = pd.DataFrame([mk(1, fd.MACHINING, "alarm.raised", {"metric": "CYCLE_TIME_ANOMALY"}), mk(2, fd.PRESS, "sim.fault", {"mode": "paint_down"})])
+live = fd.alerts(live_ev, inv_ok, empty_ship, no_ov)
+assert list(live["구분"]) == ["AI", "결함"] and "경보 중" in live.iloc[0]["내용"] and "도장 정지" in live.iloc[1]["내용"], live
+print("경보 목록: 지금 진행 중인 AI 경보와 결함만 나오고, 해제된 것은 이력(최근 것이 위)에만 남음")
 print(f"대시보드 숫자 검증: 양품 {good_direct} / 불량 {scrap_direct}, 냉연강판 소비 {steel['consumed']:.1f}kg (공정 실행 x 0.5), 출하 {ship['count']}건 {ship['qty']:.0f}개 "
       f"(양품 {brka_good}개 이하), FAIL 차단 LOT {len(ship['blocked'])}개, 용접 균열 {weld_direct:.0f}개, 프레스 OEE {ov.iloc[1]['OEE']}")
 print("\n테스트 통과")

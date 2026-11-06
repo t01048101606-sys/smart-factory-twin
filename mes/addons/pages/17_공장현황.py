@@ -31,13 +31,13 @@ with st.expander("3D 공장 화면", expanded=True):
                                  help="MES를 다른 컴퓨터에서 열었다면 localhost 대신 트윈 서버가 있는 컴퓨터의 주소를 넣으세요.")
     with t2:
         height = st.number_input("높이", min_value=300, max_value=1300, value=560, step=20)
-    src = f"{twin_url.rstrip('/')}/3d/factory?embed=1"
+    src = f"{twin_url.rstrip('/')}/3d/factory?embed=scene"      # 3D 장면만 (카드와 버튼은 숨김)
     try:
         import streamlit.components.v1 as components
         components.iframe(src, height=int(height), scrolling=False)
     except Exception:
         st.info("3D 화면을 이 페이지 안에 표시하지 못했습니다. 아래 링크로 새 탭에서 여세요.")
-    st.markdown(f"[새 탭에서 열기]({src})")
+    st.markdown(f"[새 탭에서 열기 (조작 버튼 포함)]({twin_url.rstrip('/')}/3d/factory)")
 
 # ---------------------------------------------------------------- 데이터
 ev_m = oee.load_events(since, line_id=fd.MACHINING)
@@ -77,6 +77,8 @@ if al.empty:
     alert_badge("지금 주의가 필요한 항목이 없습니다.", "ok")
 else:
     show_dataframe(al, "")
+with st.expander("지나간 경보와 결함 이력"):
+    show_dataframe(fd.history(ev_all), "경보나 결함 이력이 없습니다.")
 
 # ---------------------------------------------------------------- 라인
 st.subheader("라인 현황")
@@ -104,16 +106,17 @@ else:
 st.subheader("자재 재고")
 inv_t = inv.rename(columns={"item_code": "자재코드", "item_name": "자재", "unit": "단위", "received": "입고", "consumed": "소비", "balance": "재고",
                             "per_unit": "단위당 소비", "makeable": "만들 수 있는 완제품(개)"}).copy()
-inv_t["상태"] = inv["low"].map({True: "부족", False: "충분"})
-inv_t = inv_t.drop(columns=["low"])
+inv_t["상태"] = ["자동 입고(시연)" if a else ("부족" if low else "충분") for a, low in zip(inv["auto"], inv["low"])]
+inv_t = inv_t.drop(columns=["low", "auto"])
 for col in ("입고", "소비", "재고", "만들 수 있는 완제품(개)"):
     inv_t[col] = inv_t[col].astype(float).round(2)
 if len(inv):
-    fig = go.Figure(go.Bar(x=inv["item_name"], y=inv["makeable"], marker_color=["#ef4b4b" if v else "#2f9bff" for v in inv["low"]]))
+    fig = go.Figure(go.Bar(x=inv["item_name"], y=inv["makeable"], marker_color=["#7a8696" if a else ("#ef4b4b" if low else "#2f9bff") for a, low in zip(inv["auto"], inv["low"])]))
     fig.update_layout(yaxis_title="남은 재고로 만들 수 있는 완제품(개)", margin=dict(l=10, r=10, t=10, b=10), height=260)
     st.plotly_chart(fig, use_container_width=True)
 show_dataframe(inv_t, "등록된 자재가 없습니다.")
-st.caption("부족 기준은 완제품 20개 분량(5개 작업지시 4건)입니다. 물류 구역은 재고가 발주점 아래로 내려가면 입고 트럭을 부릅니다.")
+st.caption("부족 기준은 완제품 20개 분량(5개 작업지시 4건)입니다. 물류 구역은 재고가 발주점 아래로 내려가면 입고 트럭을 부릅니다. "
+           "가공용 블랭크는 어댑터가 모자라면 자동으로 입고하는 시연용 자재라 부족으로 보지 않습니다.")
 
 # ---------------------------------------------------------------- 출하
 st.subheader("출하")

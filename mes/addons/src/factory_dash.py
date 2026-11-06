@@ -54,8 +54,11 @@ def production(fetch):
     return serial, wo
 
 
+AUTO_RECEIPT = ("RM-BLANK",)    # 어댑터가 모자라면 자동으로 입고하는 자재 (시연용). 물류 구역의 발주 대상이 아니라서 "부족"으로 보지 않는다
+
+
 def inventory(fetch, low_units: int = 20) -> pd.DataFrame:
-    """자재별 입고, 소비, 재고와 '남은 재고로 만들 수 있는 완제품 수'. low_units 보다 적으면 부족."""
+    """자재별 입고, 소비, 재고와 '남은 재고로 만들 수 있는 완제품 수'. low_units 보다 적으면 부족 (자동 입고 자재는 제외)."""
     mat = fetch(
         """
         SELECT i.item_id, i.item_code, i.item_name, i.unit,
@@ -68,7 +71,8 @@ def inventory(fetch, low_units: int = 20) -> pd.DataFrame:
     df = mat.merge(per, on="item_id", how="left")
     df["balance"] = df["received"] - df["consumed"]
     df["makeable"] = df.apply(lambda r: (r["balance"] / r["per_unit"]) if r["per_unit"] and r["per_unit"] > 0 else None, axis=1)
-    df["low"] = df["makeable"].apply(lambda v: v is not None and v < low_units)
+    df["auto"] = df["item_code"].isin(AUTO_RECEIPT)
+    df["low"] = [(m is not None and m < low_units and not a) for m, a in zip(df["makeable"], df["auto"])]
     return df.drop(columns=["item_id"])
 
 
@@ -160,9 +164,13 @@ def line_overview(ev_m: pd.DataFrame, ev_p: pd.DataFrame, ev_l: pd.DataFrame, no
     return pd.DataFrame(rows), res
 
 
+def _kst(ts):
+    return ts.tz_convert("Asia/Seoul").strftime("%m-%d %H:%M:%S")
+
+
 def alerts(ev_all: pd.DataFrame, inv: pd.DataFrame, ship: dict, overview: pd.DataFrame, n: int = 12) -> pd.DataFrame:
-    """주의가 필요한 일: FAIL LOT 출하 차단, 재고 부족, AI 경보, 결함 주입, 라인 무응답."""
-    kst = lambda ts: ts.tz_convert("Asia/Seoul").strftime("%m-%d %H:%M:%S")
+    """지금 주의가 필요한 일만: FAIL LOT 출하 차단, 재고 부족, 라인 무응답, 지금 경보 중인 AI 이상 감지, 지금 주입되어 있는 결함.
+    지나간 경보와 결함은 history() 에 있다."""
     rows = []
     for _, r in ship["blocked"].iterrows():
         rows.append(("품질", f"{r['lot_no']} 검사 불합격(FAIL): 출하 차단 (불량 {int(r['scrap'])}개)", ""))
@@ -172,9 +180,26 @@ def alerts(ev_all: pd.DataFrame, inv: pd.DataFrame, ship: dict, overview: pd.Dat
         if str(r["상태"]).startswith("무응답"):
             rows.append(("설비", f"{r['라인']}: {r['상태']}", ""))
     if not ev_all.empty:
-        for _, r in ev_all[ev_all["event_type"] == "alarm.raised"].tail(3).iterrows():
-            rows.append(("AI", f"이상 감지 경보 ({r['payload'].get('metric', r['payload'].get('code', ''))})".replace(" ()", ""), kst(r["ts"])))
-        for _, r in ev_all[(ev_all["event_type"] == "sim.fault") & (ev_all["payload"].apply(lambda p: p.get("mode") != "none"))].tail(3).iterrows():
-            rows.append(("결함", f"결함 주입: {oee.FAULT_KO.get(r['payload']['mode'], r['payload']['mode'])}", kst(r["ts"])))
-    df = pd.DataFrame(rows, columns=["구분", "내용", "발생"])
-    return df.head(n)
+        for line_id, g in ev_all.groupby("line_id"):
+            ai = g[g["event_type"].isin(["alarm.raised", "alarm.cleared"])]
+            if len(ai) and ai.iloc[-1]["event_type"] == "alarm.raised":          # 마지막 경보 이벤트가 '발생'이면 지금 경보 중
+                p = ai.iloc[-1]["payload"]
+                rows.append(("AI", f"이상 감지 경보 중 ({p.get('metric', p.get('code', ''))})".replace(" ()", ""), _kst(ai.iloc[-1]["ts"])))
+            fl = g[g["event_type"] == "sim.fault"]
+            if len(fl) and fl.iloc[-1]["payload"].get("mode") != "none":          # 마지막 결함 이벤트가 '해제'가 아니면 지금 주입 중
+                rows.append(("결함", f"결함 주입 중: {oee.FAULT_KO.get(fl.iloc[-1]['payload']['mode'], fl.iloc[-1]['payload']['mode'])}", _kst(fl.iloc[-1]["ts"])))
+    return pd.DataFrame(rows, columns=["구분", "내용", "발생"]).head(n)
+
+
+def history(ev_all: pd.DataFrame, n: int = 15) -> pd.DataFrame:
+    """지나간 경보와 결함 주입 이력 (최근 것이 위)."""
+    cols = ["시각", "구분", "내용"]
+    if ev_all.empty:
+        return pd.DataFrame(columns=cols)
+    ev = ev_all[ev_all["event_type"].isin(["alarm.raised", "alarm.cleared", "sim.fault"])].tail(n).iloc[::-1]
+    rows = []
+    for _, r in ev.iterrows():
+        t, p = r["event_type"], r["payload"]
+        what = {"alarm.raised": "AI 이상 감지 경보 발생", "alarm.cleared": "AI 이상 감지 경보 해제"}.get(t) or f"결함 주입: {oee.FAULT_KO.get(p.get('mode'), p.get('mode'))}"
+        rows.append((_kst(r["ts"]), "AI" if t.startswith("alarm") else "결함", what))
+    return pd.DataFrame(rows, columns=cols)

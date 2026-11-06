@@ -147,7 +147,7 @@ nm = tmp / "node_modules" / "three"
 (nm / "package.json").write_text(json.dumps({"name": "three", "type": "module", "main": "index.js", "exports": {".": "./index.js", "./addons/*": "./addons/*"}}))
 FAKE = (ROOT / "tests" / "fake_three.js").read_text(encoding="utf-8")
 (nm / "index.js").write_text(FAKE)
-(nm / "addons" / "controls" / "OrbitControls.js").write_text("export class OrbitControls { constructor() { this.target = { set() {} }; } update() {} }")
+(nm / "addons" / "controls" / "OrbitControls.js").write_text("export class OrbitControls { constructor() { this.target = { x: 0, y: 0, z: 0, set(a, b, c) { this.x = a; this.y = b; this.z = c; }, toArray() { return [this.x, this.y, this.z]; }, copy(o) { this.x = o.x; this.y = o.y; this.z = o.z; }, clone() { return { ...this }; } }; } update() {} }")
 JS = (ROOT / "src" / "static" / "factory.js").read_text(encoding="utf-8")
 names = sorted(set(re.findall(r"THREE\.(\w+)", JS)))
 missing = [n for n in names if f"export class {n}" not in FAKE and f"export const {n}" not in FAKE and f"{n} =" not in FAKE]
@@ -207,6 +207,7 @@ console.log(JSON.stringify({
   mv: [0, 1, 2, 3].map(i => els['mv_machining_' + i].textContent), pv: [0, 1, 2, 3, 4].map(i => els['mv_press_' + i].textContent),
   lv: [0, 1, 2, 3, 4, 5].map(i => els['mv_logistics_' + i].textContent), lst: els.st_logistics.textContent,
   ml: els.ml_machining_0.textContent, labelsField: labelsField.slice(0, 40), labelsLab, cam: [cam.x, cam.y, cam.z],
+  demoCap: els.demoCap && els.demoCap.textContent, demoBtn: els.demoBtn && els.demoBtn.textContent,
   views: els.views.innerHTML.includes('v_overview') && els.views.innerHTML.includes('v_press'),
 }));
 process.exit(0);
@@ -398,4 +399,23 @@ for line_id, scene in (("cobot", CSC), ("logistics", LSC), ("press", PSC)):
 ov = run(fs, "전체", "?embed=scene")["cam"]
 assert math.dist(ov, exp) > 10                                    # focus 가 없으면 전체 시점
 print("?focus= 로 열면 그 구역 시점(cobot, logistics, press), 없으면 전체 시점")
+
+# 세부 시점: ?focus=press:weld 는 장면의 weld 시점 + 구역 offset
+lo = [l for l in layout["lines"] if l["id"] == "press"][0]["offset"]
+exp = [PSC["views"]["weld"]["position"][i] + lo[i] for i in range(3)]
+assert math.dist(run(fs, "focus press:weld", "?embed=scene&focus=press:weld")["cam"], exp) < 1e-6
+# 데모 모드: 시나리오가 가리키는 시점이 모두 실제로 있고(전체, 구역, 구역:세부), ?demo=1 로 열면 바로 시작한다
+scene_of = {"machining": MSC if "MSC" in globals() else None, "press": PSC, "logistics": LSC, "cobot": CSC}
+steps = re.findall(r"\{ t: (\d+), view: '([^']+)', cap: '([^']+)'", JS)
+assert len(steps) == 12 and all(int(t) >= 5 for t, _, _ in steps)
+for _, view, _ in steps:
+    if view == "overview":
+        continue
+    ln, _, sub = view.partition(":")
+    assert ln in {l["id"] for l in layout["lines"]}, view
+    if sub:
+        assert sub in scene_of[ln]["views"], view
+od = run(fs, "demo", "?embed=1&demo=1")
+assert od["demoCap"].startswith("1 / 12") and od["demoBtn"] == "■ 데모 중지", (od["demoCap"], od["demoBtn"])
+print(f"데모 모드: {len(steps)}단계, 모든 시점 존재, ?demo=1 로 바로 시작 ('{od['demoCap'][:30]}...')")
 print("\n테스트 통과")

@@ -1,5 +1,6 @@
 export const registry = { meshes: [], lights: [], sprites: [], groups: [] };
-const vec = (x = 0, y = 0, z = 0) => ({ x, y, z, set(a, b, c) { this.x = a; this.y = b; this.z = c; return this; } });
+const vec = (x = 0, y = 0, z = 0) => ({ x, y, z, set(a, b, c) { this.x = a; this.y = b; this.z = c; return this; },
+  toArray() { return [this.x, this.y, this.z]; }, clone() { return vec(this.x, this.y, this.z); }, copy(o) { this.x = o.x; this.y = o.y; this.z = o.z; return this; } });
 class Obj { constructor() { this.position = vec(); this.scale = vec(1, 1, 1); this.rotation = vec(); this.visible = true; this.userData = {}; } }
 const color = () => ({ setHex(v) { this.hex = v; }, set(v) { this.value = v; } });
 const asNum = (o, k) => { for (const key of ['position', 'scale']) { const v = o[key]; if (v && ![v.x, v.y, v.z].every(Number.isFinite)) throw new Error(`NaN in ${k}.${key}`); } };

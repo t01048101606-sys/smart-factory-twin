@@ -27,16 +27,20 @@
   #msg { top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; max-width:420px; font-size:14px; line-height:1.5; }
   body.embed #title { display:none; }
   body.view #bar { display:none; }
+  #demoCap { display:none; top:14px; left:50%; transform:translateX(-50%); font-size:17px; font-weight:600; padding:10px 20px; max-width:80vw; text-align:center; pointer-events:none; }
+  body.scene #demoCap { display:none !important; }
   body.scene #bar, body.scene #cards { display:none; }   /* embed=scene: 3D 장면만 (MES 대시보드에 끼워 넣을 때) */
 </style>
 <script type="importmap">__IMPORTMAP__</script>
 </head>
 <body>
 <div id="msg" class="box">공장 화면을 불러오는 중입니다...</div>
+<div id="demoCap" class="box"></div>
 <div id="cards" class="box"></div>
 <div id="bar" class="box">
   <span id="title" style="font-weight:600;margin-right:6px">스마트 팩토리</span>
   <label>시점</label><span id="views" style="display:flex;gap:6px"></span>
+  <button id="demoBtn">▶ 데모</button>
   <span style="margin-left:auto"></span>
   <label><input type="checkbox" id="labels" checked> 이름표</label>
   <label>용어 <select id="termsMode"><option value="field">현장 용어</option><option value="lab">장비 원명칭</option></select></label>

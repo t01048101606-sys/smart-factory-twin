@@ -71,6 +71,64 @@ function setView(name) {
 }
 if (controls.addEventListener) controls.addEventListener('start', () => { userMoved = true; });
 
+// ---------------------------------------------------------------- 데모 모드: 카메라가 구역을 차례로 돌고, 단계마다 조작(라인 시작, 입고 요청, 결함 주입)을 자동으로 한다
+const DEMO_STEPS = [
+  { t: 5, view: 'overview', cap: '스마트 팩토리 전체: 가공 라인 · 프레스/용접/도장 · 협동로봇 · 물류 출하', act: () => { post('/api/line/control', { action: 'reset' }); post('/api/line/speed', { value: 3 }); } },
+  { t: 8, view: 'machining', cap: '가공 라인 (PLC): 공급 → 판별 → 가공 → 분류', act: () => post('/api/press', { dev: 'M101' }) },
+  { t: 8, view: 'press:press', cap: '프레스: 코일을 풀어 서보 피더로 보내고, 슬라이드가 금형에 닿아 성형', act: () => post('/api/line/control', { action: 'start' }) },
+  { t: 8, view: 'press:weld', cap: '용접: 3-2-1 지그에 클램프로 고정 → 6축 로봇이 C형 서보 건으로 스폿 용접' },
+  { t: 8, view: 'press:paint', cap: '도장: 행거가 전착조에 잠기고, 건조로에서 경화' },
+  { t: 9, view: 'cobot', cap: '협동로봇 셀: 비전 검사 → 양품은 파렛트에, 불량은 NG 상자에' },
+  { t: 9, view: 'logistics:inbound', cap: '입고: 만재 트럭이 하역하고 재고가 보충됨', act: () => post('/api/logistics/request_inbound', {}) },
+  { t: 7, view: 'logistics', cap: 'AGV가 완제품 창고에서 출하 도크로 파렛트를 운반' },
+  { t: 9, view: 'logistics:outbound', cap: '출하: 파렛트 4개가 가득 차야 트럭이 출발' },
+  { t: 8, view: 'press', cap: '결함 주입: 용접 속도 저하 → 라인 효율(OEE)에 영향', act: () => post('/api/line/fault', { mode: 'weld_slow' }) },
+  { t: 6, view: 'press', cap: '결함 해제: 정상 속도로 복귀', act: () => post('/api/line/fault', { mode: 'none' }) },
+  { t: 5, view: 'overview', cap: '데모 끝: 모든 수치는 MES 화면에서 이어서 확인할 수 있습니다' },
+];
+let demoCam = null, demoTimer = null, demoIdx = -1;
+const smooth = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+function overviewView() {
+  if (!fit) return null;
+  const keep = { p: camera.position.clone(), t: controls.target.clone() };
+  fitOverview();
+  const v = { position: camera.position.toArray(), target: controls.target.toArray() };
+  camera.position.copy(keep.p); controls.target.copy(keep.t);
+  return v;
+}
+function flyTo(name, dur = 2.5) {
+  const v = name === 'overview' ? overviewView() : views[name];
+  if (!v) return;
+  userMoved = true;
+  demoCam = { from: [camera.position.toArray(), controls.target.toArray()], to: [v.position, v.target], t0: clock.now, dur: dur * 1000 };
+}
+function stepCamera() {
+  if (!demoCam) return;
+  const k = Math.min(1, (clock.now - demoCam.t0) / demoCam.dur), e = smooth(k);
+  camera.position.set(...demoCam.from[0].map((a, i) => a + (demoCam.to[0][i] - a) * e));
+  controls.target.set(...demoCam.from[1].map((a, i) => a + (demoCam.to[1][i] - a) * e));
+  if (k >= 1) demoCam = null;
+}
+function demoCaption(text) { const c = $('demoCap'); if (c) { c.textContent = text || ''; c.style.display = text ? 'block' : 'none'; } }
+function demoStop() {
+  clearTimeout(demoTimer); demoTimer = null; demoIdx = -1; demoCam = null; demoCaption('');
+  const b = $('demoBtn'); if (b) b.textContent = '▶ 데모';
+}
+function demoNext() {
+  demoIdx += 1;
+  if (demoIdx >= DEMO_STEPS.length) { demoStop(); return; }
+  const st = DEMO_STEPS[demoIdx];
+  demoCaption(`${demoIdx + 1} / ${DEMO_STEPS.length}  ${st.cap}`);
+  flyTo(st.view);
+  if (st.act) st.act();
+  demoTimer = setTimeout(demoNext, st.t * 1000);
+}
+function demoToggle() {
+  if (demoTimer) { demoStop(); return; }
+  const b = $('demoBtn'); if (b) b.textContent = '■ 데모 중지';
+  demoIdx = -1; demoNext();
+}
+
 // ---------------------------------------------------------------- 라인 장면 만들기
 const lines = [];
 const labelSprites = [];
@@ -304,6 +362,7 @@ let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now; clock.now = now; clock.dt = dt;
   frame(dt);
+  stepCamera();
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
@@ -328,6 +387,12 @@ function loop(now) {
       views[ln.id] = { position: [ln.offset[0] + ctx.def.camera.position[0], ln.offset[1] + ctx.def.camera.position[1], ln.offset[2] + ctx.def.camera.position[2]],
                        target: [ln.offset[0] + ctx.def.camera.target[0], ln.offset[1] + ctx.def.camera.target[1], ln.offset[2] + ctx.def.camera.target[2]] };
     }
+    for (const ln of layout.lines) {          // 장면 안의 세부 시점(press, weld, paint, inbound, outbound ...)도 'press:weld' 같은 이름으로 쓸 수 있다
+      const ctx = lines.find(c => c.ln.id === ln.id);
+      for (const [nm, v] of Object.entries(ctx.def.views || {})) {
+        views[`${ln.id}:${nm}`] = { position: v.position.map((x, i) => x + ln.offset[i]), target: v.target.map((x, i) => x + ln.offset[i]) };
+      }
+    }
     const dir = layout.camera.position.map((v, i) => v - layout.camera.target[i]), len = Math.hypot(...dir) || 1;
     const target = [(bounds.min[0] + bounds.max[0]) / 2, 0, (bounds.min[2] + bounds.max[2]) / 2];   // 전체 범위의 가운데를 바라본다
     fit = { target, dir: dir.map(v => v / len) };
@@ -335,6 +400,7 @@ function loop(now) {
     $('v_overview').onclick = () => setView('overview');
     lines.forEach(c => { $('v_' + c.ln.id).onclick = () => setView(c.ln.id); });
     buildCards();
+    if ($('demoBtn')) $('demoBtn').onclick = demoToggle;
   } catch (e) {
     $('msg').textContent = '공장 장면을 불러오지 못했습니다: ' + e;
     return;
@@ -346,6 +412,7 @@ function loop(now) {
   resize(); fitOverview();
   const focus = new URLSearchParams(location.search).get('focus');          // 예: ?focus=cobot (MES 라인별 페이지에 끼울 때)
   if (focus && views[focus]) setView(focus);
+  if (new URLSearchParams(location.search).get('demo') === '1') demoToggle();      // ?demo=1 : 열자마자 데모 시작 (영상 녹화용)
   poll(); setInterval(poll, 100);
   window.__twin3dReady = true;
   $('msg').style.display = 'none';

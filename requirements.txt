@@ -1,0 +1,6 @@
+# 트윈 서버 + 어댑터 + MES 화면에 필요한 패키지
+flask
+pymodbus      # OpenPLC 모드(Modbus TCP)에서만 필요
+pandas
+streamlit
+plotly
